@@ -177,6 +177,7 @@ def _generate_dataset(
     _dataset_name=None,
     _token: OAuthToken = None,
 ):
+    os.environ["HF_TOKEN"] = _token.token
     gr.Info("Started pipeline execution.")
     result_queue = multiprocessing.Queue()
     p = multiprocessing.Process(
@@ -188,7 +189,6 @@ def _generate_dataset(
     distiset = result_queue.get()
 
     if _dataset_name is not None:
-        os.environ["HF_TOKEN"] = _token.token
         gr.Info("Pushing dataset to Hugging Face Hub...")
         distiset.push_to_hub(
             repo_id=_dataset_name,
