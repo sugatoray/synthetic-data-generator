@@ -131,7 +131,7 @@ def _run_pipeline(
                 generation_kwargs={
                     "temperature": 0.8,  # it's the best value for Llama 3.1 70B Instruct
                 },
-                api_key=_token,
+                api_key=_token.token,
             ),
             n_turns=_num_turns,
             num_rows=_num_rows,
@@ -151,7 +151,7 @@ def _generate_system_prompt(_dataset_description, _token: OAuthToken = None):
                 "max_new_tokens": 2048,
                 "do_sample": True,
             },
-            api_key=_token,
+            api_key=_token.token,
         ),
         use_system_prompt=True,
     )
@@ -187,7 +187,10 @@ def _generate_dataset(
     if _dataset_name is not None:
         gr.Info("Pushing dataset to Hugging Face Hub...")
         distiset.push_to_hub(
-            repo_id=_dataset_name, private=False, include_script=True, token=_token
+            repo_id=_dataset_name,
+            private=False,
+            include_script=True,
+            token=_token.token,
         )
         gr.Info("Dataset pushed to Hugging Face Hub: https://huggingface.co")
     else:
