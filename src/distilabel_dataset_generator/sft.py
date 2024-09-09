@@ -121,7 +121,7 @@ MODEL = "meta-llama/Meta-Llama-3.1-70B-Instruct"
 
 
 def _run_pipeline(
-    result_queue, _num_turns, _num_rows, _system_prompt, _token: OAuthToken = None
+    result_queue, _num_turns, _num_rows, _system_prompt, _token: str = None
 ):
     os.environ["HF_TOKEN"] = _token.token
     with Pipeline(name="sft") as pipeline:
@@ -133,7 +133,7 @@ def _run_pipeline(
                 generation_kwargs={
                     "temperature": 0.8,  # it's the best value for Llama 3.1 70B Instruct
                 },
-                api_key=_token.token,
+                api_key=_token,
             ),
             n_turns=_num_turns,
             num_rows=_num_rows,
