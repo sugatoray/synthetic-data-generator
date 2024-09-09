@@ -123,7 +123,6 @@ MODEL = "meta-llama/Meta-Llama-3.1-70B-Instruct"
 def _run_pipeline(
     result_queue, _num_turns, _num_rows, _system_prompt, _token: str = None
 ):
-    os.environ["HF_TOKEN"] = _token.token
     with Pipeline(name="sft") as pipeline:
         magpie_step = MagpieGenerator(
             llm=InferenceEndpointsLLM(
