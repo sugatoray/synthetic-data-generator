@@ -1,4 +1,5 @@
 import multiprocessing
+import os
 
 import gradio as gr
 import pandas as pd
@@ -122,6 +123,7 @@ MODEL = "meta-llama/Meta-Llama-3.1-70B-Instruct"
 def _run_pipeline(
     result_queue, _num_turns, _num_rows, _system_prompt, _token: OAuthToken = None
 ):
+    os.environ["HF_TOKEN"] = _token.token
     with Pipeline(name="sft") as pipeline:
         magpie_step = MagpieGenerator(
             llm=InferenceEndpointsLLM(
@@ -142,6 +144,7 @@ def _run_pipeline(
 
 
 def _generate_system_prompt(_dataset_description, _token: OAuthToken = None):
+    os.environ["HF_TOKEN"] = _token.token
     generate_description = TextGeneration(
         llm=InferenceEndpointsLLM(
             model_id=MODEL,
@@ -185,6 +188,7 @@ def _generate_dataset(
     distiset = result_queue.get()
 
     if _dataset_name is not None:
+        os.environ["HF_TOKEN"] = _token.token
         gr.Info("Pushing dataset to Hugging Face Hub...")
         distiset.push_to_hub(
             repo_id=_dataset_name,
