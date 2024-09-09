@@ -181,7 +181,8 @@ def _generate_dataset(
     gr.Info("Started pipeline execution.")
     result_queue = multiprocessing.Queue()
     p = multiprocessing.Process(
-        target=_run_pipeline, args=(result_queue, _num_turns, _num_rows, _system_prompt)
+        target=_run_pipeline,
+        args=(result_queue, _num_turns, _num_rows, _system_prompt, _token.token),
     )
     p.start()
     p.join()
