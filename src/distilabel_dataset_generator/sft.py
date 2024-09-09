@@ -6,7 +6,7 @@ from distilabel.llms import InferenceEndpointsLLM
 from distilabel.pipeline import Pipeline
 from distilabel.steps.tasks import MagpieGenerator, TextGeneration
 
-from distilabel_dataset_generator.utils import OAuthToken, get_login_button
+from src.distilabel_dataset_generator.utils import OAuthToken, get_login_button
 
 INFORMATION_SEEKING_PROMPT = (
     "You are an AI assistant designed to provide accurate and concise information on a wide"

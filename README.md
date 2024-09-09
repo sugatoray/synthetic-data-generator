@@ -1,6 +1,6 @@
 ---
 title: Distilabel Dataset Generator
-emoji: 👁
+emoji: ⚗️
 colorFrom: purple
 colorTo: gray
 sdk: gradio

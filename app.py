@@ -1,6 +1,6 @@
 import gradio as gr
 
-from distilabel_dataset_generator.sft import demo
+from src.distilabel_dataset_generator.sft import demo
 
 demo = gr.TabbedInterface(
     [demo],
