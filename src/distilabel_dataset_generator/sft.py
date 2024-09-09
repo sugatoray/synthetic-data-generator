@@ -116,24 +116,12 @@ The prompt you write should follow the same style and structure as the following
 User dataset description:
 """
 
-MODEL = "meta-llama/Meta-Llama-3.1-8B-Instruct"
-
-generate_description = TextGeneration(
-    llm=InferenceEndpointsLLM(
-        model_id=MODEL,
-        tokenizer_id=MODEL,
-        generation_kwargs={
-            "temperature": 0.8,
-            "max_new_tokens": 2048,
-            "do_sample": True,
-        },
-    ),
-    use_system_prompt=True,
-)
-generate_description.load()
+MODEL = "meta-llama/Meta-Llama-3.1-70B-Instruct"
 
 
-def _run_pipeline(result_queue, _num_turns, _num_rows, _system_prompt):
+def _run_pipeline(
+    result_queue, _num_turns, _num_rows, _system_prompt, _token: OAuthToken = None
+):
     with Pipeline(name="sft") as pipeline:
         magpie_step = MagpieGenerator(
             llm=InferenceEndpointsLLM(
@@ -143,6 +131,7 @@ def _run_pipeline(result_queue, _num_turns, _num_rows, _system_prompt):
                 generation_kwargs={
                     "temperature": 0.8,  # it's the best value for Llama 3.1 70B Instruct
                 },
+                api_key=_token,
             ),
             n_turns=_num_turns,
             num_rows=_num_rows,
@@ -152,7 +141,21 @@ def _run_pipeline(result_queue, _num_turns, _num_rows, _system_prompt):
     result_queue.put(distiset)
 
 
-def _generate_system_prompt(_dataset_description):
+def _generate_system_prompt(_dataset_description, _token: OAuthToken = None):
+    generate_description = TextGeneration(
+        llm=InferenceEndpointsLLM(
+            model_id=MODEL,
+            tokenizer_id=MODEL,
+            generation_kwargs={
+                "temperature": 0.8,
+                "max_new_tokens": 2048,
+                "do_sample": True,
+            },
+            api_key=_token,
+        ),
+        use_system_prompt=True,
+    )
+    generate_description.load()
     return next(
         generate_description.process(
             [
