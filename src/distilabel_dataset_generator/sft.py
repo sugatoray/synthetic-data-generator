@@ -1,8 +1,12 @@
+import multiprocessing
+
 import gradio as gr
 import pandas as pd
 from distilabel.llms import InferenceEndpointsLLM
 from distilabel.pipeline import Pipeline
 from distilabel.steps.tasks import MagpieGenerator, TextGeneration
+
+from distilabel_dataset_generator.utils import OAuthToken, get_login_button
 
 INFORMATION_SEEKING_PROMPT = (
     "You are an AI assistant designed to provide accurate and concise information on a wide"
@@ -112,7 +116,7 @@ The prompt you write should follow the same style and structure as the following
 User dataset description:
 """
 
-MODEL = "meta-llama/Meta-Llama-3.1-70B-Instruct"
+MODEL = "meta-llama/Meta-Llama-3.1-8B-Instruct"
 
 generate_description = TextGeneration(
     llm=InferenceEndpointsLLM(
@@ -129,20 +133,7 @@ generate_description = TextGeneration(
 generate_description.load()
 
 
-def _generate_system_prompt(_dataset_description):
-    return next(
-        generate_description.process(
-            [
-                {
-                    "system_prompt": PROMPT_CREATION_PROMPT,
-                    "instruction": _dataset_description,
-                }
-            ]
-        )
-    )[0]["generation"]
-
-
-def _generate_dataset(_system_prompt, _num_turns=1, _num_rows=5):
+def _run_pipeline(result_queue, _num_turns, _num_rows, _system_prompt):
     with Pipeline(name="sft") as pipeline:
         magpie_step = MagpieGenerator(
             llm=InferenceEndpointsLLM(
@@ -157,25 +148,69 @@ def _generate_dataset(_system_prompt, _num_turns=1, _num_rows=5):
             num_rows=_num_rows,
             system_prompt=_system_prompt,
         )
-    magpie_step.load()
-    if _num_turns == 1:
-        outputs = {"instruction": [], "response": []}
-        for _ in range(_num_rows):
-            entry = next(magpie_step.process())[0][0]
-            outputs["instruction"].append(entry["instruction"])
-            outputs["response"].append(entry["response"])
+    distiset = pipeline.run()
+    result_queue.put(distiset)
+
+
+def _generate_system_prompt(_dataset_description):
+    return next(
+        generate_description.process(
+            [
+                {
+                    "system_prompt": PROMPT_CREATION_PROMPT,
+                    "instruction": _dataset_description,
+                }
+            ]
+        )
+    )[0]["generation"]
+
+
+def _generate_dataset(
+    _system_prompt,
+    _num_turns=1,
+    _num_rows=5,
+    _dataset_name=None,
+    _token: OAuthToken = None,
+):
+    gr.Info("Started pipeline execution.")
+    result_queue = multiprocessing.Queue()
+    p = multiprocessing.Process(
+        target=_run_pipeline, args=(result_queue, _num_turns, _num_rows, _system_prompt)
+    )
+    p.start()
+    p.join()
+    distiset = result_queue.get()
+
+    if _dataset_name is not None:
+        gr.Info("Pushing dataset to Hugging Face Hub...")
+        distiset.push_to_hub(
+            repo_id=_dataset_name, private=False, include_script=True, token=_token
+        )
+        gr.Info("Dataset pushed to Hugging Face Hub: https://huggingface.co")
     else:
-        outputs = {"conversation": []}
-        for _ in range(_num_rows):
-            entry = next(magpie_step.process())[0][0]
-            outputs["conversation"].append(entry["conversation"])
-    return pd.DataFrame(outputs)
+        # If not pushing to hub, generate the dataset directly
+        distiset = distiset["default"]["train"]
+        if _num_turns == 1:
+            outputs = distiset.to_pandas()[["instruction", "response"]]
+        else:
+            outputs = {"conversation_id": [], "role": [], "content": []}
+            conversations = distiset["conversation"]
+            for idx, entry in enumerate(conversations):
+                for message in entry["conversation"]:
+                    outputs["conversation_id"].append(idx + 1)
+                    outputs["role"].append(message["role"])
+                    outputs["content"].append(message["content"])
+        return pd.DataFrame(outputs)
+
+    return pd.DataFrame(distiset.to_pandas())
 
 
 with gr.Blocks(
     title="⚗️ Distilabel Dataset Generator",
     head="⚗️ Distilabel Dataset Generator",
 ) as demo:
+    get_login_button()
+
     dataset_description = gr.Textbox(
         label="Provide a description of the dataset",
         value="A chemistry dataset for an assistant that explains chemical reactions and formulas",
@@ -212,7 +247,7 @@ with gr.Blocks(
             )
         with gr.Column():
             num_rows = gr.Number(
-                value=1, label="Number of rows in the dataset", minimum=1
+                value=100, label="Number of rows in the dataset", minimum=1
             )
 
     dataset_name_push_to_hub = gr.Textbox(label="Dataset Name to push to Hub")
@@ -223,8 +258,7 @@ with gr.Blocks(
 
     btn_generate_full_dataset.click(
         fn=_generate_dataset,
-        inputs=[system_prompt, num_turns, num_rows],
-        outputs=[table],
+        inputs=[system_prompt, num_turns, num_rows, dataset_name_push_to_hub],
     )
 
 demo
