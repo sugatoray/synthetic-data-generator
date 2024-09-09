@@ -9,5 +9,4 @@ demo = gr.TabbedInterface(
     head="⚗️ Distilabel Dataset Generator",
 )
 
-if __name__ == "__main__":
-    demo.launch()
+demo.launch()

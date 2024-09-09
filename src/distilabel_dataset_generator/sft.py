@@ -1,4 +1,5 @@
 import gradio as gr
+import pandas as pd
 from distilabel.llms import InferenceEndpointsLLM
 from distilabel.pipeline import Pipeline
 from distilabel.steps.tasks import MagpieGenerator, TextGeneration
@@ -111,13 +112,17 @@ The prompt you write should follow the same style and structure as the following
 User dataset description:
 """
 
-MODEL = "meta-llama/Meta-Llama-3.1-8B-Instruct"
+MODEL = "meta-llama/Meta-Llama-3.1-70B-Instruct"
 
 generate_description = TextGeneration(
     llm=InferenceEndpointsLLM(
         model_id=MODEL,
         tokenizer_id=MODEL,
-        generation_kwargs={"temperature": 0.8, "max_new_tokens": 2048},
+        generation_kwargs={
+            "temperature": 0.8,
+            "max_new_tokens": 2048,
+            "do_sample": True,
+        },
     ),
     use_system_prompt=True,
 )
@@ -137,7 +142,7 @@ def _generate_system_prompt(_dataset_description):
     )[0]["generation"]
 
 
-def _generate_dataset(_system_prompt, _num_turns=1, _num_rows=1):
+def _generate_dataset(_system_prompt, _num_turns=1, _num_rows=5):
     with Pipeline(name="sft") as pipeline:
         magpie_step = MagpieGenerator(
             llm=InferenceEndpointsLLM(
@@ -152,16 +157,28 @@ def _generate_dataset(_system_prompt, _num_turns=1, _num_rows=1):
             num_rows=_num_rows,
             system_prompt=_system_prompt,
         )
-    distiset = pipeline.run()
-    print(distiset)
-    return distiset
+    magpie_step.load()
+    if _num_turns == 1:
+        outputs = {"instruction": [], "response": []}
+        for _ in range(_num_rows):
+            entry = next(magpie_step.process())[0][0]
+            outputs["instruction"].append(entry["instruction"])
+            outputs["response"].append(entry["response"])
+    else:
+        outputs = {"conversation": []}
+        for _ in range(_num_rows):
+            entry = next(magpie_step.process())[0][0]
+            outputs["conversation"].append(entry["conversation"])
+    return pd.DataFrame(outputs)
 
 
 with gr.Blocks(
-    title="⚗️ Distilabel Dataset Generator", head="⚗️ Distilabel Dataset Generator"
+    title="⚗️ Distilabel Dataset Generator",
+    head="⚗️ Distilabel Dataset Generator",
 ) as demo:
     dataset_description = gr.Textbox(
-        label="Provide a description of the dataset", value="I am a dataset"
+        label="Provide a description of the dataset",
+        value="A chemistry dataset for an assistant that explains chemical reactions and formulas",
     )
 
     btn_generate_system_prompt = gr.Button(
@@ -177,10 +194,10 @@ with gr.Blocks(
     )
 
     btn_generate_sample_dataset = gr.Button(
-        value="🧪 Generate Sample Dataset of 10 rows and a single turn"
+        value="🧪 Generate Sample Dataset of 5 rows and a single turn"
     )
 
-    table = gr.Dataframe(label="Generated Dataset")
+    table = gr.Dataframe(label="Generated Dataset", wrap=True)
 
     btn_generate_sample_dataset.click(
         fn=_generate_dataset,
@@ -190,9 +207,13 @@ with gr.Blocks(
 
     with gr.Row(variant="panel"):
         with gr.Column():
-            num_turns = gr.Number(value=1, label="Number of turns in the conversation")
+            num_turns = gr.Number(
+                value=1, label="Number of turns in the conversation", minimum=1
+            )
         with gr.Column():
-            num_rows = gr.Number(value=1, label="Number of rows in the dataset")
+            num_rows = gr.Number(
+                value=1, label="Number of rows in the dataset", minimum=1
+            )
 
     dataset_name_push_to_hub = gr.Textbox(label="Dataset Name to push to Hub")
 
