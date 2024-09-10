@@ -5,6 +5,7 @@ import pandas as pd
 from distilabel.distiset import Distiset
 from distilabel.llms import InferenceEndpointsLLM
 from distilabel.pipeline import Pipeline
+from distilabel.steps import KeepColumns
 from distilabel.steps.tasks import MagpieGenerator, TextGeneration
 
 from src.distilabel_dataset_generator.utils import (
@@ -141,8 +142,18 @@ DEFAULT_DATASET = pd.DataFrame(
 
 
 def _run_pipeline(result_queue, num_turns, num_rows, system_prompt, token: str = None):
+    output_mappings = (
+        {
+            "instruction": "prompt",
+            "response": "completion",
+        }
+        if num_turns == 1
+        else {
+            "conversation": "messages",
+        }
+    )
     with Pipeline(name="sft") as pipeline:
-        magpie_step = MagpieGenerator(
+        magpie = MagpieGenerator(
             llm=InferenceEndpointsLLM(
                 model_id=MODEL,
                 tokenizer_id=MODEL,
@@ -150,6 +161,7 @@ def _run_pipeline(result_queue, num_turns, num_rows, system_prompt, token: str =
                 generation_kwargs={
                     "temperature": 0.8,  # it's the best value for Llama 3.1 70B Instruct
                     "do_sample": True,
+                    "max_new_tokens": 2048,
                     "stop_sequences": [
                         "<|eot_id|>",
                         "<|end_of_text|>",
@@ -163,7 +175,12 @@ def _run_pipeline(result_queue, num_turns, num_rows, system_prompt, token: str =
             n_turns=num_turns,
             num_rows=num_rows,
             system_prompt=system_prompt,
+            output_mappings=output_mappings,
         )
+        keep_columns = KeepColumns(
+            columns=list(output_mappings.values()) + ["model_name"],
+        )
+        magpie.connect(keep_columns)
     distiset: Distiset = pipeline.run()
     result_queue.put(distiset)
 
@@ -212,7 +229,9 @@ def generate_dataset(
                 "Please sign in with Hugging Face to be able to push the dataset to the Hub."
             )
 
-    gr.Info("Started pipeline execution.")
+    gr.Info(
+        "Started pipeline execution. This might take a while, depending on the number of rows and turns you have selected. Don't close this page."
+    )
     result_queue = multiprocessing.Queue()
     p = multiprocessing.Process(
         target=_run_pipeline,
@@ -223,7 +242,7 @@ def generate_dataset(
     distiset = result_queue.get()
 
     if dataset_name is not None:
-        gr.Info("Pushing dataset to Hugging Face Hub...")
+        gr.Info("Pushing dataset to Hugging Face Hub.")
         repo_id = f"{orgs_selector}/{dataset_name}"
         distiset.push_to_hub(
             repo_id=repo_id,
@@ -231,17 +250,19 @@ def generate_dataset(
             include_script=False,
             token=token.token,
         )
-        gr.Info(f"Dataset pushed to Hugging Face Hub: https://huggingface.co/{repo_id}")
+        gr.Info(
+            f'Dataset pushed to Hugging Face Hub: <a href="https://huggingface.co/datasets/{repo_id}">https://huggingface.co/datasets/{repo_id}</a>'
+        )
     else:
         # If not pushing to hub generate the dataset directly
         distiset = distiset["default"]["train"]
         if num_turns == 1:
-            outputs = distiset.to_pandas()[["instruction", "response"]]
+            outputs = distiset.to_pandas()[["prompt", "completion"]]
         else:
             outputs = {"conversation_id": [], "role": [], "content": []}
-            conversations = distiset["conversation"]
+            conversations = distiset["messages"]
             for idx, entry in enumerate(conversations):
-                for message in entry["conversation"]:
+                for message in entry["messages"]:
                     outputs["conversation_id"].append(idx + 1)
                     outputs["role"].append(message["role"])
                     outputs["content"].append(message["content"])
