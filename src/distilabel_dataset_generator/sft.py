@@ -291,31 +291,32 @@ with gr.Blocks(
 ) as app:
     gr.Markdown(
         """
-### Generate a high quality SFT dataset in a breeze using [🐦‍⬛MagPie](https://arxiv.org/abs/2406.08464) and [🦙Llama 3.1 - 70B Instruct](https://huggingface.co/meta-llama/Meta-Llama-3.1-70B-Instruct).
 
-More information on distilabel and techniques can be found in the "FAQ" tab. The code can be found in the [Spaces repository](https://huggingface.co/spaces/argilla/distilabel-dataset-generator/tree/main).
 """
     )
-    btn_duplicate = get_duplicate_button()
-
-    dataset_description = gr.Textbox(
+    dataset_description = gr.TextArea(
         label="Provide a description of the dataset",
         value=DEFAULT_SYSTEM_PROMPT_DESCRIPTION,
     )
+    with gr.Row():
+        gr.Column(scale=1)
+        btn_generate_system_prompt = gr.Button(
+            value="Generate sample dataset"
+        )
+        gr.Column(scale=1)
 
-    btn_generate_system_prompt = gr.Button(
-        value="🧪 Generate Sytem Prompt and Sample Dataset"
-    )
-
-    system_prompt = gr.Textbox(
-        label="Provide or correct the system prompt",
+    system_prompt = gr.TextArea(
+        label="If you want to improve the dataset, you can tune the system prompt and regenerate the sample",
         value=DEFAULT_SYSTEM_PROMPT,
     )
 
-    btn_generate_sample_dataset = gr.Button(
-        value="🧪 Generate Sample Dataset of 5 rows and a single turn",
-    )
-
+    with gr.Row():
+        gr.Column(scale=1)
+        btn_generate_sample_dataset = gr.Button(
+            value="Regenerate sample dataset",
+        )
+        gr.Column(scale=1)
+   
     table = gr.Dataframe(label="Generated Dataset", wrap=True, value=DEFAULT_DATASET)
 
     btn_generate_system_prompt.click(
