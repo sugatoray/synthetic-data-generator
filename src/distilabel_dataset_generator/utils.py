@@ -55,7 +55,6 @@ def list_orgs(token: OAuthToken = None):
             for entry in data["auth"]["accessToken"]["fineGrained"]["scoped"]
             if "repo.write" in entry["permissions"]
         ]
-        print(organisations)
         return organisations
     else:
         return []
