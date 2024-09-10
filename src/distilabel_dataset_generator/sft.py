@@ -232,16 +232,29 @@ def generate_dataset(
         )
         num_rows = 5000
 
+    if num_rows < 50:
+        duration = 60
+    elif num_rows < 250:
+        duration = 300
+    elif num_rows < 1000:
+        duration = 500
+    else:
+        duration = 1000
+
     gr.Info(
-        "Started pipeline execution. This might take a while, depending on the number of rows and turns you have selected. Don't close this page."
+        "Started pipeline execution. This might take a while, depending on the number of rows and turns you have selected. Don't close this page.",
+        duration=duration,
     )
     result_queue = multiprocessing.Queue()
     p = multiprocessing.Process(
         target=_run_pipeline,
         args=(result_queue, num_turns, num_rows, system_prompt),
     )
-    p.start()
-    p.join()
+    try:
+        p.start()
+        p.join()
+    except Exception as e:
+        raise gr.Error(f"An error occurred during dataset generation: {str(e)}")
     distiset = result_queue.get()
 
     if dataset_name is not None:
