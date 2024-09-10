@@ -4,11 +4,11 @@ with gr.Blocks() as app:
     gr.Markdown(
         """### FAQ
 
+        <img src="https://huggingface.co/spaces/argilla/distilabel-dataset-generator/resolve/main/assets/image.png" alt="Distilabel Dataset Generator" style="width: 300px;">
+
         #### What is Distilabel Dataset Generator?
 
-        Distilabel Dataset Generator is a tool that allows you to easily create high-quality datasets for training and fine-tuning language models. It leverages the power of Distilabel and advanced language models to generate synthetic data tailored to your specific needs.
-
-        ![Distilabel Dataset Generator](https://huggingface.co/spaces/argilla/distilabel-dataset-generator/blob/main/assets/image.png)
+        Distilabel Dataset Generator is a tool that allows you to easily create high-quality datasets for training and fine-tuning language models. It leverages the power of distilabel and advanced language models to generate synthetic data tailored to your specific needs.
 
         This tool simplifies the process of creating custom datasets, enabling you to:
         - Define the characteristics of your desired dataset
@@ -17,13 +17,13 @@ with gr.Blocks() as app:
         - Produce full-scale datasets with customizable parameters
         - Push your generated datasets directly to the Hugging Face Hub
 
-        By using Distilabel Dataset Generator, you can rapidly prototype and create datasets for various NLP tasks, accelerating your AI development process.
+        By using Distilabel Dataset Generator, you can rapidly prototype and create datasets for, accelerating your AI development process.
 
         #### How is this free?
 
         The current implementation is based on [Free Serverless Hugging Face Inference Endpoints](https://huggingface.co/docs/api-inference/index). They are rate limited but free to use for anyone on the Hugging Face Hub. You can re-use the underlying pipeline to generate data with other [distilabel LLM integrations](https://distilabel.argilla.io/dev/components-gallery/llms/).
 
-        #### What is Distilabel?
+        #### What is distilabel?
 
         Distilabel is the framework for synthetic data and AI feedback for engineers who need fast, reliable and scalable pipelines based on verified research papers.
 
@@ -35,15 +35,15 @@ with gr.Blocks() as app:
 
         AI feedback is feedback provided by an AI model, instead of being provided by a human.
 
-        #### How is Distilabel different from other synthetic data generation frameworks?
+        #### How is distilabel different from other synthetic data generation frameworks?
 
         Distilabel can be used for generating synthetic data and AI feedback for a wide variety of projects including traditional predictive NLP (classification, extraction, etc.), or generative and large language model scenarios (instruction following, dialogue generation, judging etc.). Distilabel's programmatic approach allows you to build scalable pipelines for data generation and AI feedback. The goal of distilabel is to accelerate your AI development by quickly generating high-quality, diverse datasets based on verified research methodologies for generating and judging with AI feedback. So, Distilabel is focused and specifically designed to be a tool that for scalable and reliable synthetic data generation.
 
-        #### What do people use Distilabel for?
+        #### What do people use distilabel for?
 
         The Argilla community uses distilabel to create amazing [datasets](https://huggingface.co/datasets?other=distilabel) and [models](https://huggingface.co/models?other=distilabel).
 
-        - The [1M OpenHermesPreference](https://huggingface.co/datasets/argilla/OpenHermesPreferences) is a dataset of ~1 million AI preferences derived from teknium/OpenHermes-2.5. It shows how we can use Distilabel to **synthesize data on an immense scale**.
+        - The [1M OpenHermesPreference](https://huggingface.co/datasets/argilla/OpenHermesPreferences) is a dataset of ~1 million AI preferences derived from teknium/OpenHermes-2.5. It shows how we can use distilabel to **synthesize data on an immense scale**.
         - Our [distilabeled Intel Orca DPO dataset](https://huggingface.co/datasets/argilla/distilabel-intel-orca-dpo-pairs) and the [improved OpenHermes model](https://huggingface.co/argilla/distilabeled-OpenHermes-2.5-Mistral-7B), show how we **improve model performance by filtering out 50%** of the original dataset through **AI feedback**.
         - The [haiku DPO data](https://github.com/davanstrien/haiku-dpo) outlines how anyone can create a **dataset for a specific task** and **the latest research papers** to improve the quality of the dataset.
         """
