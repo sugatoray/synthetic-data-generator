@@ -290,17 +290,13 @@ More information on distilabel and techniques can be found in the "FAQ" tab. The
         value=DEFAULT_SYSTEM_PROMPT_DESCRIPTION,
     )
 
-    btn_generate_system_prompt = gr.Button(value="🧪 Generate Sytem Prompt")
+    btn_generate_system_prompt = gr.Button(
+        value="🧪 Generate Sytem Prompt and Sample Dataset"
+    )
 
     system_prompt = gr.Textbox(
         label="Provide or correct the system prompt",
         value=DEFAULT_SYSTEM_PROMPT,
-    )
-
-    btn_generate_system_prompt.click(
-        fn=generate_system_prompt,
-        inputs=[dataset_description],
-        outputs=[system_prompt],
     )
 
     btn_generate_sample_dataset = gr.Button(
@@ -309,11 +305,22 @@ More information on distilabel and techniques can be found in the "FAQ" tab. The
 
     table = gr.Dataframe(label="Generated Dataset", wrap=True, value=DEFAULT_DATASET)
 
+    btn_generate_system_prompt.click(
+        fn=generate_system_prompt,
+        inputs=[dataset_description],
+        outputs=[system_prompt],
+    ).then(
+        fn=generate_dataset,
+        inputs=[system_prompt],
+        outputs=[table],
+    )
+
     btn_generate_sample_dataset.click(
         fn=generate_dataset,
         inputs=[system_prompt],
         outputs=[table],
     )
+
     btn_login: gr.LoginButton | None = get_login_button()
     with gr.Column() as push_to_hub_ui:
         with gr.Row(variant="panel"):
