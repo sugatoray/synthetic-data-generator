@@ -8,14 +8,7 @@ from distilabel.llms import InferenceEndpointsLLM
 from distilabel.pipeline import Pipeline
 from distilabel.steps import KeepColumns
 from distilabel.steps.tasks import MagpieGenerator, TextGeneration
-
-from src.distilabel_dataset_generator.utils import (
-    OAuthToken,
-    get_duplicate_button,
-    get_login_button,
-    get_org_dropdown,
-    swap_visibilty,
-)
+from huggingface_hub import whoami
 
 INFORMATION_SEEKING_PROMPT = (
     "You are an AI assistant designed to provide accurate and concise information on a wide"
@@ -180,7 +173,7 @@ def _run_pipeline(result_queue, num_turns, num_rows, system_prompt, token: str =
     result_queue.put(distiset)
 
 
-def generate_system_prompt(dataset_description, token: OAuthToken = None, progress=gr.Progress()):
+def generate_system_prompt(dataset_description, progress=gr.Progress()):
     progress(0.1, desc="Initializing text generation")
     generate_description = TextGeneration(
         llm=InferenceEndpointsLLM(
@@ -230,10 +223,13 @@ def generate_dataset(
     if repo_id is not None:
         if not repo_id:
             raise gr.Error("Please provide a dataset name to push the dataset to.")
-        if token is None:
+        try:
+            whoami(token=token)
+        except Exception:
             raise gr.Error(
-                "Please sign in with Hugging Face to be able to push the dataset to the Hub."
+                "Provide a Hugging Face to be able to push the dataset to the Hub."
             )
+
     if num_turns > 4:
         raise gr.Info(
             "You can only generate a dataset with 4 or fewer turns. Setting to 4."
@@ -263,20 +259,22 @@ def generate_dataset(
         target=_run_pipeline,
         args=(result_queue, num_turns, num_rows, system_prompt),
     )
-    
+
     try:
         p.start()
         total_steps = 100
         for step in range(total_steps):
             if not p.is_alive():
                 break
-            progress((step + 1) / total_steps, desc=f"Generating dataset with {num_rows} rows")
+            progress(
+                (step + 1) / total_steps,
+                desc=f"Generating dataset with {num_rows} rows",
+            )
             time.sleep(0.5)  # Adjust this value based on your needs
         p.join()
     except Exception as e:
         raise gr.Error(f"An error occurred during dataset generation: {str(e)}")
-    
-    
+
     distiset = result_queue.get()
 
     if repo_id is not None:
@@ -290,20 +288,13 @@ def generate_dataset(
         gr.Info(
             f'Dataset pushed to Hugging Face Hub: <a href="https://huggingface.co/datasets/{repo_id}">https://huggingface.co/datasets/{repo_id}</a>'
         )
-    
+
     # If not pushing to hub generate the dataset directly
     distiset = distiset["default"]["train"]
     if num_turns == 1:
         outputs = distiset.to_pandas()[["prompt", "completion"]]
     else:
         outputs = distiset.to_pandas()[["messages"]]
-        # outputs = {"conversation_id": [], "role": [], "content": []}
-        # conversations = distiset["messages"]
-        # for idx, entry in enumerate(conversations):
-        #     for message in entry["messages"]:
-        #         outputs["conversation_id"].append(idx + 1)
-        #         outputs["role"].append(message["role"])
-        #         outputs["content"].append(message["content"])
 
     progress(1.0, desc="Dataset generation completed")
     return pd.DataFrame(outputs)
@@ -320,9 +311,7 @@ with gr.Blocks(
     )
     with gr.Row():
         gr.Column(scale=1)
-        btn_generate_system_prompt = gr.Button(
-            value="Generate sample dataset"
-        )
+        btn_generate_system_prompt = gr.Button(value="Generate sample dataset")
         gr.Column(scale=1)
 
     system_prompt = gr.TextArea(
@@ -337,12 +326,12 @@ with gr.Blocks(
         )
         gr.Column(scale=1)
 
-    table = gr.DataFrame(
-        value=DEFAULT_DATASET,
-        interactive=False,
-        wrap=True,
-
-    )
+    with gr.Row():
+        table = gr.DataFrame(
+            value=DEFAULT_DATASET,
+            interactive=False,
+            wrap=True,
+        )
 
     result = btn_generate_system_prompt.click(
         fn=generate_system_prompt,
@@ -362,17 +351,21 @@ with gr.Blocks(
         outputs=[table],
         show_progress=True,
     )
-    
-     # Add a header for the full dataset generation section
+
+    # Add a header for the full dataset generation section
     gr.Markdown("## Generate full dataset")
-    gr.Markdown("Once you're satisfied with the sample, generate a larger dataset and push it to the hub.")
+    gr.Markdown(
+        "Once you're satisfied with the sample, generate a larger dataset and push it to the hub. Get <a href='https://huggingface.co/settings/tokens' target='_blank'>a Hugging Face token</a> with write access to the organization you want to push the dataset to."
+    )
     with gr.Column() as push_to_hub_ui:
         with gr.Row(variant="panel"):
             num_turns = gr.Number(
                 value=1,
                 label="Number of turns in the conversation",
+                minimum=1,
                 maximum=4,
-                info="Whether the dataset is for a single turn with 'instruction-response' columns or a multi-turn conversation with a 'conversation' column.",
+                step=1,
+                info="Choose between 1 (single turn with 'instruction-response' columns) and 2-4 (multi-turn conversation with a 'conversation' column).",
             )
             num_rows = gr.Number(
                 value=100,
@@ -381,10 +374,9 @@ with gr.Blocks(
                 maximum=5000,
                 info="The number of rows in the dataset. Note that you are able to generate more rows at once but that this will take time.",
             )
-            
 
         with gr.Row(variant="panel"):
-            hf_token = gr.Textbox(label="HF token")
+            hf_token = gr.Textbox(label="HF token", type="password")
             repo_id = gr.Textbox(label="HF repo ID", placeholder="owner/dataset_name")
             private = gr.Checkbox(label="Private dataset", value=True, interactive=True)
 
@@ -394,13 +386,7 @@ with gr.Blocks(
 
         btn_generate_full_dataset.click(
             fn=generate_dataset,
-            inputs=[
-                system_prompt,
-                num_turns,
-                num_rows,
-                private,
-                repo_id,
-            ],
+            inputs=[system_prompt, num_turns, num_rows, private, repo_id, hf_token],
             outputs=[table],
             show_progress=True,
         )
