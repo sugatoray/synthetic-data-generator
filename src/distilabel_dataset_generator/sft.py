@@ -262,10 +262,12 @@ with gr.Blocks(
     title="⚗️ Distilabel Dataset Generator",
     head="⚗️ Distilabel Dataset Generator",
     css=get_css(),
-) as demo:
+) as app:
     gr.Markdown(
         """
-### Generate a high quality SFT dataset in a breeze using [🐦‍⬛MagPie](https://arxiv.org/abs/2406.08464) and [🦙Llama 3.1 - 70B Instruct](https://huggingface.co/meta-llama/Meta-Llama-3.1-70B-Instruct). More information on distilabel and techniques can be found in the "FAQ" tab. The code can be found in the [Spaces repository](https://huggingface.co/spaces/argilla/distilabel-dataset-generator/tree/main).
+### Generate a high quality SFT dataset in a breeze using [🐦‍⬛MagPie](https://arxiv.org/abs/2406.08464) and [🦙Llama 3.1 - 70B Instruct](https://huggingface.co/meta-llama/Meta-Llama-3.1-70B-Instruct).
+
+More information on distilabel and techniques can be found in the "FAQ" tab. The code can be found in the [Spaces repository](https://huggingface.co/spaces/argilla/distilabel-dataset-generator/tree/main).
 """
     )
     with gr.Row(variant="panel"):
@@ -346,7 +348,5 @@ with gr.Blocks(
                 ],
             )
 
-    demo.load(get_org_dropdown, outputs=[orgs_selector])
-    demo.load(fn=swap_visibilty, outputs=main_ui)
-
-demo
+    app.load(get_org_dropdown, outputs=[orgs_selector])
+    app.load(fn=swap_visibilty, outputs=main_ui)
