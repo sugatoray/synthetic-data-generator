@@ -1,5 +1,4 @@
 import multiprocessing
-import os
 
 import gradio as gr
 import pandas as pd
@@ -10,11 +9,9 @@ from distilabel.steps.tasks import MagpieGenerator, TextGeneration
 
 from src.distilabel_dataset_generator.utils import (
     OAuthToken,
-    get_css,
     get_duplicate_button,
     get_login_button,
     get_org_dropdown,
-    list_orgs,
     swap_visibilty,
 )
 
@@ -172,9 +169,6 @@ def _run_pipeline(result_queue, num_turns, num_rows, system_prompt, token: str =
 
 
 def generate_system_prompt(dataset_description, token: OAuthToken = None):
-    if token is None:
-        raise gr.Error("Please sign in with Hugging Face to generate a dataset.")
-    os.environ["HF_TOKEN"] = token.token
     generate_description = TextGeneration(
         llm=InferenceEndpointsLLM(
             model_id=MODEL,
@@ -210,18 +204,14 @@ def generate_dataset(
     dataset_name=None,
     token: OAuthToken = None,
 ):
-    if token is None:
-        raise gr.Error("Please sign in with Hugging Face to generate a dataset.")
     if dataset_name is not None:
         if not dataset_name:
             raise gr.Error("Please provide a dataset name to push the dataset to.")
-    if orgs_selector is not None:
-        if not orgs_selector:
+        if token is None:
             raise gr.Error(
-                f"Please select an organization to push the dataset to from: {list_orgs(token)}"
+                "Please sign in with Hugging Face to be able to push the dataset to the Hub."
             )
 
-    os.environ["HF_TOKEN"] = token.token
     gr.Info("Started pipeline execution.")
     result_queue = multiprocessing.Queue()
     p = multiprocessing.Process(
@@ -243,7 +233,7 @@ def generate_dataset(
         )
         gr.Info(f"Dataset pushed to Hugging Face Hub: https://huggingface.co/{repo_id}")
     else:
-        # If not pushing to hub, generate the dataset directly
+        # If not pushing to hub generate the dataset directly
         distiset = distiset["default"]["train"]
         if num_turns == 1:
             outputs = distiset.to_pandas()[["instruction", "response"]]
@@ -261,7 +251,6 @@ def generate_dataset(
 with gr.Blocks(
     title="⚗️ Distilabel Dataset Generator",
     head="⚗️ Distilabel Dataset Generator",
-    css=get_css(),
 ) as app:
     gr.Markdown(
         """
@@ -270,83 +259,74 @@ with gr.Blocks(
 More information on distilabel and techniques can be found in the "FAQ" tab. The code can be found in the [Spaces repository](https://huggingface.co/spaces/argilla/distilabel-dataset-generator/tree/main).
 """
     )
-    with gr.Row(variant="panel"):
-        with gr.Column():
-            btn_login = get_login_button()
-        with gr.Column():
-            btn_duplicate = get_duplicate_button()
-    with gr.Row():
-        with gr.Column(visible=True) as main_ui:
-            dataset_description = gr.Textbox(
-                label="Provide a description of the dataset",
-                value=DEFAULT_SYSTEM_PROMPT_DESCRIPTION,
+    btn_duplicate = get_duplicate_button()
+
+    dataset_description = gr.Textbox(
+        label="Provide a description of the dataset",
+        value=DEFAULT_SYSTEM_PROMPT_DESCRIPTION,
+    )
+
+    btn_generate_system_prompt = gr.Button(value="🧪 Generate Sytem Prompt")
+
+    system_prompt = gr.Textbox(
+        label="Provide or correct the system prompt",
+        value=DEFAULT_SYSTEM_PROMPT,
+    )
+
+    btn_generate_system_prompt.click(
+        fn=generate_system_prompt,
+        inputs=[dataset_description],
+        outputs=[system_prompt],
+    )
+
+    btn_generate_sample_dataset = gr.Button(
+        value="🧪 Generate Sample Dataset of 5 rows and a single turn",
+    )
+
+    table = gr.Dataframe(label="Generated Dataset", wrap=True, value=DEFAULT_DATASET)
+
+    btn_generate_sample_dataset.click(
+        fn=generate_dataset,
+        inputs=[system_prompt],
+        outputs=[table],
+    )
+    btn_login: gr.LoginButton | None = get_login_button()
+    with gr.Column() as push_to_hub_ui:
+        with gr.Row(variant="panel"):
+            num_turns = gr.Number(
+                value=1,
+                label="Number of turns in the conversation",
+                minimum=1,
+                info="Whether the dataset is for a single turn with 'instruction-response' columns or a multi-turn conversation with a 'conversation' column.",
             )
-
-            btn_generate_system_prompt = gr.Button(value="🧪 Generate Sytem Prompt")
-
-            system_prompt = gr.Textbox(
-                label="Provide or correct the system prompt",
-                value=DEFAULT_SYSTEM_PROMPT,
+            num_rows = gr.Number(
+                value=100,
+                label="Number of rows in the dataset",
+                minimum=1,
+                maximum=5000,
+                info="The number of rows in the dataset. Note that you are able to generate more rows at once but that this will take time.",
             )
+            private = gr.Checkbox(label="Private dataset", value=True, interactive=True)
 
-            btn_generate_system_prompt.click(
-                fn=generate_system_prompt,
-                inputs=[dataset_description],
-                outputs=[system_prompt],
-            )
+        with gr.Row(variant="panel"):
+            orgs_selector = gr.Dropdown(label="Organization")
+            dataset_name_push_to_hub = gr.Textbox(label="Dataset Name to push to Hub")
 
-            btn_generate_sample_dataset = gr.Button(
-                value="🧪 Generate Sample Dataset of 5 rows and a single turn",
-            )
+        btn_generate_full_dataset = gr.Button(
+            value="⚗️ Generate Full Dataset", variant="primary"
+        )
 
-            table = gr.Dataframe(
-                label="Generated Dataset", wrap=True, value=DEFAULT_DATASET
-            )
-
-            btn_generate_sample_dataset.click(
-                fn=generate_dataset,
-                inputs=[system_prompt],
-                outputs=[table],
-            )
-
-            with gr.Row(variant="panel"):
-                num_turns = gr.Number(
-                    value=1,
-                    label="Number of turns in the conversation",
-                    minimum=1,
-                    info="Whether the dataset is for a single turn with 'instruction-response' columns or a multi-turn conversation with a 'conversation' column.",
-                )
-                num_rows = gr.Number(
-                    value=100,
-                    label="Number of rows in the dataset",
-                    minimum=1,
-                    info="The number of rows in the dataset. Note that you are able to generate several 1000 rows at once but that this will take time.",
-                )
-                private = gr.Checkbox(
-                    label="Private dataset", value=True, interactive=True
-                )
-
-            with gr.Row(variant="panel"):
-                orgs_selector = gr.Dropdown(label="Organization")
-                dataset_name_push_to_hub = gr.Textbox(
-                    label="Dataset Name to push to Hub"
-                )
-
-            btn_generate_full_dataset = gr.Button(
-                value="⚗️ Generate Full Dataset", variant="primary"
-            )
-
-            btn_generate_full_dataset.click(
-                fn=generate_dataset,
-                inputs=[
-                    system_prompt,
-                    num_turns,
-                    num_rows,
-                    private,
-                    orgs_selector,
-                    dataset_name_push_to_hub,
-                ],
-            )
+        btn_generate_full_dataset.click(
+            fn=generate_dataset,
+            inputs=[
+                system_prompt,
+                num_turns,
+                num_rows,
+                private,
+                orgs_selector,
+                dataset_name_push_to_hub,
+            ],
+        )
 
     app.load(get_org_dropdown, outputs=[orgs_selector])
-    app.load(fn=swap_visibilty, outputs=main_ui)
+    app.load(fn=swap_visibilty, outputs=push_to_hub_ui)

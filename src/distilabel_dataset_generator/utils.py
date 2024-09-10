@@ -39,7 +39,7 @@ def get_login_button():
         or get_space() is None
     ):
         return gr.LoginButton(
-            value="Sign in with Hugging Face to generate a dataset!",
+            value="Sign in with Hugging Face to generate a full dataset and push it to the Hub!",
             size="lg",
         )
 
@@ -70,23 +70,7 @@ def get_org_dropdown(token: OAuthToken = None):
 
 
 def swap_visibilty(profile: Union[gr.OAuthProfile, None]):
-    if get_space():
-        if profile is None:
-            return gr.Column(visible=False)
-        else:
-            return gr.Column(visible=True)
+    if profile is None:
+        return gr.Column(visible=False)
     else:
         return gr.Column(visible=True)
-
-
-def get_css():
-    css = """
-h1{font-size: 2em}
-h3{margin-top: 0}
-#component-1{text-align:center}
-.main_ui_logged_out{opacity: 0.3; pointer-events: none}
-.tabitem{border: 0px}
-.group_padding{padding: .55em}
-#space_model .wrap > label:last-child{opacity: 0.3; pointer-events:none}
-"""
-    return css
