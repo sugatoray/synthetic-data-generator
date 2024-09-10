@@ -195,7 +195,6 @@ def generate_system_prompt(dataset_description, token: OAuthToken = None):
                 "max_new_tokens": 2048,
                 "do_sample": True,
             },
-            api_key=token.token,
         ),
         use_system_prompt=True,
     )
@@ -235,7 +234,7 @@ def generate_dataset(
     result_queue = multiprocessing.Queue()
     p = multiprocessing.Process(
         target=_run_pipeline,
-        args=(result_queue, num_turns, num_rows, system_prompt, token.token),
+        args=(result_queue, num_turns, num_rows, system_prompt),
     )
     p.start()
     p.join()
