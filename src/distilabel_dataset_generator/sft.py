@@ -142,16 +142,10 @@ DEFAULT_DATASET = pd.DataFrame(
 
 
 def _run_pipeline(result_queue, num_turns, num_rows, system_prompt, token: str = None):
-    output_mappings = (
-        {
-            "instruction": "prompt",
-            "response": "completion",
-        }
-        if num_turns == 1
-        else {
-            "conversation": "messages",
-        }
-    )
+    if num_turns == 1:
+        output_mappings = {"instruction": "prompt", "response": "completion"}
+    else:
+        output_mappings = {"conversation": "messages"}
     with Pipeline(name="sft") as pipeline:
         magpie = MagpieGenerator(
             llm=InferenceEndpointsLLM(
@@ -181,7 +175,7 @@ def _run_pipeline(result_queue, num_turns, num_rows, system_prompt, token: str =
             columns=list(output_mappings.values()) + ["model_name"],
         )
         magpie.connect(keep_columns)
-    distiset: Distiset = pipeline.run()
+    distiset: Distiset = pipeline.run(use_cache=False)
     result_queue.put(distiset)
 
 
@@ -227,6 +221,16 @@ def generate_dataset(
             raise gr.Error(
                 "Please sign in with Hugging Face to be able to push the dataset to the Hub."
             )
+    if num_turns > 4:
+        raise gr.Info(
+            "You can only generate a dataset with 4 or fewer turns. Setting to 4."
+        )
+        num_turns = 4
+    if num_rows > 5000:
+        raise gr.Info(
+            "You can only generate a dataset with 5000 or fewer rows. Setting to 5000."
+        )
+        num_rows = 5000
 
     gr.Info(
         "Started pipeline execution. This might take a while, depending on the number of rows and turns you have selected. Don't close this page."
@@ -316,7 +320,7 @@ More information on distilabel and techniques can be found in the "FAQ" tab. The
             num_turns = gr.Number(
                 value=1,
                 label="Number of turns in the conversation",
-                minimum=1,
+                maximum=4,
                 info="Whether the dataset is for a single turn with 'instruction-response' columns or a multi-turn conversation with a 'conversation' column.",
             )
             num_rows = gr.Number(
