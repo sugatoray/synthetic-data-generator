@@ -300,6 +300,48 @@ def generate_dataset(
     return pd.DataFrame(outputs)
 
 
+def generate_pipeline_code(system_prompt):
+    code = f"""
+from distilabel.pipeline import Pipeline
+from distilabel.steps import KeepColumns
+from distilabel.steps.tasks import MagpieGenerator
+from distilabel.llms import InferenceEndpointsLLM
+
+MODEL = "{MODEL}"
+SYSTEM_PROMPT = "{system_prompt}"
+
+with Pipeline(name="sft") as pipeline:
+    magpie = MagpieGenerator(
+        llm=InferenceEndpointsLLM(
+            model_id=MODEL,
+            tokenizer_id=MODEL,
+            magpie_pre_query_template="llama3",
+            generation_kwargs={{
+                "temperature": 0.8,
+                "do_sample": True,
+                "max_new_tokens": 2048,
+                "stop_sequences": [
+                    "<|eot_id|>",
+                    "<|end_of_text|>",
+                    "<|start_header_id|>",
+                    "<|end_header_id|>",
+                    "assistant",
+                ],
+            }}
+        ),
+        n_turns=1,
+        num_rows=100,
+        system_prompt=SYSTEM_PROMPT,
+    )
+
+if __name__ == "__main__":
+    distiset = pipeline.run()
+"""
+    return code
+
+def update_pipeline_code(system_prompt):
+    return generate_pipeline_code(system_prompt)
+
 with gr.Blocks(
     title="⚗️ Distilabel Dataset Generator",
     head="⚗️ Distilabel Dataset Generator",
@@ -357,6 +399,8 @@ with gr.Blocks(
     gr.Markdown(
         "Once you're satisfied with the sample, generate a larger dataset and push it to the hub. Get <a href='https://huggingface.co/settings/tokens' target='_blank'>a Hugging Face token</a> with write access to the organization you want to push the dataset to."
     )
+
+
     with gr.Column() as push_to_hub_ui:
         with gr.Row(variant="panel"):
             num_turns = gr.Number(
@@ -384,9 +428,40 @@ with gr.Blocks(
             value="⚗️ Generate Full Dataset", variant="primary"
         )
 
-        btn_generate_full_dataset.click(
-            fn=generate_dataset,
-            inputs=[system_prompt, num_turns, num_rows, private, repo_id, hf_token],
-            outputs=[table],
-            show_progress=True,
-        )
+        # Add this line here, before the button click event
+        success_message = gr.Markdown(visible=False)
+
+    def show_success_message(repo_id_value):
+        return gr.update(value=f"""
+            <div style="padding: 1em; background-color: #e6f3e6; border-radius: 5px; margin-top: 1em;">
+                <h3 style="color: #2e7d32; margin: 0;">Dataset Published Successfully!</h3>
+                <p style="margin-top: 0.5em;">
+                    Your dataset is now available at: 
+                    <a href="https://huggingface.co/datasets/{repo_id_value}" target="_blank" style="color: #1565c0; text-decoration: none;">
+                        https://huggingface.co/datasets/{repo_id_value}
+                    </a>
+                </p>
+            </div>
+        """, visible=True)
+
+    btn_generate_full_dataset.click(
+        fn=generate_dataset,
+        inputs=[system_prompt, num_turns, num_rows, private, repo_id, hf_token],
+        outputs=[table],
+        show_progress=True,
+    ).then(
+        fn=show_success_message,
+        inputs=[repo_id],
+        outputs=[success_message]
+    )
+
+    gr.Markdown("## Or run this pipeline locally with distilabel")
+     
+    with gr.Accordion("Run this pipeline on Distilabel", open=False):
+        pipeline_code = gr.Code(language="python", label="Distilabel Pipeline Code")
+
+    system_prompt.change(
+        fn=update_pipeline_code,
+        inputs=[system_prompt],
+        outputs=[pipeline_code],
+    )
