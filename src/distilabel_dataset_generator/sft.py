@@ -223,13 +223,12 @@ def generate_dataset(
     num_turns=1,
     num_rows=5,
     private=True,
-    orgs_selector=None,
-    dataset_name=None,
-    token: OAuthToken = None,
+    repo_id=None,
+    token=None,
     progress=gr.Progress(),
 ):
-    if dataset_name is not None:
-        if not dataset_name:
+    if repo_id is not None:
+        if not repo_id:
             raise gr.Error("Please provide a dataset name to push the dataset to.")
         if token is None:
             raise gr.Error(
@@ -280,14 +279,13 @@ def generate_dataset(
     
     distiset = result_queue.get()
 
-    if dataset_name is not None:
+    if repo_id is not None:
         progress(0.95, desc="Pushing dataset to Hugging Face Hub.")
-        repo_id = f"{orgs_selector}/{dataset_name}"
         distiset.push_to_hub(
             repo_id=repo_id,
             private=private,
             include_script=False,
-            token=token.token,
+            token=token,
         )
         gr.Info(
             f'Dataset pushed to Hugging Face Hub: <a href="https://huggingface.co/datasets/{repo_id}">https://huggingface.co/datasets/{repo_id}</a>'
@@ -339,7 +337,6 @@ with gr.Blocks(
         )
         gr.Column(scale=1)
 
-    #table = gr.HTML(_format_dataframe_as_html(DEFAULT_DATASET))
     table = gr.DataFrame(
         value=DEFAULT_DATASET,
         interactive=False,
@@ -347,7 +344,7 @@ with gr.Blocks(
 
     )
 
-    btn_generate_system_prompt.click(
+    result = btn_generate_system_prompt.click(
         fn=generate_system_prompt,
         inputs=[dataset_description],
         outputs=[system_prompt],
@@ -365,12 +362,10 @@ with gr.Blocks(
         outputs=[table],
         show_progress=True,
     )
-
+    
      # Add a header for the full dataset generation section
-    gr.Markdown("## Generate full dataset and push to hub")
+    gr.Markdown("## Generate full dataset")
     gr.Markdown("Once you're satisfied with the sample, generate a larger dataset and push it to the hub.")
-
-    btn_login: gr.LoginButton | None = get_login_button()
     with gr.Column() as push_to_hub_ui:
         with gr.Row(variant="panel"):
             num_turns = gr.Number(
@@ -386,11 +381,12 @@ with gr.Blocks(
                 maximum=5000,
                 info="The number of rows in the dataset. Note that you are able to generate more rows at once but that this will take time.",
             )
-            private = gr.Checkbox(label="Private dataset", value=True, interactive=True)
+            
 
         with gr.Row(variant="panel"):
-            orgs_selector = gr.Dropdown(label="Organization")
-            dataset_name_push_to_hub = gr.Textbox(label="Dataset Name to push to Hub")
+            hf_token = gr.Textbox(label="HF token")
+            repo_id = gr.Textbox(label="HF repo ID", placeholder="owner/dataset_name")
+            private = gr.Checkbox(label="Private dataset", value=True, interactive=True)
 
         btn_generate_full_dataset = gr.Button(
             value="⚗️ Generate Full Dataset", variant="primary"
@@ -403,12 +399,8 @@ with gr.Blocks(
                 num_turns,
                 num_rows,
                 private,
-                orgs_selector,
-                dataset_name_push_to_hub,
+                repo_id,
             ],
             outputs=[table],
             show_progress=True,
         )
-
-    app.load(get_org_dropdown, outputs=[orgs_selector])
-    app.load(fn=swap_visibilty, outputs=push_to_hub_ui)
