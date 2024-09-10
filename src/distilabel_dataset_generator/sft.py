@@ -10,10 +10,12 @@ from distilabel.steps.tasks import MagpieGenerator, TextGeneration
 
 from src.distilabel_dataset_generator.utils import (
     OAuthToken,
+    get_css,
     get_duplicate_button,
     get_login_button,
     get_org_dropdown,
     list_orgs,
+    swap_visibilty,
 )
 
 INFORMATION_SEEKING_PROMPT = (
@@ -151,6 +153,13 @@ def _run_pipeline(result_queue, num_turns, num_rows, system_prompt, token: str =
                 generation_kwargs={
                     "temperature": 0.8,  # it's the best value for Llama 3.1 70B Instruct
                     "do_sample": True,
+                    "stop_sequences": [
+                        "<|eot_id|>",
+                        "<|end_of_text|>",
+                        "<|start_header_id|>",
+                        "<|end_header_id|>",
+                        "assistant",
+                    ],
                 },
                 api_key=token,
             ),
@@ -229,7 +238,7 @@ def generate_dataset(
         distiset.push_to_hub(
             repo_id=repo_id,
             private=private,
-            include_script=True,
+            include_script=False,
             token=token.token,
         )
         gr.Info(f"Dataset pushed to Hugging Face Hub: https://huggingface.co/{repo_id}")
@@ -252,76 +261,92 @@ def generate_dataset(
 with gr.Blocks(
     title="⚗️ Distilabel Dataset Generator",
     head="⚗️ Distilabel Dataset Generator",
+    css=get_css(),
 ) as demo:
+    gr.Markdown(
+        """
+### Generate a high quality SFT dataset in a breeze using [🐦‍⬛MagPie](https://arxiv.org/abs/2406.08464) and [🦙Llama 3.1 - 70B Instruct](https://huggingface.co/meta-llama/Meta-Llama-3.1-70B-Instruct). More information on distilabel and techniques can be found in the "FAQ" tab. The code can be found in the [Spaces repository](https://huggingface.co/spaces/argilla/distilabel-dataset-generator/tree/main).
+"""
+    )
     with gr.Row(variant="panel"):
         with gr.Column():
             btn_login = get_login_button()
         with gr.Column():
             btn_duplicate = get_duplicate_button()
+    with gr.Row():
+        with gr.Column(visible=True) as main_ui:
+            dataset_description = gr.Textbox(
+                label="Provide a description of the dataset",
+                value=DEFAULT_SYSTEM_PROMPT_DESCRIPTION,
+            )
 
-    dataset_description = gr.Textbox(
-        label="Provide a description of the dataset",
-        value=DEFAULT_SYSTEM_PROMPT_DESCRIPTION,
-    )
+            btn_generate_system_prompt = gr.Button(value="🧪 Generate Sytem Prompt")
 
-    btn_generate_system_prompt = gr.Button(value="🧪 Generate Sytem Prompt")
+            system_prompt = gr.Textbox(
+                label="Provide or correct the system prompt",
+                value=DEFAULT_SYSTEM_PROMPT,
+            )
 
-    system_prompt = gr.Textbox(
-        label="Provide or correct the system prompt", value=DEFAULT_SYSTEM_PROMPT
-    )
+            btn_generate_system_prompt.click(
+                fn=generate_system_prompt,
+                inputs=[dataset_description],
+                outputs=[system_prompt],
+            )
 
-    btn_generate_system_prompt.click(
-        fn=generate_system_prompt,
-        inputs=[dataset_description],
-        outputs=[system_prompt],
-    )
+            btn_generate_sample_dataset = gr.Button(
+                value="🧪 Generate Sample Dataset of 5 rows and a single turn",
+            )
 
-    btn_generate_sample_dataset = gr.Button(
-        value="🧪 Generate Sample Dataset of 5 rows and a single turn",
-    )
+            table = gr.Dataframe(
+                label="Generated Dataset", wrap=True, value=DEFAULT_DATASET
+            )
 
-    table = gr.Dataframe(label="Generated Dataset", wrap=True, value=DEFAULT_DATASET)
+            btn_generate_sample_dataset.click(
+                fn=generate_dataset,
+                inputs=[system_prompt],
+                outputs=[table],
+            )
 
-    btn_generate_sample_dataset.click(
-        fn=generate_dataset,
-        inputs=[system_prompt],
-        outputs=[table],
-    )
+            with gr.Row(variant="panel"):
+                num_turns = gr.Number(
+                    value=1,
+                    label="Number of turns in the conversation",
+                    minimum=1,
+                    info="Whether the dataset is for a single turn with 'instruction-response' columns or a multi-turn conversation with a 'conversation' column.",
+                )
+                num_rows = gr.Number(
+                    value=100,
+                    label="Number of rows in the dataset",
+                    minimum=1,
+                    info="The number of rows in the dataset. Note that you are able to generate several 1000 rows at once but that this will take time.",
+                )
+                private = gr.Checkbox(
+                    label="Private dataset", value=True, interactive=True
+                )
 
-    with gr.Row(variant="panel"):
-        num_turns = gr.Number(
-            value=1,
-            label="Number of turns in the conversation",
-            minimum=1,
-            info="Whether the dataset is for a single turn with 'instruction-response' columns or a multi-turn conversation with a 'conversation' column.",
-        )
-        num_rows = gr.Number(
-            value=100,
-            label="Number of rows in the dataset",
-            minimum=1,
-            info="The number of rows in the dataset. Note that you are able to generate several 1000 rows at once but that this will take time.",
-        )
-        private = gr.Checkbox(label="Private dataset", value=True, interactive=True)
+            with gr.Row(variant="panel"):
+                orgs_selector = gr.Dropdown(label="Organization")
+                dataset_name_push_to_hub = gr.Textbox(
+                    label="Dataset Name to push to Hub"
+                )
 
-    with gr.Row(variant="panel"):
-        orgs_selector = gr.Dropdown(label="Organization")
-        dataset_name_push_to_hub = gr.Textbox(label="Dataset Name to push to Hub")
+            btn_generate_full_dataset = gr.Button(
+                value="⚗️ Generate Full Dataset", variant="primary"
+            )
 
-    btn_generate_full_dataset = gr.Button(
-        value="⚗️ Generate Full Dataset", variant="primary"
-    )
-
-    btn_generate_full_dataset.click(
-        fn=generate_dataset,
-        inputs=[
-            system_prompt,
-            num_turns,
-            num_rows,
-            private,
-            orgs_selector,
-            dataset_name_push_to_hub,
-        ],
-    )
+            btn_generate_full_dataset.click(
+                fn=generate_dataset,
+                inputs=[
+                    system_prompt,
+                    num_turns,
+                    num_rows,
+                    private,
+                    orgs_selector,
+                    dataset_name_push_to_hub,
+                ],
+            )
 
     demo.load(get_org_dropdown, outputs=[orgs_selector])
+    demo.load(fn=swap_visibilty, outputs=main_ui)
+
 demo

@@ -7,6 +7,7 @@ demo = gr.TabbedInterface(
     ["Supervised Fine-Tuning"],
     title="⚗️ Distilabel Dataset Generator",
     head="⚗️ Distilabel Dataset Generator",
+    theme="ParityError/Interstellar",
 )
 
 if __name__ == "__main__":
