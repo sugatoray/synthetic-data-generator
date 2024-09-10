@@ -1,3 +1,3 @@
-distilabel[hf-inference-endpoints]>=1.3.2
 transformers
 gradio[oauth]
+distilabel[hf-inference-endpoints] @ git+https://github.com/argilla-io/distilabel.git@develop

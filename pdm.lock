@@ -5,7 +5,7 @@
 groups = ["default"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:957e0276f679a9f7e65c68e3dbd1a1565f4b515468943faf6bdeb36b65a271a0"
+content_hash = "sha256:556d2e0f25e5f944cae3277e88ff719a4bc24b86c44f39d3f94f1b39d0b251cf"
 
 [[metadata.targets]]
 requires_python = ">=3.10"
@@ -505,6 +505,9 @@ files = [
 name = "distilabel"
 version = "1.3.2"
 requires_python = ">=3.9"
+git = "https://github.com/argilla-io/distilabel.git"
+ref = "develop"
+revision = "f207fab676358766888d17b4289d4ff6e00aa384"
 summary = "Distilabel is an AI Feedback (AIF) framework for building datasets with and for LLMs."
 groups = ["default"]
 dependencies = [
@@ -524,25 +527,20 @@ dependencies = [
     "typer>=0.9.0",
     "universal-pathlib>=0.2.2",
 ]
-files = [
-    {file = "distilabel-1.3.2-py3-none-any.whl", hash = "sha256:35a48458db16763a5fe84390ae4a360dc92846a2c0d2b4510cd5279e2fd0c1d0"},
-    {file = "distilabel-1.3.2.tar.gz", hash = "sha256:4c678fa083112f31b4d29a0b58daa7e14f6e9f77c5b974a8780a76b7c96e4724"},
-]
 
 [[package]]
 name = "distilabel"
 version = "1.3.2"
 extras = ["hf-inference-endpoints"]
 requires_python = ">=3.9"
+git = "https://github.com/argilla-io/distilabel.git"
+ref = "develop"
+revision = "f207fab676358766888d17b4289d4ff6e00aa384"
 summary = "Distilabel is an AI Feedback (AIF) framework for building datasets with and for LLMs."
 groups = ["default"]
 dependencies = [
-    "distilabel==1.3.2",
+    "distilabel @ git+https://github.com/argilla-io/distilabel.git@develop",
     "huggingface-hub>=0.22.0",
-]
-files = [
-    {file = "distilabel-1.3.2-py3-none-any.whl", hash = "sha256:35a48458db16763a5fe84390ae4a360dc92846a2c0d2b4510cd5279e2fd0c1d0"},
-    {file = "distilabel-1.3.2.tar.gz", hash = "sha256:4c678fa083112f31b4d29a0b58daa7e14f6e9f77c5b974a8780a76b7c96e4724"},
 ]
 
 [[package]]
