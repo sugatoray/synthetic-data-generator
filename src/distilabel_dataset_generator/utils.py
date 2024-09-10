@@ -6,6 +6,7 @@ from gradio.oauth import (
     OPENID_PROVIDER_URL,
     get_space,
 )
+from huggingface_hub import whoami
 
 if (
     all(
@@ -36,6 +37,32 @@ def get_login_button():
         or get_space() is None
     ):
         return gr.LoginButton(
-            value="Sign in with Hugging Face - a login will reset the data!",
+            value="Sign in with Hugging Face to generate a dataset!",
             size="lg",
         )
+
+
+def get_duplicate_button():
+    if get_space() is not None:
+        return gr.DuplicateButton(size="lg")
+
+
+def list_orgs(token: OAuthToken = None):
+    if token is not None:
+        data = whoami(token)
+        organisations = [
+            entry["entity"]["name"]
+            for entry in data["auth"]["accessToken"]["fineGrained"]["scoped"]
+            if "repo.write" in entry["permissions"]
+        ]
+        print(organisations)
+        return organisations
+    else:
+        return []
+
+
+def get_org_dropdown(token: OAuthToken = None):
+    orgs = list_orgs(token)
+    return gr.Dropdown(
+        label="Organization", choices=orgs, value=orgs[0] if orgs else None
+    )

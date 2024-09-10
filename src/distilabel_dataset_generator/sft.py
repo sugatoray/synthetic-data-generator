@@ -3,11 +3,18 @@ import os
 
 import gradio as gr
 import pandas as pd
+from distilabel.distiset import Distiset
 from distilabel.llms import InferenceEndpointsLLM
 from distilabel.pipeline import Pipeline
 from distilabel.steps.tasks import MagpieGenerator, TextGeneration
 
-from src.distilabel_dataset_generator.utils import OAuthToken, get_login_button
+from src.distilabel_dataset_generator.utils import (
+    OAuthToken,
+    get_duplicate_button,
+    get_login_button,
+    get_org_dropdown,
+    list_orgs,
+)
 
 INFORMATION_SEEKING_PROMPT = (
     "You are an AI assistant designed to provide accurate and concise information on a wide"
@@ -118,11 +125,23 @@ User dataset description:
 """
 
 MODEL = "meta-llama/Meta-Llama-3.1-70B-Instruct"
+DEFAULT_SYSTEM_PROMPT_DESCRIPTION = (
+    "A chemistry dataset for an assistant that explains chemical reactions and formulas"
+)
+DEFAULT_SYSTEM_PROMPT = "You are an AI assistant specializing in chemistry and chemical reactions. Your purpose is to help users understand and work with chemical formulas, equations, and reactions. Provide clear explanations of reaction mechanisms, assist in balancing chemical equations, and offer guidance on the interpretation of chemical structures. Explain the roles of reactants, products, catalysts, and solvents, and define key chemistry terms when necessary."
+DEFAULT_DATASET = pd.DataFrame(
+    {
+        "instruction": [
+            "What is the term for the study of the structure and evolution of the Earth's interior.	"
+        ],
+        "response": [
+            """The study of the structure and evolution of the Earth's interior is called geophysics, particularly the subfield of geology known as geodynamics, and more specifically the subfield of geology known as geotectonics. However, a more specific term for this study is "geology of the Earth's interior" or "Earth internal structure." However, the most commonly used term for this study is geophysics.	"""
+        ],
+    }
+)
 
 
-def _run_pipeline(
-    result_queue, _num_turns, _num_rows, _system_prompt, _token: str = None
-):
+def _run_pipeline(result_queue, num_turns, num_rows, system_prompt, token: str = None):
     with Pipeline(name="sft") as pipeline:
         magpie_step = MagpieGenerator(
             llm=InferenceEndpointsLLM(
@@ -131,19 +150,22 @@ def _run_pipeline(
                 magpie_pre_query_template="llama3",
                 generation_kwargs={
                     "temperature": 0.8,  # it's the best value for Llama 3.1 70B Instruct
+                    "do_sample": True,
                 },
-                api_key=_token,
+                api_key=token,
             ),
-            n_turns=_num_turns,
-            num_rows=_num_rows,
-            system_prompt=_system_prompt,
+            n_turns=num_turns,
+            num_rows=num_rows,
+            system_prompt=system_prompt,
         )
-    distiset = pipeline.run()
+    distiset: Distiset = pipeline.run()
     result_queue.put(distiset)
 
 
-def _generate_system_prompt(_dataset_description, _token: OAuthToken = None):
-    os.environ["HF_TOKEN"] = _token.token
+def generate_system_prompt(dataset_description, token: OAuthToken = None):
+    if token is None:
+        raise gr.Error("Please sign in with Hugging Face to generate a dataset.")
+    os.environ["HF_TOKEN"] = token.token
     generate_description = TextGeneration(
         llm=InferenceEndpointsLLM(
             model_id=MODEL,
@@ -153,7 +175,7 @@ def _generate_system_prompt(_dataset_description, _token: OAuthToken = None):
                 "max_new_tokens": 2048,
                 "do_sample": True,
             },
-            api_key=_token.token,
+            api_key=token.token,
         ),
         use_system_prompt=True,
     )
@@ -163,44 +185,58 @@ def _generate_system_prompt(_dataset_description, _token: OAuthToken = None):
             [
                 {
                     "system_prompt": PROMPT_CREATION_PROMPT,
-                    "instruction": _dataset_description,
+                    "instruction": dataset_description,
                 }
             ]
         )
     )[0]["generation"]
 
 
-def _generate_dataset(
-    _system_prompt,
-    _num_turns=1,
-    _num_rows=5,
-    _dataset_name=None,
-    _token: OAuthToken = None,
+def generate_dataset(
+    system_prompt,
+    num_turns=1,
+    num_rows=5,
+    private=True,
+    orgs_selector=None,
+    dataset_name=None,
+    token: OAuthToken = None,
 ):
-    os.environ["HF_TOKEN"] = _token.token
+    if token is None:
+        raise gr.Error("Please sign in with Hugging Face to generate a dataset.")
+    if dataset_name is not None:
+        if not dataset_name:
+            raise gr.Error("Please provide a dataset name to push the dataset to.")
+    if orgs_selector is not None:
+        if not orgs_selector:
+            raise gr.Error(
+                f"Please select an organization to push the dataset to from: {list_orgs(token)}"
+            )
+
+    os.environ["HF_TOKEN"] = token.token
     gr.Info("Started pipeline execution.")
     result_queue = multiprocessing.Queue()
     p = multiprocessing.Process(
         target=_run_pipeline,
-        args=(result_queue, _num_turns, _num_rows, _system_prompt, _token.token),
+        args=(result_queue, num_turns, num_rows, system_prompt, token.token),
     )
     p.start()
     p.join()
     distiset = result_queue.get()
 
-    if _dataset_name is not None:
+    if dataset_name is not None:
         gr.Info("Pushing dataset to Hugging Face Hub...")
+        repo_id = f"{orgs_selector}/{dataset_name}"
         distiset.push_to_hub(
-            repo_id=_dataset_name,
-            private=False,
+            repo_id=repo_id,
+            private=private,
             include_script=True,
-            token=_token.token,
+            token=token.token,
         )
-        gr.Info("Dataset pushed to Hugging Face Hub: https://huggingface.co")
+        gr.Info(f"Dataset pushed to Hugging Face Hub: https://huggingface.co/{repo_id}")
     else:
         # If not pushing to hub, generate the dataset directly
         distiset = distiset["default"]["train"]
-        if _num_turns == 1:
+        if num_turns == 1:
             outputs = distiset.to_pandas()[["instruction", "response"]]
         else:
             outputs = {"conversation_id": [], "role": [], "content": []}
@@ -212,63 +248,80 @@ def _generate_dataset(
                     outputs["content"].append(message["content"])
         return pd.DataFrame(outputs)
 
-    return pd.DataFrame(distiset.to_pandas())
-
 
 with gr.Blocks(
     title="⚗️ Distilabel Dataset Generator",
     head="⚗️ Distilabel Dataset Generator",
 ) as demo:
-    get_login_button()
+    with gr.Row(variant="panel"):
+        with gr.Column():
+            btn_login = get_login_button()
+        with gr.Column():
+            btn_duplicate = get_duplicate_button()
 
     dataset_description = gr.Textbox(
         label="Provide a description of the dataset",
-        value="A chemistry dataset for an assistant that explains chemical reactions and formulas",
+        value=DEFAULT_SYSTEM_PROMPT_DESCRIPTION,
     )
 
-    btn_generate_system_prompt = gr.Button(
-        value="🧪 Generate Sytem Prompt",
-    )
+    btn_generate_system_prompt = gr.Button(value="🧪 Generate Sytem Prompt")
 
-    system_prompt = gr.Textbox(label="Provide or correct the system prompt")
+    system_prompt = gr.Textbox(
+        label="Provide or correct the system prompt", value=DEFAULT_SYSTEM_PROMPT
+    )
 
     btn_generate_system_prompt.click(
-        fn=_generate_system_prompt,
+        fn=generate_system_prompt,
         inputs=[dataset_description],
         outputs=[system_prompt],
     )
 
     btn_generate_sample_dataset = gr.Button(
-        value="🧪 Generate Sample Dataset of 5 rows and a single turn"
+        value="🧪 Generate Sample Dataset of 5 rows and a single turn",
     )
 
-    table = gr.Dataframe(label="Generated Dataset", wrap=True)
+    table = gr.Dataframe(label="Generated Dataset", wrap=True, value=DEFAULT_DATASET)
 
     btn_generate_sample_dataset.click(
-        fn=_generate_dataset,
+        fn=generate_dataset,
         inputs=[system_prompt],
         outputs=[table],
     )
 
     with gr.Row(variant="panel"):
-        with gr.Column():
-            num_turns = gr.Number(
-                value=1, label="Number of turns in the conversation", minimum=1
-            )
-        with gr.Column():
-            num_rows = gr.Number(
-                value=100, label="Number of rows in the dataset", minimum=1
-            )
+        num_turns = gr.Number(
+            value=1,
+            label="Number of turns in the conversation",
+            minimum=1,
+            info="Whether the dataset is for a single turn with 'instruction-response' columns or a multi-turn conversation with a 'conversation' column.",
+        )
+        num_rows = gr.Number(
+            value=100,
+            label="Number of rows in the dataset",
+            minimum=1,
+            info="The number of rows in the dataset. Note that you are able to generate several 1000 rows at once but that this will take time.",
+        )
+        private = gr.Checkbox(label="Private dataset", value=True, interactive=True)
 
-    dataset_name_push_to_hub = gr.Textbox(label="Dataset Name to push to Hub")
+    with gr.Row(variant="panel"):
+        orgs_selector = gr.Dropdown(label="Organization")
+        dataset_name_push_to_hub = gr.Textbox(label="Dataset Name to push to Hub")
 
     btn_generate_full_dataset = gr.Button(
         value="⚗️ Generate Full Dataset", variant="primary"
     )
 
     btn_generate_full_dataset.click(
-        fn=_generate_dataset,
-        inputs=[system_prompt, num_turns, num_rows, dataset_name_push_to_hub],
+        fn=generate_dataset,
+        inputs=[
+            system_prompt,
+            num_turns,
+            num_rows,
+            private,
+            orgs_selector,
+            dataset_name_push_to_hub,
+        ],
     )
 
+    demo.load(get_org_dropdown, outputs=[orgs_selector])
 demo
