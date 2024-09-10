@@ -1,4 +1,5 @@
 import multiprocessing
+import time
 
 import gradio as gr
 import pandas as pd
@@ -179,7 +180,8 @@ def _run_pipeline(result_queue, num_turns, num_rows, system_prompt, token: str =
     result_queue.put(distiset)
 
 
-def generate_system_prompt(dataset_description, token: OAuthToken = None):
+def generate_system_prompt(dataset_description, token: OAuthToken = None, progress=gr.Progress()):
+    progress(0.1, desc="Initializing text generation")
     generate_description = TextGeneration(
         llm=InferenceEndpointsLLM(
             model_id=MODEL,
@@ -192,8 +194,10 @@ def generate_system_prompt(dataset_description, token: OAuthToken = None):
         ),
         use_system_prompt=True,
     )
+    progress(0.4, desc="Loading model")
     generate_description.load()
-    return next(
+    progress(0.7, desc="Generating system prompt")
+    result = next(
         generate_description.process(
             [
                 {
@@ -203,6 +207,15 @@ def generate_system_prompt(dataset_description, token: OAuthToken = None):
             ]
         )
     )[0]["generation"]
+    progress(1.0, desc="System prompt generated")
+    return result
+
+
+def generate_sample_dataset(system_prompt, progress=gr.Progress()):
+    progress(0.1, desc="Initializing sample dataset generation")
+    result = generate_dataset(system_prompt, num_turns=1, num_rows=2, progress=progress)
+    progress(1.0, desc="Sample dataset generated")
+    return result
 
 
 def generate_dataset(
@@ -213,6 +226,7 @@ def generate_dataset(
     orgs_selector=None,
     dataset_name=None,
     token: OAuthToken = None,
+    progress=gr.Progress(),
 ):
     if dataset_name is not None:
         if not dataset_name:
@@ -242,7 +256,7 @@ def generate_dataset(
         duration = 1000
 
     gr.Info(
-        "Started pipeline execution. This might take a while, depending on the number of rows and turns you have selected. Don't close this page.",
+        "Dataset generation started. This might take a while. Don't close the page.",
         duration=duration,
     )
     result_queue = multiprocessing.Queue()
@@ -250,15 +264,24 @@ def generate_dataset(
         target=_run_pipeline,
         args=(result_queue, num_turns, num_rows, system_prompt),
     )
+    
     try:
         p.start()
+        total_steps = 100
+        for step in range(total_steps):
+            if not p.is_alive():
+                break
+            progress((step + 1) / total_steps, desc=f"Generating dataset with {num_rows} rows")
+            time.sleep(0.5)  # Adjust this value based on your needs
         p.join()
     except Exception as e:
         raise gr.Error(f"An error occurred during dataset generation: {str(e)}")
+    
+    
     distiset = result_queue.get()
 
     if dataset_name is not None:
-        gr.Info("Pushing dataset to Hugging Face Hub.")
+        progress(0.95, desc="Pushing dataset to Hugging Face Hub.")
         repo_id = f"{orgs_selector}/{dataset_name}"
         distiset.push_to_hub(
             repo_id=repo_id,
@@ -269,31 +292,30 @@ def generate_dataset(
         gr.Info(
             f'Dataset pushed to Hugging Face Hub: <a href="https://huggingface.co/datasets/{repo_id}">https://huggingface.co/datasets/{repo_id}</a>'
         )
+    
+    # If not pushing to hub generate the dataset directly
+    distiset = distiset["default"]["train"]
+    if num_turns == 1:
+        outputs = distiset.to_pandas()[["prompt", "completion"]]
     else:
-        # If not pushing to hub generate the dataset directly
-        distiset = distiset["default"]["train"]
-        if num_turns == 1:
-            outputs = distiset.to_pandas()[["prompt", "completion"]]
-        else:
-            outputs = {"conversation_id": [], "role": [], "content": []}
-            conversations = distiset["messages"]
-            for idx, entry in enumerate(conversations):
-                for message in entry["messages"]:
-                    outputs["conversation_id"].append(idx + 1)
-                    outputs["role"].append(message["role"])
-                    outputs["content"].append(message["content"])
-        return pd.DataFrame(outputs)
+        outputs = distiset.to_pandas()[["messages"]]
+        # outputs = {"conversation_id": [], "role": [], "content": []}
+        # conversations = distiset["messages"]
+        # for idx, entry in enumerate(conversations):
+        #     for message in entry["messages"]:
+        #         outputs["conversation_id"].append(idx + 1)
+        #         outputs["role"].append(message["role"])
+        #         outputs["content"].append(message["content"])
+
+    progress(1.0, desc="Dataset generation completed")
+    return pd.DataFrame(outputs)
 
 
 with gr.Blocks(
     title="⚗️ Distilabel Dataset Generator",
     head="⚗️ Distilabel Dataset Generator",
 ) as app:
-    gr.Markdown(
-        """
-
-"""
-    )
+    gr.Markdown("## Iterate on a sample dataset")
     dataset_description = gr.TextArea(
         label="Provide a description of the dataset",
         value=DEFAULT_SYSTEM_PROMPT_DESCRIPTION,
@@ -316,24 +338,37 @@ with gr.Blocks(
             value="Regenerate sample dataset",
         )
         gr.Column(scale=1)
-   
-    table = gr.Dataframe(label="Generated Dataset", wrap=True, value=DEFAULT_DATASET)
+
+    #table = gr.HTML(_format_dataframe_as_html(DEFAULT_DATASET))
+    table = gr.DataFrame(
+        value=DEFAULT_DATASET,
+        interactive=False,
+        wrap=True,
+
+    )
 
     btn_generate_system_prompt.click(
         fn=generate_system_prompt,
         inputs=[dataset_description],
         outputs=[system_prompt],
+        show_progress=True,
     ).then(
-        fn=generate_dataset,
+        fn=generate_sample_dataset,
         inputs=[system_prompt],
         outputs=[table],
+        show_progress=True,
     )
 
     btn_generate_sample_dataset.click(
-        fn=generate_dataset,
+        fn=generate_sample_dataset,
         inputs=[system_prompt],
         outputs=[table],
+        show_progress=True,
     )
+
+     # Add a header for the full dataset generation section
+    gr.Markdown("## Generate full dataset and push to hub")
+    gr.Markdown("Once you're satisfied with the sample, generate a larger dataset and push it to the hub.")
 
     btn_login: gr.LoginButton | None = get_login_button()
     with gr.Column() as push_to_hub_ui:
@@ -371,6 +406,8 @@ with gr.Blocks(
                 orgs_selector,
                 dataset_name_push_to_hub,
             ],
+            outputs=[table],
+            show_progress=True,
         )
 
     app.load(get_org_dropdown, outputs=[orgs_selector])
