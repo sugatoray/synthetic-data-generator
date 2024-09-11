@@ -222,8 +222,8 @@ def get_pipeline(num_turns, num_rows, system_prompt):
                         "temperature": 0.8, 
                         "max_new_tokens": 1024
                     },
-                    output_mappings={"generation": "completion"}
-                )
+                ),
+                output_mappings={"generation": "completion"}
             )
             
             keep_columns = KeepColumns(
