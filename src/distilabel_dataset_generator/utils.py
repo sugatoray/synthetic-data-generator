@@ -52,8 +52,8 @@ def list_orgs(oauth_token: OAuthToken = None):
     return list(set(organisations))
 
 
-def get_org_dropdown(token: OAuthToken = None):
-    orgs = list_orgs(token)
+def get_org_dropdown(oauth_token: OAuthToken = None):
+    orgs = list_orgs(oauth_token)
     return gr.Dropdown(
         label="Organization",
         choices=orgs,
@@ -62,8 +62,15 @@ def get_org_dropdown(token: OAuthToken = None):
     )
 
 
-def get_token(token: OAuthToken = None):
-    if token:
-        return token.token
+def get_token(oauth_token: OAuthToken = None):
+    if oauth_token:
+        return oauth_token.token
     else:
         return ""
+
+
+def swap_visibilty(oauth_token: OAuthToken = None):
+    if oauth_token is None:
+        return gr.update(elem_classes=["main_ui_logged_out"])
+    else:
+        return gr.update(elem_classes=["main_ui_logged_in"])

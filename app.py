@@ -16,7 +16,11 @@ h3{margin-top: 0}
 .tabitem{border: 0px}
 .group_padding{padding: .55em}
 #space_model .wrap > label:last-child{opacity: 0.3; pointer-events:none}
+#system_prompt_examples {
+    color: black;
+}
 """
+
 
 demo = gr.TabbedInterface(
     [sft_app, faq_app],

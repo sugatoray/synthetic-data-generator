@@ -1,6 +1,5 @@
 import multiprocessing
 import time
-from typing import Union
 
 import gradio as gr
 import pandas as pd
@@ -8,7 +7,7 @@ from distilabel.distiset import Distiset
 
 from src.distilabel_dataset_generator.pipelines.sft import (
     DEFAULT_DATASET,
-    DEFAULT_DATASET_DESCRIPTION,
+    DEFAULT_DATASET_DESCRIPTIONS,
     DEFAULT_SYSTEM_PROMPT,
     PROMPT_CREATION_PROMPT,
     generate_pipeline_code,
@@ -19,6 +18,7 @@ from src.distilabel_dataset_generator.utils import (
     get_login_button,
     get_org_dropdown,
     get_token,
+    swap_visibilty,
 )
 
 
@@ -141,13 +141,6 @@ def generate_dataset(
     return pd.DataFrame(outputs)
 
 
-def swap_visibilty(profile: Union[gr.OAuthProfile, None]):
-    if profile is None:
-        return gr.update(elem_classes=["main_ui_logged_out"]), gr.Mark
-    else:
-        return gr.update(elem_classes=["main_ui_logged_in"])
-
-
 css = """
 .main_ui_logged_out{opacity: 0.3; pointer-events: none}
 """
@@ -162,14 +155,19 @@ with gr.Blocks(
             get_login_button()
         with gr.Column(scale=2):
             gr.Markdown(
-                "This token will only be used to push the dataset to the Hugging Face Hub. It won't be incurring any costs because we are using Free Serverless Inference Endpoints."
+                "This token will only be used to push the dataset to the Hugging Face Hub. There are no generation costs because we are using Free Serverless Inference Endpoints."
             )
 
     gr.Markdown("## Iterate on a sample dataset")
     with gr.Column() as main_ui:
         dataset_description = gr.TextArea(
             label="Provide a description of the dataset",
-            value=DEFAULT_DATASET_DESCRIPTION,
+            value=DEFAULT_DATASET_DESCRIPTIONS[0],
+        )
+        examples = gr.Examples(
+            elem_id="system_prompt_examples",
+            examples=[[example] for example in DEFAULT_DATASET_DESCRIPTIONS[1:]],
+            inputs=[dataset_description],
         )
         with gr.Row():
             gr.Column(scale=1)

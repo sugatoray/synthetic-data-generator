@@ -115,8 +115,11 @@ User dataset description:
 """
 
 MODEL = "meta-llama/Meta-Llama-3.1-70B-Instruct"
-DEFAULT_DATASET_DESCRIPTION = (
-    "A chemistry dataset for an assistant that explains chemical reactions and formulas"
+DEFAULT_DATASET_DESCRIPTIONS = (
+    "A chemistry dataset for an assistant that explains chemical reactions and formulas.",
+    "A dataset for an assistant that work in the customer support domain.",
+    "A dataset for an assistant that writes code.",
+    "A dataset for an assistant that work in the legal domain.",
 )
 DEFAULT_SYSTEM_PROMPT = "You are an AI assistant specializing in chemistry and chemical reactions. Your purpose is to help users understand and work with chemical formulas, equations, and reactions. Provide clear explanations of reaction mechanisms, assist in balancing chemical equations, and offer guidance on the interpretation of chemical structures. Explain the roles of reactants, products, catalysts, and solvents, and define key chemistry terms when necessary."
 DEFAULT_DATASET = pd.DataFrame(
