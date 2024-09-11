@@ -1,5 +1,6 @@
 import multiprocessing
 import time
+from typing import Union
 
 import gradio as gr
 import pandas as pd
@@ -17,7 +18,6 @@ from src.distilabel_dataset_generator.pipelines.sft import (
 from src.distilabel_dataset_generator.utils import (
     get_login_button,
     get_org_dropdown,
-    get_token,
 )
 
 
@@ -65,8 +65,8 @@ def generate_dataset(
     private=True,
     org_name=None,
     repo_name=None,
-    token=None,
     progress=gr.Progress(),
+    oauth_token: Union[gr.OAuthToken, None]
 ):
     repo_id = (
         f"{org_name}/{repo_name}"
@@ -77,12 +77,6 @@ def generate_dataset(
         if not repo_id:
             raise gr.Error(
                 "Please provide a repo_name and org_name to push the dataset to."
-            )
-        try:
-            whoami(token=token)
-        except Exception:
-            raise gr.Error(
-                "Provide a Hugging Face token with write access to the organization you want to push the dataset to."
             )
 
     if num_turns > 4:
@@ -132,7 +126,7 @@ def generate_dataset(
             repo_id=repo_id,
             private=private,
             include_script=False,
-            token=token,
+            token=oauth_token.token,
         )
 
     # If not pushing to hub generate the dataset directly
@@ -152,11 +146,16 @@ def generate_pipeline_code() -> str:
 
     return pipeline_code
 
+css = """
+.main_ui_logged_out{opacity: 0.3; pointer-events: none}
+"""
 
 with gr.Blocks(
     title="⚗️ Distilabel Dataset Generator",
     head="⚗️ Distilabel Dataset Generator",
+    css=css
 ) as app:
+    get_login_button()
     gr.Markdown("## Iterate on a sample dataset")
     with gr.Column() as main_ui:
         dataset_description = gr.TextArea(
@@ -209,7 +208,7 @@ with gr.Blocks(
         # Add a header for the full dataset generation section
         gr.Markdown("## Generate full dataset")
         gr.Markdown(
-            "Once you're satisfied with the sample, generate a larger dataset and push it to the hub. Get <a href='https://huggingface.co/settings/tokens' target='_blank'>a Hugging Face token</a> with write access to the organization you want to push the dataset to. A OAuth login resets the session state, so watch out not to lose your generated system prompt!"
+            "Once you're satisfied with the sample, generate a larger dataset and push it to the Hub."
         )
 
         with gr.Column() as push_to_hub_ui:
@@ -231,8 +230,6 @@ with gr.Blocks(
                 )
 
             with gr.Row(variant="panel"):
-                get_login_button()
-                hf_token = gr.Textbox(label="HF token", type="password")
                 org_name = get_org_dropdown()
                 repo_name = gr.Textbox(label="Repo name", placeholder="dataset_name")
                 private = gr.Checkbox(
@@ -277,7 +274,6 @@ with gr.Blocks(
             private,
             org_name,
             repo_name,
-            hf_token,
         ],
         outputs=[table],
         show_progress=True,
@@ -296,5 +292,4 @@ with gr.Blocks(
             label="Distilabel Pipeline Code",
         )
 
-    app.load(get_token, outputs=[hf_token])
     app.load(get_org_dropdown, outputs=[org_name])

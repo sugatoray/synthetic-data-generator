@@ -47,18 +47,17 @@ def get_duplicate_button():
         return gr.DuplicateButton(size="lg")
 
 
-def list_orgs(token: OAuthToken = None):
-    if token is not None:
-        data = whoami(token)
-        organisations = [
-            entry["entity"]["name"]
-            for entry in data["auth"]["accessToken"]["fineGrained"]["scoped"]
-            if "repo.write" in entry["permissions"]
-        ]
-        organisations.append(data["name"])
-        return list(set(organisations))
-    else:
+def list_orgs(oauth_token: OAuthToken = None):
+    if oauth_token is None:
         return []
+    data = whoami(oauth_token.token)
+    organisations = [
+        entry["entity"]["name"]
+        for entry in data["auth"]["accessToken"]["fineGrained"]["scoped"]
+        if "repo.write" in entry["permissions"]
+    ]
+    organisations.append(data["name"])
+    return list(set(organisations))
 
 
 def get_org_dropdown(token: OAuthToken = None):
