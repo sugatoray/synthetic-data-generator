@@ -224,7 +224,7 @@ def get_pipeline(num_turns, num_rows, system_prompt):
                     },
                 ),
                 output_mappings={"generation": "completion"},
-                input_mappings={"prompt": "instruction"}
+                input_mappings={"instruction": "prompt"}
             )
             
             keep_columns = KeepColumns(
