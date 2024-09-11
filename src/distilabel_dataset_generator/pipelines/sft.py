@@ -129,13 +129,64 @@ DEFAULT_DATASET = pd.DataFrame(
         ],
     }
 )
+_STOP_SEQUENCES = [
+    "<|eot_id|>",
+    "<|start_header_id|>",
+    "assistant",
+    " \n\n",
+]
+
+
+def _get_output_mappings(num_turns):
+    if num_turns == 1:
+        return {"instruction": "prompt", "response": "completion"}
+    else:
+        return {"conversation": "messages"}
+
+
+def generate_pipeline_code(system_prompt, num_turns, num_rows):
+    input_mappings = _get_output_mappings(num_turns)
+    code = f"""
+from distilabel.pipeline import Pipeline
+from distilabel.steps import KeepColumns
+from distilabel.steps.tasks import MagpieGenerator
+from distilabel.llms import InferenceEndpointsLLM
+
+MODEL = "{MODEL}"
+SYSTEM_PROMPT = "{system_prompt}"
+
+with Pipeline(name="sft") as pipeline:
+    magpie = MagpieGenerator(
+        llm=InferenceEndpointsLLM(
+            model_id=MODEL,
+            tokenizer_id=MODEL,
+            magpie_pre_query_template="llama3",
+            generation_kwargs={{
+                "temperature": 0.8,
+                "do_sample": True,
+                "max_new_tokens": 2048,
+                "stop_sequences": {_STOP_SEQUENCES}
+            }}
+        ),
+        n_turns={num_turns},
+        num_rows={num_rows},
+        system_prompt=SYSTEM_PROMPT,
+        output_mappings={input_mappings},
+    )
+    keep_columns = KeepColumns(
+        columns={list(input_mappings.values())} + ["model_name"],
+    )
+    magpie.connect(keep_columns)
+
+if __name__ == "__main__":
+    distiset = pipeline.run()
+"""
+    return code
 
 
 def get_pipeline(num_turns, num_rows, system_prompt):
-    if num_turns == 1:
-        output_mappings = {"instruction": "prompt", "response": "completion"}
-    else:
-        output_mappings = {"conversation": "messages"}
+    input_mappings = _get_output_mappings(num_turns)
+    output_mappings = input_mappings
     with Pipeline(name="sft") as pipeline:
         magpie = MagpieGenerator(
             llm=InferenceEndpointsLLM(
@@ -147,13 +198,7 @@ def get_pipeline(num_turns, num_rows, system_prompt):
                     "temperature": 0.8,  # it's the best value for Llama 3.1 70B Instruct
                     "do_sample": True,
                     "max_new_tokens": 2048,
-                    "stop_sequences": [
-                        "<|eot_id|>",
-                        "<|end_of_text|>",
-                        "<|start_header_id|>",
-                        "<|end_header_id|>",
-                        "assistant",
-                    ],
+                    "stop_sequences": _STOP_SEQUENCES,
                 },
             ),
             batch_size=2,
@@ -179,6 +224,7 @@ def get_prompt_generation_step():
                 "temperature": 0.8,
                 "max_new_tokens": 2048,
                 "do_sample": True,
+                "stop_sequences": _STOP_SEQUENCES,
             },
         ),
         use_system_prompt=True,

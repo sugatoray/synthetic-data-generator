@@ -5,20 +5,20 @@ from typing import Union
 import gradio as gr
 import pandas as pd
 from distilabel.distiset import Distiset
-from huggingface_hub import whoami
 
 from src.distilabel_dataset_generator.pipelines.sft import (
     DEFAULT_DATASET,
     DEFAULT_DATASET_DESCRIPTION,
     DEFAULT_SYSTEM_PROMPT,
     PROMPT_CREATION_PROMPT,
+    generate_pipeline_code,
     get_pipeline,
     get_prompt_generation_step,
 )
 from src.distilabel_dataset_generator.utils import (
     get_login_button,
     get_org_dropdown,
-    get_token
+    get_token,
 )
 
 
@@ -60,13 +60,13 @@ def generate_sample_dataset(system_prompt, progress=gr.Progress()):
 
 
 def generate_dataset(
-    system_prompt,
-    num_turns=1,
-    num_rows=5,
-    private=True,
-    org_name=None,
-    repo_name=None,
-    oauth_token: Union[gr.OAuthToken, None] = None,
+    system_prompt: str,
+    num_turns: int = 1,
+    num_rows: int = 5,
+    private: bool = True,
+    org_name: str = None,
+    repo_name: str = None,
+    oauth_token: str = None,
     progress=gr.Progress(),
 ):
     repo_id = (
@@ -141,17 +141,12 @@ def generate_dataset(
     return pd.DataFrame(outputs)
 
 
-def generate_pipeline_code() -> str:
-    with open("src/distilabel_dataset_generator/pipelines/sft.py", "r") as f:
-        pipeline_code = f.read()
-
-    return pipeline_code
-
 def swap_visibilty(profile: Union[gr.OAuthProfile, None]):
     if profile is None:
-        return gr.update(elem_classes=["main_ui_logged_out"])
+        return gr.update(elem_classes=["main_ui_logged_out"]), gr.Mark
     else:
         return gr.update(elem_classes=["main_ui_logged_in"])
+
 
 css = """
 .main_ui_logged_out{opacity: 0.3; pointer-events: none}
@@ -160,9 +155,16 @@ css = """
 with gr.Blocks(
     title="⚗️ Distilabel Dataset Generator",
     head="⚗️ Distilabel Dataset Generator",
-    css=css
+    css=css,
 ) as app:
-    get_login_button()
+    with gr.Row():
+        with gr.Column(scale=1):
+            get_login_button()
+        with gr.Column(scale=2):
+            gr.Markdown(
+                "This token will only be used to push the dataset to the Hugging Face Hub. It won't be incurring any costs because we are using Free Serverless Inference Endpoints."
+            )
+
     gr.Markdown("## Iterate on a sample dataset")
     with gr.Column() as main_ui:
         dataset_description = gr.TextArea(
@@ -237,6 +239,12 @@ with gr.Blocks(
                 )
 
             with gr.Row(variant="panel"):
+                hf_token = gr.Textbox(
+                    label="Hugging Face Token",
+                    placeholder="hf_...",
+                    type="password",
+                    visible=False,
+                )
                 org_name = get_org_dropdown()
                 repo_name = gr.Textbox(label="Repo name", placeholder="dataset_name")
                 private = gr.Checkbox(
@@ -281,6 +289,7 @@ with gr.Blocks(
             private,
             org_name,
             repo_name,
+            hf_token,
         ],
         outputs=[table],
         show_progress=True,
@@ -294,10 +303,28 @@ with gr.Blocks(
 
     with gr.Accordion("Run this pipeline on Distilabel", open=False):
         pipeline_code = gr.Code(
-            value=generate_pipeline_code(),
+            value=generate_pipeline_code(
+                system_prompt.value, num_turns.value, num_rows.value
+            ),
             language="python",
             label="Distilabel Pipeline Code",
         )
 
+    system_prompt.change(
+        fn=generate_pipeline_code,
+        inputs=[system_prompt, num_turns, num_rows],
+        outputs=[pipeline_code],
+    )
+    num_turns.change(
+        fn=generate_pipeline_code,
+        inputs=[system_prompt, num_turns, num_rows],
+        outputs=[pipeline_code],
+    )
+    num_rows.change(
+        fn=generate_pipeline_code,
+        inputs=[system_prompt, num_turns, num_rows],
+        outputs=[pipeline_code],
+    )
+    app.load(get_token, outputs=[hf_token])
     app.load(get_org_dropdown, outputs=[org_name])
     app.load(fn=swap_visibilty, outputs=main_ui)

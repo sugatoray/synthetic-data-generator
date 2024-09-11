@@ -8,7 +8,7 @@ from gradio.oauth import (
 )
 from huggingface_hub import whoami
 
-if (
+_CHECK_IF_SPACE_IS_SET = (
     all(
         [
             OAUTH_CLIENT_ID,
@@ -18,28 +18,19 @@ if (
         ]
     )
     or get_space() is None
-):
+)
+
+if _CHECK_IF_SPACE_IS_SET:
     from gradio.oauth import OAuthToken
 else:
     OAuthToken = str
 
 
 def get_login_button():
-    if (
-        all(
-            [
-                OAUTH_CLIENT_ID,
-                OAUTH_CLIENT_SECRET,
-                OAUTH_SCOPES,
-                OPENID_PROVIDER_URL,
-            ]
-        )
-        or get_space() is None
-    ):
-        return gr.LoginButton(
-            value="Sign in with Hugging Face! (This resets the session state.)",
-            size="lg",
-        )
+    return gr.LoginButton(
+        value="Sign in with Hugging Face!",
+        size="lg",
+    )
 
 
 def get_duplicate_button():
@@ -51,6 +42,7 @@ def list_orgs(oauth_token: OAuthToken = None):
     if oauth_token is None:
         return []
     data = whoami(oauth_token.token)
+    print(data["auth"])
     organisations = [
         entry["entity"]["name"]
         for entry in data["auth"]["accessToken"]["fineGrained"]["scoped"]
