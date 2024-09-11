@@ -42,15 +42,17 @@ def list_orgs(oauth_token: OAuthToken = None):
     if oauth_token is None:
         return []
     data = whoami(oauth_token.token)
-    print(data)
-    print(data["auth"])
-    organisations = [
-        entry["entity"]["name"]
-        for entry in data["auth"]["accessToken"]["fineGrained"]["scoped"]
-        if "repo.write" in entry["permissions"]
-    ]
-    organisations.append(data["name"])
-    return list(set(organisations))
+    if data["auth"]["type"] == "oauth":
+        organisations = [data["name"]] + [org["name"] for org in data["orgs"]]
+    else:
+        organisations = [
+            entry["entity"]["name"]
+            for entry in data["auth"]["accessToken"]["fineGrained"]["scoped"]
+            if "repo.write" in entry["permissions"]
+        ]
+        organisations = [org for org in organisations if org != data["name"]]
+        organisations = [data["name"]] + organisations
+    return organisations
 
 
 def get_org_dropdown(oauth_token: OAuthToken = None):
