@@ -18,6 +18,7 @@ from src.distilabel_dataset_generator.pipelines.sft import (
 from src.distilabel_dataset_generator.utils import (
     get_login_button,
     get_org_dropdown,
+    get_token
 )
 
 
@@ -65,7 +66,7 @@ def generate_dataset(
     private=True,
     org_name=None,
     repo_name=None,
-    oauth_token: Union[gr.OAuthToken, None]=None,
+    oauth_token: Union[gr.OAuthToken, None] = None,
     progress=gr.Progress(),
 ):
     repo_id = (
@@ -145,6 +146,12 @@ def generate_pipeline_code() -> str:
         pipeline_code = f.read()
 
     return pipeline_code
+
+def swap_visibilty(profile: Union[gr.OAuthProfile, None]):
+    if profile is None:
+        return gr.update(elem_classes=["main_ui_logged_out"])
+    else:
+        return gr.update(elem_classes=["main_ui_logged_in"])
 
 css = """
 .main_ui_logged_out{opacity: 0.3; pointer-events: none}
@@ -293,3 +300,4 @@ with gr.Blocks(
         )
 
     app.load(get_org_dropdown, outputs=[org_name])
+    app.load(fn=swap_visibilty, outputs=main_ui)
