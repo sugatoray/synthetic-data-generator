@@ -65,7 +65,7 @@ def generate_dataset(
     private=True,
     org_name=None,
     repo_name=None,
-    oauth_token: Union[gr.OAuthToken, None],
+    oauth_token: Union[gr.OAuthToken, None]=None,
     progress=gr.Progress(),
 ):
     repo_id = (
