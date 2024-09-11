@@ -209,7 +209,7 @@ def get_pipeline(num_turns, num_rows, system_prompt):
                 n_turns=num_turns,
                 num_rows=num_rows,
                 system_prompt=system_prompt,
-                output_mappings=output_mappings,
+                output_mappings={"instruction": "prompt"},
                 only_instruction=True
             )
             
@@ -222,6 +222,7 @@ def get_pipeline(num_turns, num_rows, system_prompt):
                         "temperature": 0.8, 
                         "max_new_tokens": 1024
                     },
+                    output_mappings={"generation": "completion"}
                 )
             )
             
