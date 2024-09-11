@@ -190,31 +190,73 @@ if __name__ == "__main__":
 def get_pipeline(num_turns, num_rows, system_prompt):
     input_mappings = _get_output_mappings(num_turns)
     output_mappings = input_mappings
-    with Pipeline(name="sft") as pipeline:
-        magpie = MagpieGenerator(
-            llm=InferenceEndpointsLLM(
-                model_id=MODEL,
-                tokenizer_id=MODEL,
-                api_key=os.environ["HF_TOKEN"],
-                magpie_pre_query_template="llama3",
-                generation_kwargs={
-                    "temperature": 0.8,  # it's the best value for Llama 3.1 70B Instruct
-                    "do_sample": True,
-                    "max_new_tokens": 2048,
-                    "stop_sequences": _STOP_SEQUENCES,
-                },
-            ),
-            batch_size=2,
-            n_turns=num_turns,
-            num_rows=num_rows,
-            system_prompt=system_prompt,
-            output_mappings=output_mappings,
-        )
-        keep_columns = KeepColumns(
-            columns=list(output_mappings.values()) + ["model_name"],
-        )
-        magpie.connect(keep_columns)
-    return pipeline
+    if num_turns == 1:
+        with Pipeline(name="sft") as pipeline:
+            magpie = MagpieGenerator(
+                llm=InferenceEndpointsLLM(
+                    model_id=MODEL,
+                    tokenizer_id=MODEL,
+                    api_key=os.environ["HF_TOKEN"],
+                    magpie_pre_query_template="llama3",
+                    generation_kwargs={
+                        "temperature": 0.8,  # it's the best value for Llama 3.1 70B Instruct
+                        "do_sample": True,
+                        "max_new_tokens": 512,
+                        "stop_sequences": _STOP_SEQUENCES,
+                    },
+                ),
+                batch_size=2,
+                n_turns=num_turns,
+                num_rows=num_rows,
+                system_prompt=system_prompt,
+                output_mappings=output_mappings,
+                only_instructions=True
+            )
+            
+            generate_response = TextGeneration(
+                llm=InferenceEndpointsLLM(
+                    model_id=MODEL,
+                    tokenizer_id=MODEL,
+                    generation_kwargs={
+                        "temperature": 0.8, 
+                        "max_new_tokens": 1024
+                    },
+                )
+            )
+            
+            keep_columns = KeepColumns(
+                columns=list(output_mappings.values()) + ["model_name"],
+            )
+            
+            magpie.connect(generate_response)
+            generate_response.connect(keep_columns)
+        return pipeline
+    else:
+        with Pipeline(name="sft") as pipeline:
+            magpie = MagpieGenerator(
+                llm=InferenceEndpointsLLM(
+                    model_id=MODEL,
+                    tokenizer_id=MODEL,
+                    api_key=os.environ["HF_TOKEN"],
+                    magpie_pre_query_template="llama3",
+                    generation_kwargs={
+                        "temperature": 0.8,  # it's the best value for Llama 3.1 70B Instruct
+                        "do_sample": True,
+                        "max_new_tokens": 2048,
+                        "stop_sequences": _STOP_SEQUENCES,
+                    },
+                ),
+                batch_size=2,
+                n_turns=num_turns,
+                num_rows=num_rows,
+                system_prompt=system_prompt,
+                output_mappings=output_mappings,
+            )
+            keep_columns = KeepColumns(
+                columns=list(output_mappings.values()) + ["model_name"],
+            )
+            magpie.connect(keep_columns)
+        return pipeline
 
 
 def get_prompt_generation_step():
