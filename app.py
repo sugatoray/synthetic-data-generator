@@ -8,9 +8,20 @@ theme = gr.themes.Monochrome(
     font=[gr.themes.GoogleFont("Inter"), "ui-sans-serif", "system-ui", "sans-serif"],
 )
 
+css = """
+h1{font-size: 2em}
+h3{margin-top: 0}
+#component-1{text-align:center}
+.main_ui_logged_out{opacity: 0.3; pointer-events: none}
+.tabitem{border: 0px}
+.group_padding{padding: .55em}
+#space_model .wrap > label:last-child{opacity: 0.3; pointer-events:none}
+"""
+
 demo = gr.TabbedInterface(
     [sft_app, faq_app],
     ["Supervised Fine-Tuning", "FAQ"],
+    css=css,
     title="⚗️ distilabel Dataset Generator",
     head="⚗️ distilabel Dataset Generator",
     theme=theme,

@@ -66,7 +66,10 @@ def list_orgs(token: OAuthToken = None):
 def get_org_dropdown(token: OAuthToken = None):
     orgs = list_orgs(token)
     return gr.Dropdown(
-        label="Organization", choices=orgs, value=orgs[0] if orgs else None
+        label="Organization",
+        choices=orgs,
+        value=orgs[0] if orgs else None,
+        allow_custom_value=True,
     )
 
 
@@ -75,3 +78,17 @@ def swap_visibilty(profile: Union[gr.OAuthProfile, None]):
         return gr.Column(visible=False)
     else:
         return gr.Column(visible=True)
+
+
+def swap_visibilty_classes(profile: Union[gr.OAuthProfile, None]):
+    if profile is None:
+        return gr.update(elem_classes=["main_ui_logged_out"])
+    else:
+        return gr.update(elem_classes=["main_ui_logged_in"])
+
+
+def get_token(token: OAuthToken = None):
+    if token:
+        return token.token
+    else:
+        return ""
