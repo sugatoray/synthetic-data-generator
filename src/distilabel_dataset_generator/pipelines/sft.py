@@ -227,7 +227,6 @@ def get_prompt_generation_step():
                 "temperature": 0.8,
                 "max_new_tokens": 2048,
                 "do_sample": True,
-                "stop_sequences": _STOP_SEQUENCES,
             },
         ),
         use_system_prompt=True,
@@ -243,7 +242,7 @@ if __name__ == "__main__":
             [
                 {
                     "system_prompt": PROMPT_CREATION_PROMPT,
-                    "instruction": DEFAULT_DATASET_DESCRIPTION,
+                    "instruction": DEFAULT_DATASET_DESCRIPTIONS[0],
                 }
             ]
         )

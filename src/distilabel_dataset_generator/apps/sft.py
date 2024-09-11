@@ -89,14 +89,18 @@ def generate_dataset(
             "You can only generate a dataset with 5000 or fewer rows. Setting to 5000."
         )
 
-    if num_rows < 50:
+    if num_rows < 10:
         duration = 60
-    elif num_rows < 250:
-        duration = 300
+    elif num_rows < 30:
+        duration = 120
+    elif num_rows < 100:
+        duration = 240
+    elif num_rows < 300:
+        duration = 600
     elif num_rows < 1000:
-        duration = 500
+        duration = 1200
     else:
-        duration = 1000
+        duration = 2400
 
     result_queue = multiprocessing.Queue()
     p = multiprocessing.Process(
@@ -127,7 +131,7 @@ def generate_dataset(
             repo_id=repo_id,
             private=private,
             include_script=False,
-            token=oauth_token.token,
+            token=oauth_token,
         )
 
     # If not pushing to hub generate the dataset directly
