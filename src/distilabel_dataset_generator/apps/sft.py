@@ -157,7 +157,6 @@ with gr.Blocks(
     title="⚗️ Distilabel Dataset Generator",
     head="⚗️ Distilabel Dataset Generator",
 ) as app:
-    get_login_button()
     gr.Markdown("## Iterate on a sample dataset")
     with gr.Column() as main_ui:
         dataset_description = gr.TextArea(
@@ -210,7 +209,7 @@ with gr.Blocks(
         # Add a header for the full dataset generation section
         gr.Markdown("## Generate full dataset")
         gr.Markdown(
-            "Once you're satisfied with the sample, generate a larger dataset and push it to the hub. Get <a href='https://huggingface.co/settings/tokens' target='_blank'>a Hugging Face token</a> with write access to the organization you want to push the dataset to."
+            "Once you're satisfied with the sample, generate a larger dataset and push it to the hub. Get <a href='https://huggingface.co/settings/tokens' target='_blank'>a Hugging Face token</a> with write access to the organization you want to push the dataset to. A OAuth login resets the session state, so watch out not to lose your generated system prompt!"
         )
 
         with gr.Column() as push_to_hub_ui:
@@ -232,6 +231,7 @@ with gr.Blocks(
                 )
 
             with gr.Row(variant="panel"):
+                get_login_button()
                 hf_token = gr.Textbox(label="HF token", type="password")
                 org_name = get_org_dropdown()
                 repo_name = gr.Textbox(label="Repo name", placeholder="dataset_name")
