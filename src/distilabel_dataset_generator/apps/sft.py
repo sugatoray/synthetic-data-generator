@@ -150,6 +150,10 @@ from distilabel.llms import InferenceEndpointsLLM
 
 MODEL = "{MODEL}"
 SYSTEM_PROMPT = "{system_prompt}"
+# increase this to generate multi-turn conversations
+NUM_TURNS = 1
+# increase this to generate a larger dataset
+NUM_ROWS = 100
 
 with Pipeline(name="sft") as pipeline:
     magpie = MagpieGenerator(
@@ -170,8 +174,8 @@ with Pipeline(name="sft") as pipeline:
                 ],
             }}
         ),
-        n_turns=1,
-        num_rows=100,
+        n_turns=NUM_TURNS,
+        num_rows=NUM_ROWS,
         system_prompt=SYSTEM_PROMPT,
     )
 
