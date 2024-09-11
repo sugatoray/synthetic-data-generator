@@ -39,7 +39,7 @@ def get_login_button():
         or get_space() is None
     ):
         return gr.LoginButton(
-            value="Sign in with Hugging Face to generate a full dataset and push it to the Hub!",
+            value="Sign in with Hugging Face! (This resets the session)",
             size="lg",
         )
 

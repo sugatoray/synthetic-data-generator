@@ -10,7 +10,6 @@ from src.distilabel_dataset_generator.pipelines.sft import (
     DEFAULT_DATASET,
     DEFAULT_DATASET_DESCRIPTION,
     DEFAULT_SYSTEM_PROMPT,
-    MODEL,
     PROMPT_CREATION_PROMPT,
     get_pipeline,
     get_prompt_generation_step,
@@ -104,10 +103,6 @@ def generate_dataset(
     else:
         duration = 1000
 
-    gr.Info(
-        "Dataset generation started. This might take a while. Don't close the page.",
-        duration=duration,
-    )
     result_queue = multiprocessing.Queue()
     p = multiprocessing.Process(
         target=_run_pipeline,
@@ -122,7 +117,7 @@ def generate_dataset(
                 break
             progress(
                 (step + 1) / total_steps,
-                desc=f"Generating dataset with {num_rows} rows",
+                desc=f"Generating dataset with {num_rows} rows. Don't close this window.",
             )
             time.sleep(duration / total_steps)  # Adjust this value based on your needs
         p.join()
@@ -151,52 +146,11 @@ def generate_dataset(
     return pd.DataFrame(outputs)
 
 
-def generate_pipeline_code(system_prompt):
-    code = f"""
-from distilabel.pipeline import Pipeline
-from distilabel.steps import KeepColumns
-from distilabel.steps.tasks import MagpieGenerator
-from distilabel.llms import InferenceEndpointsLLM
+def generate_pipeline_code() -> str:
+    with open("src/distilabel_dataset_generator/pipelines/sft.py", "r") as f:
+        pipeline_code = f.read()
 
-MODEL = "{MODEL}"
-SYSTEM_PROMPT = "{system_prompt}"
-# increase this to generate multi-turn conversations
-NUM_TURNS = 1
-# increase this to generate a larger dataset
-NUM_ROWS = 100
-
-with Pipeline(name="sft") as pipeline:
-    magpie = MagpieGenerator(
-        llm=InferenceEndpointsLLM(
-            model_id=MODEL,
-            tokenizer_id=MODEL,
-            magpie_pre_query_template="llama3",
-            generation_kwargs={{
-                "temperature": 0.8,
-                "do_sample": True,
-                "max_new_tokens": 2048,
-                "stop_sequences": [
-                    "<|eot_id|>",
-                    "<|end_of_text|>",
-                    "<|start_header_id|>",
-                    "<|end_header_id|>",
-                    "assistant",
-                ],
-            }}
-        ),
-        n_turns=NUM_TURNS,
-        num_rows=NUM_ROWS,
-        system_prompt=SYSTEM_PROMPT,
-    )
-
-if __name__ == "__main__":
-    distiset = pipeline.run()
-"""
-    return code
-
-
-def update_pipeline_code(system_prompt):
-    return generate_pipeline_code(system_prompt)
+    return pipeline_code
 
 
 with gr.Blocks(
@@ -267,7 +221,7 @@ with gr.Blocks(
                     minimum=1,
                     maximum=4,
                     step=1,
-                    info="Choose between 1 (single turn with 'instruction-response' columns) and 2-4 (multi-turn conversation with a 'conversation' column).",
+                    info="Choose between 1 (single turn with 'instruction-response' columns) and 2-4 (multi-turn conversation with a 'messages' column).",
                 )
                 num_rows = gr.Number(
                     value=100,
@@ -297,6 +251,7 @@ with gr.Blocks(
             <div style="padding: 1em; background-color: #e6f3e6; border-radius: 5px; margin-top: 1em;">
                 <h3 style="color: #2e7d32; margin: 0;">Dataset Published Successfully!</h3>
                 <p style="margin-top: 0.5em;">
+                    The generated dataset is in the right format for Fine-tuning with TRL, AutoTrain or other frameworks.
                     Your dataset is now available at:
                     <a href="https://huggingface.co/datasets/{org_name}/{repo_name}" target="_blank" style="color: #1565c0; text-decoration: none;">
                         https://huggingface.co/datasets/{org_name}/{repo_name}
@@ -307,7 +262,13 @@ with gr.Blocks(
             visible=True,
         )
 
+    def hide_success_message():
+        return gr.Markdown(visible=False)
+
     btn_generate_full_dataset.click(
+        fn=hide_success_message,
+        outputs=[success_message],
+    ).then(
         fn=generate_dataset,
         inputs=[
             system_prompt,
@@ -329,13 +290,11 @@ with gr.Blocks(
     gr.Markdown("## Or run this pipeline locally with distilabel")
 
     with gr.Accordion("Run this pipeline on Distilabel", open=False):
-        pipeline_code = gr.Code(language="python", label="Distilabel Pipeline Code")
-
-    system_prompt.change(
-        fn=update_pipeline_code,
-        inputs=[system_prompt],
-        outputs=[pipeline_code],
-    )
+        pipeline_code = gr.Code(
+            value=generate_pipeline_code(),
+            language="python",
+            label="Distilabel Pipeline Code",
+        )
 
     app.load(get_token, outputs=[hf_token])
     app.load(get_org_dropdown, outputs=[org_name])
