@@ -42,6 +42,7 @@ def list_orgs(oauth_token: OAuthToken = None):
     if oauth_token is None:
         return []
     data = whoami(oauth_token.token)
+    print(data)
     print(data["auth"])
     organisations = [
         entry["entity"]["name"]
