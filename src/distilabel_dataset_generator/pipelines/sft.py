@@ -210,7 +210,7 @@ def get_pipeline(num_turns, num_rows, system_prompt):
                 num_rows=num_rows,
                 system_prompt=system_prompt,
                 output_mappings=output_mappings,
-                only_instructions=True
+                only_instruction=True
             )
             
             generate_response = TextGeneration(
