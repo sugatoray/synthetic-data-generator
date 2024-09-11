@@ -223,7 +223,8 @@ def get_pipeline(num_turns, num_rows, system_prompt):
                         "max_new_tokens": 1024
                     },
                 ),
-                output_mappings={"generation": "completion"}
+                output_mappings={"generation": "completion"},
+                input_mappings={"prompt": "instruction"}
             )
             
             keep_columns = KeepColumns(
