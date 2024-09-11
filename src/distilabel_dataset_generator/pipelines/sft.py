@@ -156,6 +156,7 @@ def get_pipeline(num_turns, num_rows, system_prompt):
                     ],
                 },
             ),
+            batch_size=1,
             n_turns=num_turns,
             num_rows=num_rows,
             system_prompt=system_prompt,

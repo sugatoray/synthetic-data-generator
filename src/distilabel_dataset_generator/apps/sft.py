@@ -274,11 +274,10 @@ with gr.Blocks(
             value="⚗️ Generate Full Dataset", variant="primary"
         )
 
-        # Add this line here, before the button click event
         success_message = gr.Markdown(visible=False)
 
     def show_success_message(repo_id_value):
-        return gr.update(
+        return gr.Markdown(
             value=f"""
             <div style="padding: 1em; background-color: #e6f3e6; border-radius: 5px; margin-top: 1em;">
                 <h3 style="color: #2e7d32; margin: 0;">Dataset Published Successfully!</h3>
