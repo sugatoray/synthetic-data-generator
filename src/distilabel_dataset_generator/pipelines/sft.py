@@ -217,6 +217,7 @@ def get_pipeline(num_turns, num_rows, system_prompt):
                 llm=InferenceEndpointsLLM(
                     model_id=MODEL,
                     tokenizer_id=MODEL,
+                    api_key=os.environ["HF_TOKEN"],
                     generation_kwargs={
                         "temperature": 0.8, 
                         "max_new_tokens": 1024
