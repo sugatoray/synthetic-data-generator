@@ -1,3 +1,5 @@
+import os
+
 import pandas as pd
 from distilabel.llms import InferenceEndpointsLLM
 from distilabel.pipeline import Pipeline
@@ -139,6 +141,7 @@ def get_pipeline(num_turns, num_rows, system_prompt):
             llm=InferenceEndpointsLLM(
                 model_id=MODEL,
                 tokenizer_id=MODEL,
+                api_key=os.environ["HF_TOKEN"],
                 magpie_pre_query_template="llama3",
                 generation_kwargs={
                     "temperature": 0.8,  # it's the best value for Llama 3.1 70B Instruct
@@ -168,6 +171,7 @@ def get_pipeline(num_turns, num_rows, system_prompt):
 def get_prompt_generation_step():
     generate_description = TextGeneration(
         llm=InferenceEndpointsLLM(
+            api_key=os.environ["HF_TOKEN"],
             model_id=MODEL,
             tokenizer_id=MODEL,
             generation_kwargs={
