@@ -138,6 +138,7 @@ _STOP_SEQUENCES = [
     "assistant",
     " \n\n",
 ]
+DEFAULT_BATCH_SIZE = 1
 
 
 def _get_output_mappings(num_turns):
@@ -205,33 +206,30 @@ def get_pipeline(num_turns, num_rows, system_prompt):
                         "stop_sequences": _STOP_SEQUENCES,
                     },
                 ),
-                batch_size=2,
+                batch_size=DEFAULT_BATCH_SIZE,
                 n_turns=num_turns,
                 num_rows=num_rows,
                 system_prompt=system_prompt,
                 output_mappings={"instruction": "prompt"},
-                only_instruction=True
+                only_instruction=True,
             )
-            
+
             generate_response = TextGeneration(
                 llm=InferenceEndpointsLLM(
                     model_id=MODEL,
                     tokenizer_id=MODEL,
                     api_key=os.environ["HF_TOKEN"],
-                    generation_kwargs={
-                        "temperature": 0.8, 
-                        "max_new_tokens": 1024
-                    },
+                    generation_kwargs={"temperature": 0.8, "max_new_tokens": 1024},
                 ),
                 system_prompt=system_prompt,
                 output_mappings={"generation": "completion"},
-                input_mappings={"instruction": "prompt"}
+                input_mappings={"instruction": "prompt"},
             )
-            
+
             keep_columns = KeepColumns(
                 columns=list(output_mappings.values()) + ["model_name"],
             )
-            
+
             magpie.connect(generate_response)
             generate_response.connect(keep_columns)
         return pipeline
@@ -250,7 +248,7 @@ def get_pipeline(num_turns, num_rows, system_prompt):
                         "stop_sequences": _STOP_SEQUENCES,
                     },
                 ),
-                batch_size=2,
+                batch_size=DEFAULT_BATCH_SIZE,
                 n_turns=num_turns,
                 num_rows=num_rows,
                 system_prompt=system_prompt,
