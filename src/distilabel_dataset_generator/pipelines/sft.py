@@ -1,10 +1,10 @@
-import os
-
 import pandas as pd
 from distilabel.llms import InferenceEndpointsLLM
 from distilabel.pipeline import Pipeline
 from distilabel.steps import KeepColumns
 from distilabel.steps.tasks import MagpieGenerator, TextGeneration
+
+from src.distilabel_dataset_generator.utils import HF_TOKENS
 
 INFORMATION_SEEKING_PROMPT = (
     "You are an AI assistant designed to provide accurate and concise information on a wide"
@@ -139,6 +139,7 @@ _STOP_SEQUENCES = [
     " \n\n",
 ]
 DEFAULT_BATCH_SIZE = 1
+TOKEN_INDEX = 0
 
 
 def _get_output_mappings(num_turns):
@@ -189,15 +190,18 @@ if __name__ == "__main__":
 
 
 def get_pipeline(num_turns, num_rows, system_prompt):
+    global TOKEN_INDEX
     input_mappings = _get_output_mappings(num_turns)
     output_mappings = input_mappings
+    api_key = HF_TOKENS[TOKEN_INDEX % len(HF_TOKENS)]
+    TOKEN_INDEX += 1
     if num_turns == 1:
         with Pipeline(name="sft") as pipeline:
             magpie = MagpieGenerator(
                 llm=InferenceEndpointsLLM(
                     model_id=MODEL,
                     tokenizer_id=MODEL,
-                    api_key=os.environ["HF_TOKEN"],
+                    api_key=api_key,
                     magpie_pre_query_template="llama3",
                     generation_kwargs={
                         "temperature": 0.8,  # it's the best value for Llama 3.1 70B Instruct
@@ -218,7 +222,7 @@ def get_pipeline(num_turns, num_rows, system_prompt):
                 llm=InferenceEndpointsLLM(
                     model_id=MODEL,
                     tokenizer_id=MODEL,
-                    api_key=os.environ["HF_TOKEN"],
+                    api_key=api_key,
                     generation_kwargs={"temperature": 0.8, "max_new_tokens": 1024},
                 ),
                 system_prompt=system_prompt,
@@ -239,7 +243,7 @@ def get_pipeline(num_turns, num_rows, system_prompt):
                 llm=InferenceEndpointsLLM(
                     model_id=MODEL,
                     tokenizer_id=MODEL,
-                    api_key=os.environ["HF_TOKEN"],
+                    api_key=api_key,
                     magpie_pre_query_template="llama3",
                     generation_kwargs={
                         "temperature": 0.8,  # it's the best value for Llama 3.1 70B Instruct
@@ -262,9 +266,12 @@ def get_pipeline(num_turns, num_rows, system_prompt):
 
 
 def get_prompt_generation_step():
+    global TOKEN_INDEX
+    api_key = HF_TOKENS[TOKEN_INDEX % len(HF_TOKENS)]
+    TOKEN_INDEX += 1
     generate_description = TextGeneration(
         llm=InferenceEndpointsLLM(
-            api_key=os.environ["HF_TOKEN"],
+            api_key=api_key,
             model_id=MODEL,
             tokenizer_id=MODEL,
             generation_kwargs={

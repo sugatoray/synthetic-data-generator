@@ -1,3 +1,5 @@
+import os
+
 import gradio as gr
 from gradio.oauth import (
     OAUTH_CLIENT_ID,
@@ -7,6 +9,9 @@ from gradio.oauth import (
     get_space,
 )
 from huggingface_hub import whoami
+
+HF_TOKENS = os.getenv("HF_TOKEN") + [os.getenv(f"HF_TOKEN_{i}") for i in range(1, 10)]
+HF_TOKENS = [token for token in HF_TOKENS if token]
 
 _CHECK_IF_SPACE_IS_SET = (
     all(
