@@ -75,7 +75,7 @@ def generate_dataset(
         else None
     )
     if repo_id is not None:
-        if not repo_id:
+        if not all([repo_id, org_name, repo_name]):
             raise gr.Error(
                 "Please provide a repo_name and org_name to push the dataset to."
             )
@@ -84,9 +84,9 @@ def generate_dataset(
         num_turns = 4
         gr.Info("You can only generate a dataset with 4 or fewer turns. Setting to 4.")
     if num_rows > 5000:
-        num_rows = 5000
+        num_rows = 1000
         gr.Info(
-            "You can only generate a dataset with 5000 or fewer rows. Setting to 5000."
+            "You can only generate a dataset with 1000 or fewer rows. Setting to 1000."
         )
 
     if num_rows < 10:
@@ -236,7 +236,7 @@ with gr.Blocks(
                     value=100,
                     label="Number of rows in the dataset",
                     minimum=1,
-                    maximum=5000,
+                    maximum=1000,
                     info="The number of rows in the dataset. Note that you are able to generate more rows at once but that this will take time.",
                 )
 
