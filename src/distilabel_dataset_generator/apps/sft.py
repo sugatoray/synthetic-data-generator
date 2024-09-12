@@ -241,7 +241,8 @@ with gr.Blocks(
                 )
 
             with gr.Row(variant="panel"):
-                hf_token = gr.Textbox(
+                oauth_token = gr.Textbox(
+                    value=get_token(),
                     label="Hugging Face Token",
                     placeholder="hf_...",
                     type="password",
@@ -291,7 +292,7 @@ with gr.Blocks(
             private,
             org_name,
             repo_name,
-            hf_token,
+            oauth_token,
         ],
         outputs=[table],
         show_progress=True,
@@ -327,6 +328,6 @@ with gr.Blocks(
         inputs=[system_prompt, num_turns, num_rows],
         outputs=[pipeline_code],
     )
-    app.load(get_token, outputs=[hf_token])
+    app.load(get_token, outputs=[oauth_token])
     app.load(get_org_dropdown, outputs=[org_name])
     app.load(fn=swap_visibilty, outputs=main_ui)

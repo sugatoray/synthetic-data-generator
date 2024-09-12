@@ -73,7 +73,7 @@ def get_token(oauth_token: OAuthToken = None):
 
 
 def swap_visibilty(oauth_token: OAuthToken = None):
-    if oauth_token is None:
-        return gr.update(elem_classes=["main_ui_logged_out"])
-    else:
+    if oauth_token:
         return gr.update(elem_classes=["main_ui_logged_in"])
+    else:
+        return gr.update(elem_classes=["main_ui_logged_out"])
