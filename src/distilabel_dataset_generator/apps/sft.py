@@ -74,8 +74,6 @@ def generate_dataset(
         if repo_name is not None and org_name is not None
         else None
     )
-    if oauth_token is None or oauth_token == "":
-        print(oauth_token, repo_id)
     if repo_id is not None:
         if not all([repo_id, org_name, repo_name]):
             raise gr.Error(
