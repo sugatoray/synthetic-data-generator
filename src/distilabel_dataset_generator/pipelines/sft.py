@@ -175,6 +175,7 @@ with Pipeline(name="sft") as pipeline:
         ),
         n_turns={num_turns},
         num_rows={num_rows},
+        batch_size=1,
         system_prompt=SYSTEM_PROMPT,
         output_mappings={input_mappings},
     )
