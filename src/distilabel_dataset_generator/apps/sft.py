@@ -158,12 +158,13 @@ with gr.Blocks(
     css=css,
 ) as app:
     with gr.Row():
-        with gr.Column(scale=1):
-            get_login_button()
-        with gr.Column(scale=2):
-            gr.Markdown(
-                "This token will only be used to push the dataset to the Hugging Face Hub. There are no generation costs because we are using Free Serverless Inference Endpoints."
-            )
+        gr.Markdown(
+            "To push the dataset to the Hugging Face Hub you need to sign in. This will only be used for pushing the dataset not for data generation."
+        )
+    with gr.Row():
+        gr.Column(scale=0.5)
+        get_login_button()
+        gr.Column(scale=0.5)
 
     gr.Markdown("## Iterate on a sample dataset")
     with gr.Column() as main_ui:
