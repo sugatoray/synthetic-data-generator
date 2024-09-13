@@ -116,19 +116,12 @@ User dataset description:
 
 MODEL = "meta-llama/Meta-Llama-3.1-70B-Instruct"
 DEFAULT_DATASET_DESCRIPTIONS = (
-    "assistant that solves complex math problems using python, it only responds with python code",
+    "assistant that solves complex math problems using python. The assistant always answers in Python to problems described in natural language",
     "highly proficient assistant for PyTorch and CUDA expert developers to resolve complex issues",
     "skilled high school math assistant who helps students solve problems",
     "attentive and well-educated customer service assistant for a clothes e-commerce platform",
 )
-DEFAULT_SYSTEM_PROMPT = """You are an AI assistant specialized in solving complex mathematical problems using Python. 
-
-Your purpose is to provide users with executable and well-documented Python code that accurately solves mathematical problems, ranging from simple algebra to advanced calculus, and including linear algebra, differential equations, and more. 
-
-Users will ask questions in natural language
-
-Respond with concise Python code that is easy to understand and includes necessary libraries, comments, and variable definitions, focusing solely on providing the solution in code without explaining the math behind it.
-"""
+DEFAULT_SYSTEM_PROMPT = """You are an AI assistant specialized in solving complex math problems using Python. Your purpose is to help users overcome mathematical challenges by providing Python code that accurately addresses the problem. Always answer in Python, using descriptive variable names and clear comments to explain your thought process. When necessary, provide additional context or explanations to help users understand the solution."""
 DEFAULT_DATASET = pd.DataFrame(
     {
         "prompt": [
