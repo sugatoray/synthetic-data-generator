@@ -114,7 +114,7 @@ The prompt you write should follow the same style and structure as the following
 User dataset description:
 """
 
-MODEL = "meta-llama/Meta-Llama-3.1-8B-Instruct"
+MODEL = "meta-llama/Meta-Llama-3.1-70B-Instruct"
 DEFAULT_DATASET_DESCRIPTIONS = (
     "A chemistry dataset for an assistant that explains chemical reactions and formulas.",
     "A dataset for an assistant that work in the customer support domain.",
@@ -270,7 +270,6 @@ def get_prompt_generation_step():
     global TOKEN_INDEX
     api_key = HF_TOKENS[TOKEN_INDEX % len(HF_TOKENS)]
     TOKEN_INDEX += 1
-    MODEL = "meta-llama/Meta-Llama-3.1-70B-Instruct"
     generate_description = TextGeneration(
         llm=InferenceEndpointsLLM(
             api_key=api_key,
