@@ -23,11 +23,20 @@ demo = gr.TabbedInterface(
     ["Supervised Fine-Tuning", "FAQ"],
     css=css,
     title="""
-    <div style="display: flex; flex-direction: column; align-items: center; margin-bottom: 1rem;">
-        <div style="display: flex; align-items: center; justify-content: center;">
-            <img src="https://distilabel.argilla.io/latest/assets/distilabel-black.svg" alt="Distilabel Logo" style="width: 200px; height: auto;">
+    <style>
+        @media (max-width: 600px) {
+            .logo-container { position: static !important; text-align: center; margin-bottom: 20px; }
+            .title-container { padding-left: 0 !important; }
+        }
+    </style>
+    <div style="position: relative; margin-bottom: 1rem;">
+        <div class="logo-container" style="position: absolute; top: 0; left: 0;">
+            <img src="https://distilabel.argilla.io/latest/assets/distilabel-black.svg" alt="Distilabel Logo" style="width: 150px; height: auto;">
         </div>
-        <p style="margin: 10px 0 0 0; font-style: italic; color: #666; font-size: 1.1em;">DataCraft: Build datasets using natural language</p>
+        <div class="title-container" style="text-align: center; padding-top: 40px; padding-left: 160px;">
+            <h1 style="margin: 0; font-size: 2em;">🧶 DataCraft</h1>
+            <p style="margin: 10px 0 0 0; color: #666; font-size: 1.1em;">Build datasets using natural language</p>
+        </div>
     </div>
     """,
     theme=theme,
