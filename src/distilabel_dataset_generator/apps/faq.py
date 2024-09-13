@@ -8,24 +8,20 @@ with gr.Blocks() as app:
             gr.HTML(
                 """
                 <div style="text-align: justify;">
-                    <div style="text-align: center;">
-                        <img src="https://huggingface.co/spaces/argilla/distilabel-dataset-generator/resolve/main/assets/image.png" alt="Distilabel Dataset Generator" style="width: 300px; margin: 20px auto;">
-                    </div>
+                    <h4 style="text-align: center;">What is Distilabel DataCraft?</h4>
 
-                    <h4 style="text-align: center;">What is Distilabel Dataset Generator?</h4>
-
-                    <p>Distilabel Dataset Generator is a tool that allows you to easily create high-quality datasets for training and fine-tuning language models. It leverages the power of distilabel and advanced language models to generate synthetic data tailored to your specific needs.</p>
+                    <p>Distilabel Dataset Generator is an experimental tool that allows you to easily create high-quality datasets for training and fine-tuning language models. It leverages the power of distilabel and advanced language models to generate synthetic data tailored to your specific needs.</p>
 
                     <p>This tool simplifies the process of creating custom datasets, enabling you to:</p>
                     <ul>
-                        <li>Define the characteristics of your desired dataset</li>
+                        <li>Define the characteristics of your desired application</li>
                         <li>Generate system prompts automatically</li>
                         <li>Create sample datasets for quick iteration</li>
                         <li>Produce full-scale datasets with customizable parameters</li>
                         <li>Push your generated datasets directly to the Hugging Face Hub</li>
                     </ul>
 
-                    <p>By using Distilabel Dataset Generator, you can rapidly prototype and create datasets for, accelerating your AI development process.</p>
+                    <p>By using Distilabel DataCraft, you can rapidly prototype and create datasets for, accelerating your AI development process.</p>
 
                     <h4 style="text-align: center;">How is this free?</h4>
 
