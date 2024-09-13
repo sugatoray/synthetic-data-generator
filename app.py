@@ -24,16 +24,36 @@ demo = gr.TabbedInterface(
     css=css,
     title="""
     <style>
+        .header-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            padding: 20px 0;
+        }
+        .logo-container {
+            position: absolute;
+            left: 0;
+            top: 0;
+        }
+        .title-container {
+            text-align: center;
+        }
         @media (max-width: 600px) {
-            .logo-container { position: static !important; text-align: center; margin-bottom: 20px; }
-            .title-container { padding-left: 0 !important; }
+            .header-container {
+                flex-direction: column;
+            }
+            .logo-container {
+                position: static;
+                margin-bottom: 20px;
+            }
         }
     </style>
-    <div style="position: relative; margin-bottom: 1rem;">
-        <div class="logo-container" style="position: absolute; top: 0; left: 0;">
+    <div class="header-container">
+        <div class="logo-container">
             <img src="https://distilabel.argilla.io/latest/assets/distilabel-black.svg" alt="Distilabel Logo" style="width: 150px; height: auto;">
         </div>
-        <div class="title-container" style="text-align: center; padding-top: 40px; padding-left: 160px;">
+        <div class="title-container">
             <h1 style="margin: 0; font-size: 2em;">🧶 DataCraft</h1>
             <p style="margin: 10px 0 0 0; color: #666; font-size: 1.1em;">Build datasets using natural language</p>
         </div>
