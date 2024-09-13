@@ -270,6 +270,7 @@ def get_prompt_generation_step():
     global TOKEN_INDEX
     api_key = HF_TOKENS[TOKEN_INDEX % len(HF_TOKENS)]
     TOKEN_INDEX += 1
+    MODEL = "meta-llama/Meta-Llama-3.1-70B-Instruct"
     generate_description = TextGeneration(
         llm=InferenceEndpointsLLM(
             api_key=api_key,
