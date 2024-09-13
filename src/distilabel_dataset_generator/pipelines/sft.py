@@ -116,19 +116,19 @@ User dataset description:
 
 MODEL = "meta-llama/Meta-Llama-3.1-70B-Instruct"
 DEFAULT_DATASET_DESCRIPTIONS = (
-    "A chemistry dataset for an assistant that explains chemical reactions and formulas.",
-    "A dataset for an assistant that work in the customer support domain.",
-    "A dataset for an assistant that writes code.",
-    "A dataset for an assistant that work in the legal domain.",
+    "A chemistry expert assistant that explains chemical reactions and formulas.",
+    "highly proficient assistant for PyTorch and CUDA expert developers to resolve complex issues",
+    "skilled high school math assistant who helps students solve problems",
+    "attentive and well-educated customer service assistant for a clothes e-commerce platform",
 )
-DEFAULT_SYSTEM_PROMPT = "You are an AI assistant specializing in chemistry and chemical reactions. Your purpose is to help users understand and work with chemical formulas, equations, and reactions. Provide clear explanations of reaction mechanisms, assist in balancing chemical equations, and offer guidance on the interpretation of chemical structures. Explain the roles of reactants, products, catalysts, and solvents, and define key chemistry terms when necessary."
+DEFAULT_SYSTEM_PROMPT = "You are an AI assistant specialized in chemistry, providing detailed explanations of chemical reactions, formulas, and processes. Your purpose is to assist users in understanding complex chemical concepts, breaking down reactions into step-by-step explanations, and helping users balance chemical equations. Offer examples of real-world applications, provide explanations of laboratory procedures, and support users in understanding the underlying principles of chemistry."
 DEFAULT_DATASET = pd.DataFrame(
     {
-        "instruction": [
-            "What is the term for the study of the structure and evolution of the Earth's interior.	"
+        "prompt": [
+            "What is the chemical equation for the reaction between sodium metal and water?"
         ],
-        "response": [
-            """The study of the structure and evolution of the Earth's interior is called geophysics, particularly the subfield of geology known as geodynamics, and more specifically the subfield of geology known as geotectonics. However, a more specific term for this study is "geology of the Earth's interior" or "Earth internal structure." However, the most commonly used term for this study is geophysics.	"""
+        "completion": [
+            """The reaction between sodium metal (Na) and water (H2O) is a highly exothermic reaction that releases hydrogen gas. The chemical equation for this reaction is: 2Na (sodium metal) + 2H2O (water) → 2NaOH (sodium hydroxide) + H2 (hydrogen gas) This can be broken down into two steps: 1. 2Na (sodium metal) + 2H2O (water) → 2Na+ (sodium ions) + 2OH- (hydroxide ions) + H2 (hydrogen gas) In the first step, the sodium metal reacts with the water to form sodium ions and hydroxide ions. 2Na+ (sodium ions) + 2OH- (hydroxide ions) → 2NaOH (sodium hydroxide) In the final step, the sodium ions and hydroxide ions combine to form sodium hydroxide. In this reaction, the sodium metal reduces the water, releasing hydrogen gas. This reaction is highly exothermic and generates a significant amount of heat, making it a self-sustaining reaction once it begins. The reaction is very violent, releasing a significant amount of"""
         ],
     }
 )
@@ -138,7 +138,7 @@ _STOP_SEQUENCES = [
     "assistant",
     " \n\n",
 ]
-DEFAULT_BATCH_SIZE = 1
+DEFAULT_BATCH_SIZE = 50
 TOKEN_INDEX = 0
 
 
@@ -190,12 +190,14 @@ if __name__ == "__main__":
     return code
 
 
-def get_pipeline(num_turns, num_rows, system_prompt):
+def get_pipeline(num_turns, num_rows, system_prompt, is_sample):
     global TOKEN_INDEX
     input_mappings = _get_output_mappings(num_turns)
     output_mappings = input_mappings
     api_key = HF_TOKENS[TOKEN_INDEX % len(HF_TOKENS)]
     TOKEN_INDEX += 1
+    MODEL = "meta-llama/Meta-Llama-3.1-8B-Instruct"
+    print("is sample?", is_sample)
     if num_turns == 1:
         with Pipeline(name="sft") as pipeline:
             magpie = MagpieGenerator(
@@ -207,7 +209,7 @@ def get_pipeline(num_turns, num_rows, system_prompt):
                     generation_kwargs={
                         "temperature": 0.8,  # it's the best value for Llama 3.1 70B Instruct
                         "do_sample": True,
-                        "max_new_tokens": 256,
+                        "max_new_tokens": 256 if is_sample else 512,
                         "stop_sequences": _STOP_SEQUENCES,
                     },
                 ),
@@ -224,7 +226,7 @@ def get_pipeline(num_turns, num_rows, system_prompt):
                     model_id=MODEL,
                     tokenizer_id=MODEL,
                     api_key=api_key,
-                    generation_kwargs={"temperature": 0.8, "max_new_tokens": 256},
+                    generation_kwargs={"temperature": 0.8, "max_new_tokens": 256 if is_sample else 1024},
                 ),
                 system_prompt=system_prompt,
                 output_mappings={"generation": "completion"},
