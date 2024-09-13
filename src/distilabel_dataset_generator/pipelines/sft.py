@@ -116,19 +116,26 @@ User dataset description:
 
 MODEL = "meta-llama/Meta-Llama-3.1-70B-Instruct"
 DEFAULT_DATASET_DESCRIPTIONS = (
-    "A chemistry expert assistant that explains chemical reactions and formulas.",
+    "assistant that solves complex math problems using python, it only responds with python code",
     "highly proficient assistant for PyTorch and CUDA expert developers to resolve complex issues",
     "skilled high school math assistant who helps students solve problems",
     "attentive and well-educated customer service assistant for a clothes e-commerce platform",
 )
-DEFAULT_SYSTEM_PROMPT = "You are an AI assistant specialized in chemistry, providing detailed explanations of chemical reactions, formulas, and processes. Your purpose is to assist users in understanding complex chemical concepts, breaking down reactions into step-by-step explanations, and helping users balance chemical equations. Offer examples of real-world applications, provide explanations of laboratory procedures, and support users in understanding the underlying principles of chemistry."
+DEFAULT_SYSTEM_PROMPT = """You are an AI assistant specialized in solving complex mathematical problems using Python. 
+
+Your purpose is to provide users with executable and well-documented Python code that accurately solves mathematical problems, ranging from simple algebra to advanced calculus, and including linear algebra, differential equations, and more. 
+
+Users will ask questions in natural language
+
+Respond with concise Python code that is easy to understand and includes necessary libraries, comments, and variable definitions, focusing solely on providing the solution in code without explaining the math behind it.
+"""
 DEFAULT_DATASET = pd.DataFrame(
     {
         "prompt": [
-            "What is the chemical equation for the reaction between sodium metal and water?"
+            "Find the roots of the equation y = 2x^3 - 3x^2 - 5x + 1, using the numpy library in Python."
         ],
         "completion": [
-            """The reaction between sodium metal (Na) and water (H2O) is a highly exothermic reaction that releases hydrogen gas. The chemical equation for this reaction is: 2Na (sodium metal) + 2H2O (water) → 2NaOH (sodium hydroxide) + H2 (hydrogen gas) This can be broken down into two steps: 1. 2Na (sodium metal) + 2H2O (water) → 2Na+ (sodium ions) + 2OH- (hydroxide ions) + H2 (hydrogen gas) In the first step, the sodium metal reacts with the water to form sodium ions and hydroxide ions. 2Na+ (sodium ions) + 2OH- (hydroxide ions) → 2NaOH (sodium hydroxide) In the final step, the sodium ions and hydroxide ions combine to form sodium hydroxide. In this reaction, the sodium metal reduces the water, releasing hydrogen gas. This reaction is highly exothermic and generates a significant amount of heat, making it a self-sustaining reaction once it begins. The reaction is very violent, releasing a significant amount of"""
+            """```python import numpy as np # Define the coefficients of the polynomial a = 2 b = -3 c = -5 d = 1 # Create a polynomial object p = np.poly1d([a, b, c, d]) # Find the roots of the polynomial roots = np.roots(p) print("The roots of the equation are: ", roots) ``` This code uses the `np.poly1d` function to create a polynomial object from the coefficients, and then the `np.roots` function to find the roots of the polynomial. The roots are then printed to the console."""
         ],
     }
 )
