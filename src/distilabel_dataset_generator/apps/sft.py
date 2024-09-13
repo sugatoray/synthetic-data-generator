@@ -54,7 +54,7 @@ def generate_system_prompt(dataset_description, progress=gr.Progress()):
 
 def generate_sample_dataset(system_prompt, progress=gr.Progress()):
     progress(0.1, desc="Initializing sample dataset generation")
-    result = generate_dataset(system_prompt, num_turns=1, num_rows=2, progress=progress)
+    result = generate_dataset(system_prompt, num_turns=1, num_rows=1, progress=progress)
     progress(1.0, desc="Sample dataset generated")
     return result
 
