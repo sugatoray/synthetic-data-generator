@@ -51,7 +51,9 @@ demo = gr.TabbedInterface(
     </style>
     <div class="header-container">
         <div class="logo-container">
-            <img src="https://distilabel.argilla.io/latest/assets/distilabel-black.svg" alt="Distilabel Logo" style="width: 150px; height: auto;">
+            <a href="https://github.com/argilla-io/distilabel" target="_blank" rel="noopener noreferrer">
+                <img src="https://distilabel.argilla.io/latest/assets/distilabel-black.svg" alt="Distilabel Logo" style="width: 150px; height: auto;">
+            </a>
         </div>
         <div class="title-container">
             <h1 style="margin: 0; font-size: 2em;">🧶 DataCraft</h1>
