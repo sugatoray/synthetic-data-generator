@@ -22,11 +22,12 @@ from src.distilabel_dataset_generator.utils import (
 )
 
 
-def _run_pipeline(result_queue, num_turns, num_rows, system_prompt):
+def _run_pipeline(result_queue, num_turns, num_rows, system_prompt, is_sample):
     pipeline = get_pipeline(
         num_turns,
         num_rows,
         system_prompt,
+        is_sample
     )
     distiset: Distiset = pipeline.run(use_cache=False)
     result_queue.put(distiset)
@@ -54,7 +55,7 @@ def generate_system_prompt(dataset_description, progress=gr.Progress()):
 
 def generate_sample_dataset(system_prompt, progress=gr.Progress()):
     progress(0.1, desc="Initializing sample dataset generation")
-    result = generate_dataset(system_prompt, num_turns=1, num_rows=1, progress=progress)
+    result = generate_dataset(system_prompt, num_turns=1, num_rows=1, progress=progress, is_sample=True)
     progress(1.0, desc="Sample dataset generated")
     return result
 
@@ -68,6 +69,7 @@ def generate_dataset(
     repo_name: str = None,
     oauth_token: str = None,
     progress=gr.Progress(),
+    is_sample: bool = False,
 ):
     repo_id = (
         f"{org_name}/{repo_name}"
@@ -88,8 +90,9 @@ def generate_dataset(
         gr.Info(
             "You can only generate a dataset with 1000 or fewer rows. Setting to 1000."
         )
-
-    if num_rows < 10:
+    if num_rows < 5:
+        duration = 25
+    elif num_rows < 10:
         duration = 60
     elif num_rows < 30:
         duration = 120
@@ -105,7 +108,7 @@ def generate_dataset(
     result_queue = multiprocessing.Queue()
     p = multiprocessing.Process(
         target=_run_pipeline,
-        args=(result_queue, num_turns, num_rows, system_prompt),
+        args=(result_queue, num_turns, num_rows, system_prompt, is_sample),
     )
 
     try:
@@ -175,27 +178,30 @@ with gr.Blocks(
         )
         with gr.Row():
             gr.Column(scale=1)
-            btn_generate_system_prompt = gr.Button(value="Generate sample dataset")
+            btn_generate_system_prompt = gr.Button(value="Generate sample")
             gr.Column(scale=1)
+        
 
         system_prompt = gr.TextArea(
-            label="If you want to improve the dataset, you can tune the system prompt and regenerate the sample",
+            label="System prompt for dataset generation. You can tune it and regenerate the sample",
             value=DEFAULT_SYSTEM_PROMPT,
         )
 
         with gr.Row():
-            gr.Column(scale=1)
-            btn_generate_sample_dataset = gr.Button(
-                value="Regenerate sample dataset",
-            )
-            gr.Column(scale=1)
-
-        with gr.Row():
             table = gr.DataFrame(
                 value=DEFAULT_DATASET,
+                label="Sample dataset. Prompts and completions truncated to 256 tokens.",
                 interactive=False,
                 wrap=True,
             )
+
+
+        with gr.Row():
+            gr.Column(scale=1)
+            btn_generate_sample_dataset = gr.Button(
+                value="Regenerate sample",
+            )
+            gr.Column(scale=1)
 
         result = btn_generate_system_prompt.click(
             fn=generate_system_prompt,
@@ -233,10 +239,10 @@ with gr.Blocks(
                     info="Choose between 1 (single turn with 'instruction-response' columns) and 2-4 (multi-turn conversation with a 'messages' column).",
                 )
                 num_rows = gr.Number(
-                    value=100,
+                    value=10,
                     label="Number of rows in the dataset",
                     minimum=1,
-                    maximum=1000,
+                    maximum=500,
                     info="The number of rows in the dataset. Note that you are able to generate more rows at once but that this will take time.",
                 )
 
@@ -249,16 +255,24 @@ with gr.Blocks(
                     visible=False,
                 )
                 org_name = get_org_dropdown()
-                repo_name = gr.Textbox(label="Repo name", placeholder="dataset_name")
+                repo_name = gr.Textbox(label="Repo name", placeholder="dataset_name", value="my-distiset")
                 private = gr.Checkbox(
                     label="Private dataset", value=True, interactive=True, scale=0.5
                 )
-
-            btn_generate_full_dataset = gr.Button(
-                value="⚗️ Generate Full Dataset", variant="primary"
-            )
-
+            with gr.Row() as regenerate_row:
+                gr.Column(scale=1)
+                btn_generate_full_dataset = gr.Button(
+                    value="Generate Full Dataset", variant="primary"
+                )
+                gr.Column(scale=1)
             success_message = gr.Markdown(visible=False)
+            with gr.Row():
+                final_dataset = gr.DataFrame(
+                    value=DEFAULT_DATASET,
+                    label="Generated dataset",
+                    interactive=False,
+                    wrap=True,
+                )
 
     def show_success_message(org_name, repo_name):
         return gr.Markdown(
@@ -294,7 +308,7 @@ with gr.Blocks(
             repo_name,
             oauth_token,
         ],
-        outputs=[table],
+        outputs=[final_dataset],
         show_progress=True,
     ).success(
         fn=show_success_message,
