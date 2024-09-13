@@ -168,7 +168,7 @@ with gr.Blocks(
     gr.Markdown("## Iterate on a sample dataset")
     with gr.Column() as main_ui:
         dataset_description = gr.TextArea(
-            label="Provide a description of the dataset",
+            label="Give a precise description of the assistant or tool. Don't describe the dataset",
             value=DEFAULT_DATASET_DESCRIPTIONS[0],
         )
         examples = gr.Examples(
