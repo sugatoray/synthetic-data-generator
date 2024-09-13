@@ -114,7 +114,7 @@ The prompt you write should follow the same style and structure as the following
 User dataset description:
 """
 
-MODEL = "meta-llama/Meta-Llama-3.1-70B-Instruct"
+MODEL = "meta-llama/Meta-Llama-3.1-8B-Instruct"
 DEFAULT_DATASET_DESCRIPTIONS = (
     "A chemistry dataset for an assistant that explains chemical reactions and formulas.",
     "A dataset for an assistant that work in the customer support domain.",
@@ -207,7 +207,7 @@ def get_pipeline(num_turns, num_rows, system_prompt):
                     generation_kwargs={
                         "temperature": 0.8,  # it's the best value for Llama 3.1 70B Instruct
                         "do_sample": True,
-                        "max_new_tokens": 512,
+                        "max_new_tokens": 256,
                         "stop_sequences": _STOP_SEQUENCES,
                     },
                 ),
@@ -224,7 +224,7 @@ def get_pipeline(num_turns, num_rows, system_prompt):
                     model_id=MODEL,
                     tokenizer_id=MODEL,
                     api_key=api_key,
-                    generation_kwargs={"temperature": 0.8, "max_new_tokens": 1024},
+                    generation_kwargs={"temperature": 0.8, "max_new_tokens": 256},
                 ),
                 system_prompt=system_prompt,
                 output_mappings={"generation": "completion"},
