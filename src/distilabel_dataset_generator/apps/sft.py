@@ -175,9 +175,10 @@ with gr.Blocks(
 
     gr.Markdown("## Iterate on a sample dataset")
     with gr.Column() as main_ui:
-        dataset_description = gr.Textbox(
+        dataset_description = gr.TextArea(
             label="Give a precise description of the assistant or tool. Don't describe the dataset",
             value=DEFAULT_DATASET_DESCRIPTIONS[0],
+            lines=2,
         )
         examples = gr.Examples(
             elem_id="system_prompt_examples",
@@ -189,9 +190,10 @@ with gr.Blocks(
             btn_generate_system_prompt = gr.Button(value="Generate sample")
             gr.Column(scale=1)
 
-        system_prompt = gr.Textbox(
+        system_prompt = gr.TextArea(
             label="System prompt for dataset generation. You can tune it and regenerate the sample",
             value=DEFAULT_SYSTEM_PROMPTS[0],
+            lines=5,
         )
 
         with gr.Row():
