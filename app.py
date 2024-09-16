@@ -16,6 +16,12 @@ css = """
 #system_prompt_examples {
     color: black;
 }
+@media (prefers-color-scheme: dark) {
+    #system_prompt_examples {
+        color: white;
+        background-color: black;
+    }
+}
 """
 
 demo = gr.TabbedInterface(
