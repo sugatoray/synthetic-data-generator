@@ -117,7 +117,6 @@ User dataset description:
 MODEL = "meta-llama/Meta-Llama-3.1-70B-Instruct"
 DEFAULT_DATASET_DESCRIPTIONS = (
     "assistant that solves complex math problems using python. The assistant always answers in Python to problems described in natural language",
-    "a super helpful and intelligent assistant that answers using chain of thought, analysing the question, defining the steps to solve it, reflecting and revising its assumptions before responding",
     "highly proficient assistant for PyTorch and CUDA expert developers to resolve complex issues",
     "skilled high school math assistant who helps students solve problems",
     "attentive and well-educated customer service assistant for a clothes e-commerce platform",
