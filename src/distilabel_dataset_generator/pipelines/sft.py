@@ -91,7 +91,7 @@ PROMPT_CREATION_PROMPT = f"""You are an AI assistant specialized in generating v
 
 Your task is to write a prompt following the instruction of the user. Respond with the prompt and nothing else. 
 
-In the generated prompt highly emphasize that the expected user questions are always direct and concise.
+In the generated prompt always finish with this sentence: User questions are direct and concise.
 
 The prompt you write should follow the same style and structure as the following example prompts:
 
@@ -121,13 +121,13 @@ User dataset description:
 MODEL = "meta-llama/Meta-Llama-3.1-70B-Instruct"
 DEFAULT_DATASET_DESCRIPTIONS = (
     "assistant that solves complex math problems using python. The assistant always answers in Python to problems described in natural language",
-    "highly proficient assistant for PyTorch and CUDA expert developers to resolve complex issues",
+    "legal assistant for startups",
     "skilled high school math assistant who helps students solve problems",
     "attentive and well-educated customer service assistant for a clothes e-commerce platform",
 )
 DEFAULT_SYSTEM_PROMPTS = [
-    """You are an AI assistant specialized in solving complex math problems using Python. Your purpose is to help users overcome mathematical challenges by providing Python code that accurately addresses the problem. Always answer in Python, using descriptive variable names and clear comments to explain your thought process. When necessary, provide additional context or explanations to help users understand the solution.""",
-    """You are a highly specialized AI assistant for expert PyTorch and CUDA developers. Your purpose is to help resolve complex issues, optimize code, and improve model performance by providing in-depth technical guidance. Offer advanced solutions for challenging problems, explain intricate concepts in detail, and suggest best practices for implementing efficient GPU-accelerated deep learning models with PyTorch and CUDA.""",
+    """You are an AI assistant specialized in solving complex math problems using Python. Your purpose is to help users overcome mathematical challenges by providing Python code that accurately addresses the problem. Always answer in Python, using descriptive variable names and clear comments to explain your thought process. When necessary, provide additional context or explanations to help users understand the solution. User questions are direct and concise""",
+    """You are an AI assistant specialized in providing legal support for startup businesses. Your purpose is to assist startup founders and entrepreneurs in navigating complex legal issues related to company formation, funding, intellectual property, employment law, and regulatory compliance. Provide clear explanations of relevant laws and regulations, offer guidance on best practices for mitigating risk, and help users draft agreements, contracts, and other essential documents for their businesses. Expect users to ask direct and concise questions regarding their specific legal concerns or situations, such as "What are the key differences between a sole proprietorship and an LLC?" or "How do I protect my startup's intellectual property?" Respond with precise and actionable advice, citing relevant laws and statutes when necessary, and avoid using overly technical jargon or complicated terminology.""",
     """You are a math assistant designed to support high school students with various mathematical topics. Your purpose is to assist students in understanding and solving problems across different areas of mathematics, including algebra, geometry, trigonometry, and calculus. Approach problems step-by-step, provide clear explanations of mathematical concepts, and offer additional examples when necessary. Be patient and encouraging, and help students understand the reasoning behind the solutions, ensuring they grasp the underlying mathematical principles.""",
     """You are an AI assistant designed to provide exceptional customer service for a clothes e-commerce platform. Your purpose is to assist users with product inquiries, order issues, and other concerns related to their shopping experience. Offer empathetic and personalized support, provide detailed product information, and efficiently resolve customer complaints. Stay up-to-date with the latest product offerings, promotions, and platform policies to deliver accurate and helpful responses. When necessary, escalate issues to relevant teams, such as returns or technical support, while keeping customers informed throughout the process.""",
 ]
@@ -135,20 +135,20 @@ DEFAULT_DATASETS = [
     pd.DataFrame.from_dict(
         {
             "prompt": [
-                "Find the roots of the equation y = 2x^3 - 3x^2 - 5x + 1, using the numpy library in Python."
+                "I'm planning a 4-day backpacking trip in the mountains next month and I'm looking for a new pair of hiking shoes. What kind of hiking shoes would you recommend for this trip?"
             ],
             "completion": [
-                """```python import numpy as np # Define the coefficients of the polynomial a = 2 b = -3 c = -5 d = 1 # Create a polynomial object p = np.poly1d([a, b, c, d]) # Find the roots of the polynomial roots = np.roots(p) print("The roots of the equation are: ", roots) ``` This code uses the `np.poly1d` function to create a polynomial object from the coefficients, and then the `np.roots` function to find the roots of the polynomial. The roots are then printed to the console."""
+                """For a 4-day backpacking trip in the mountains, you'll want hiking shoes that provide a combination of comfort, support, and durability. Considering your trip duration and terrain, I'd recommend looking for shoes with the following features: 1. **Waterproofing**: A waterproof or water-resistant membrane, such as Gore-Tex or eVent, to keep your feet dry in wet conditions. 2. **Breathability**: A breathable mesh upper to prevent overheating and discomfort. 3. **Support**: A supportive midsole and sturdy outsole for stable footing on uneven terrain. 4. **Ankle support**: High ankle collars to provide additional support and protection from ankle twists. Some excellent options for hiking shoes that meet these requirements include: 1. **Merrell Moab 2 Mid Waterproof**: A popular choice for backpacking trips, offering a rugged outsole and breathable mesh upper. 2. **Salomon Quest 4D 3 GTX**: A versatile shoe with a waterproof Gore-Tex membrane, comfortable fit, and excellent support. 3. **Keen Targhee II Mid WP**: A great option for backpacking, featuring a waterproof membrane and a comfortable, roomy toe box. 4. **La Sportiva Raptor GTX**"""
             ],
         }
     ),
     pd.DataFrame.from_dict(
         {
             "prompt": [
-                "Given a large image dataset, implement a data pipeline that reads images from a directory, applies data augmentation, and shuffles the dataset for efficient data loading and training of a deep learning model.'"
+                "I am a new startup founder and I am thinking about registering my business. I have a few questions about the different types of business structures. What is the main difference between a sole proprietorship and a Limited Liability Company (LLC)? For a sole proprietorship, I've heard that I don't have personal liability protection. Is that correct?"
             ],
             "completion": [
-                '**Image Data Pipeline with PyTorch** ===================================== In this example, we\'ll create a data pipeline that reads images from a directory, applies data augmentation, and shuffles the dataset for efficient data loading and training of a deep learning model. **Prerequisites** ----------------- * PyTorch 1.10 or later * CUDA toolkit (for GPU acceleration) * PyTorch Lightning 1.6 or later * Optional: Augmentation techniques (e.g., random cropping, flipping, rotation, color jittering) **Code** ------ ```python import os import glob import cv2 import torch from torch.utils.data import DataLoader, Dataset from torchvision import transforms from torchvision.transforms import Compose, ToTensor, Normalize from torchvision.transforms import functional as TF from pytorch_lightning.core.lightning import LightningDataModule from pytorch_lightning.core import seed_everything import numpy as np class ImageDataset(Dataset): """Custom dataset class for loading images from a directory.""" def __init__(self, image_dir, transform): self.image_dir = image_dir self.transform = transform self.image_files = glob.glob(os.path.join(image_dir, "*.jpg")) +'
+                """As a startup founder, choosing the right business structure is a crucial decision. I'm happy to help you understand the differences between a sole proprietorship and a Limited Liability Company (LLC). **Sole Proprietorship:** A sole proprietorship is a business owned and operated by one individual. It's the simplest and most common business structure, requiring minimal paperwork and no formal registration requirements. However, as you mentioned, a sole proprietorship offers **no personal liability protection**. This means that your personal assets, such as your home, savings, and other possessions, are at risk in case your business is sued or incurs debt. Your business and personal finances are not separate, so you'll be personally responsible for all business debts and liabilities. **Limited Liability Company (LLC):** A Limited Liability Company (LLC) is a more formal business structure that provides personal liability protection for its owners, known as members. Forming an LLC requires more paperwork and registration requirements compared to a sole proprietorship. With an LLC, your personal assets are generally protected from business risks and liabilities, such as: * Business debts and financial obligations *"""
             ],
         }
     ),
