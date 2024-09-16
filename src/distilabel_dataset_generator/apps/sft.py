@@ -175,13 +175,13 @@ with gr.Blocks(
 
     gr.Markdown("## Iterate on a sample dataset")
     with gr.Column() as main_ui:
-        dataset_description = gr.TextArea(
+        dataset_description = gr.Textbox(
             label="Give a precise description of the assistant or tool. Don't describe the dataset",
             value=DEFAULT_DATASET_DESCRIPTIONS[0],
         )
         examples = gr.Examples(
             elem_id="system_prompt_examples",
-            examples=[[example] for example in DEFAULT_DATASET_DESCRIPTIONS[1:]],
+            examples=[[example] for example in DEFAULT_DATASET_DESCRIPTIONS],
             inputs=[dataset_description],
         )
         with gr.Row():
@@ -189,13 +189,13 @@ with gr.Blocks(
             btn_generate_system_prompt = gr.Button(value="Generate sample")
             gr.Column(scale=1)
 
-        system_prompt = gr.TextArea(
+        system_prompt = gr.Textbox(
             label="System prompt for dataset generation. You can tune it and regenerate the sample",
             value=DEFAULT_SYSTEM_PROMPTS[0],
         )
 
         with gr.Row():
-            table = gr.DataFrame(
+            sample_dataset = gr.DataFrame(
                 value=DEFAULT_DATASETS[0],
                 label="Sample dataset. Prompts and completions truncated to 256 tokens.",
                 interactive=False,
@@ -217,14 +217,14 @@ with gr.Blocks(
         ).then(
             fn=generate_sample_dataset,
             inputs=[system_prompt],
-            outputs=[table],
+            outputs=[sample_dataset],
             show_progress=True,
         )
 
         btn_generate_sample_dataset.click(
             fn=generate_sample_dataset,
             inputs=[system_prompt],
-            outputs=[table],
+            outputs=[sample_dataset],
             show_progress=True,
         )
 
@@ -301,6 +301,12 @@ with gr.Blocks(
 
     def hide_success_message():
         return gr.Markdown(visible=False)
+
+    sample_dataset.change(
+        fn=lambda x: x,
+        inputs=[sample_dataset],
+        outputs=[final_dataset],
+    )
 
     btn_generate_full_dataset.click(
         fn=hide_success_message,
