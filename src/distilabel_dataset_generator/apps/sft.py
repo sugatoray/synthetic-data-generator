@@ -6,9 +6,9 @@ import pandas as pd
 from distilabel.distiset import Distiset
 
 from src.distilabel_dataset_generator.pipelines.sft import (
-    DEFAULT_DATASET,
     DEFAULT_DATASET_DESCRIPTIONS,
-    DEFAULT_SYSTEM_PROMPT,
+    DEFAULT_DATASETS,
+    DEFAULT_SYSTEM_PROMPTS,
     PROMPT_CREATION_PROMPT,
     generate_pipeline_code,
     get_pipeline,
@@ -29,6 +29,11 @@ def _run_pipeline(result_queue, num_turns, num_rows, system_prompt, is_sample):
 
 
 def generate_system_prompt(dataset_description, progress=gr.Progress()):
+    if dataset_description in DEFAULT_DATASET_DESCRIPTIONS:
+        index = DEFAULT_DATASET_DESCRIPTIONS.index(dataset_description)
+        if index < len(DEFAULT_SYSTEM_PROMPTS):
+            return DEFAULT_SYSTEM_PROMPTS[index]
+
     progress(0.1, desc="Initializing text generation")
     generate_description = get_prompt_generation_step()
     progress(0.4, desc="Loading model")
@@ -49,6 +54,11 @@ def generate_system_prompt(dataset_description, progress=gr.Progress()):
 
 
 def generate_sample_dataset(system_prompt, progress=gr.Progress()):
+    if system_prompt in DEFAULT_SYSTEM_PROMPTS:
+        index = DEFAULT_SYSTEM_PROMPTS.index(system_prompt)
+        if index < len(DEFAULT_DATASETS):
+            return DEFAULT_DATASETS[index]
+
     progress(0.1, desc="Initializing sample dataset generation")
     result = generate_dataset(
         system_prompt, num_turns=1, num_rows=1, progress=progress, is_sample=True
@@ -76,7 +86,7 @@ def generate_dataset(
     if repo_id is not None:
         if not all([repo_id, org_name, repo_name]):
             raise gr.Error(
-                "Please provide a repo_name and org_name to push the dataset to."
+                "Please provide a `repo_name` and `org_name` to push the dataset to."
             )
 
     if num_turns > 4:
@@ -150,8 +160,8 @@ css = """
 """
 
 with gr.Blocks(
-    title="⚗️ Distilabel Dataset Generator",
-    head="⚗️ Distilabel Dataset Generator",
+    title="🧶 DataCraft",
+    head="🧶 DataCraft",
     css=css,
 ) as app:
     with gr.Row():
@@ -181,12 +191,12 @@ with gr.Blocks(
 
         system_prompt = gr.TextArea(
             label="System prompt for dataset generation. You can tune it and regenerate the sample",
-            value=DEFAULT_SYSTEM_PROMPT,
+            value=DEFAULT_SYSTEM_PROMPTS[0],
         )
 
         with gr.Row():
             table = gr.DataFrame(
-                value=DEFAULT_DATASET,
+                value=DEFAULT_DATASETS[0],
                 label="Sample dataset. Prompts and completions truncated to 256 tokens.",
                 interactive=False,
                 wrap=True,
@@ -266,7 +276,7 @@ with gr.Blocks(
             success_message = gr.Markdown(visible=False)
             with gr.Row():
                 final_dataset = gr.DataFrame(
-                    value=DEFAULT_DATASET,
+                    value=DEFAULT_DATASETS[0],
                     label="Generated dataset",
                     interactive=False,
                     wrap=True,
