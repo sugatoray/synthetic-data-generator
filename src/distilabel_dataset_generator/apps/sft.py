@@ -23,13 +23,8 @@ from src.distilabel_dataset_generator.utils import (
 
 
 def _run_pipeline(result_queue, num_turns, num_rows, system_prompt, is_sample):
-    pipeline = get_pipeline(
-        num_turns,
-        num_rows,
-        system_prompt,
-        is_sample
-    )
-    distiset: Distiset = pipeline.run(use_cache=False)
+    pipeline = get_pipeline(num_turns, num_rows, system_prompt, is_sample)
+    distiset: Distiset = pipeline.run(use_cache=True)
     result_queue.put(distiset)
 
 
@@ -55,7 +50,9 @@ def generate_system_prompt(dataset_description, progress=gr.Progress()):
 
 def generate_sample_dataset(system_prompt, progress=gr.Progress()):
     progress(0.1, desc="Initializing sample dataset generation")
-    result = generate_dataset(system_prompt, num_turns=1, num_rows=1, progress=progress, is_sample=True)
+    result = generate_dataset(
+        system_prompt, num_turns=1, num_rows=1, progress=progress, is_sample=True
+    )
     progress(1.0, desc="Sample dataset generated")
     return result
 
@@ -181,7 +178,6 @@ with gr.Blocks(
             gr.Column(scale=1)
             btn_generate_system_prompt = gr.Button(value="Generate sample")
             gr.Column(scale=1)
-        
 
         system_prompt = gr.TextArea(
             label="System prompt for dataset generation. You can tune it and regenerate the sample",
@@ -195,7 +191,6 @@ with gr.Blocks(
                 interactive=False,
                 wrap=True,
             )
-
 
         with gr.Row():
             gr.Column(scale=1)
@@ -256,7 +251,9 @@ with gr.Blocks(
                     visible=False,
                 )
                 org_name = get_org_dropdown()
-                repo_name = gr.Textbox(label="Repo name", placeholder="dataset_name", value="my-distiset")
+                repo_name = gr.Textbox(
+                    label="Repo name", placeholder="dataset_name", value="my-distiset"
+                )
                 private = gr.Checkbox(
                     label="Private dataset", value=True, interactive=True, scale=0.5
                 )
