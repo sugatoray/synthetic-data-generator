@@ -88,7 +88,11 @@ BRAINSTORMING_PROMPT = (
 )
 
 PROMPT_CREATION_PROMPT = f"""You are an AI assistant specialized in generating very precise prompts for dataset creation.
-Your task is to write a prompt following the instruction of the user. Respond with the prompt and nothing else. In the generated prompt highly emphasize that the user questions are direct and concise and the assistant also provides highly concise and pertinent responses.
+
+Your task is to write a prompt following the instruction of the user. Respond with the prompt and nothing else. 
+
+In the generated prompt highly emphasize that the expected user questions are always direct and concise.
+
 The prompt you write should follow the same style and structure as the following example prompts:
 
 {INFORMATION_SEEKING_PROMPT}
