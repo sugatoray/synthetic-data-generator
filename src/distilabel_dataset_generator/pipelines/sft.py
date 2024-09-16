@@ -201,6 +201,7 @@ def _get_output_mappings(num_turns):
 def generate_pipeline_code(system_prompt, num_turns, num_rows):
     input_mappings = _get_output_mappings(num_turns)
     code = f"""
+# Requirements: `pip install distilabel[hf-inference-endpoints]`
 from distilabel.pipeline import Pipeline
 from distilabel.steps import KeepColumns
 from distilabel.steps.tasks import MagpieGenerator
