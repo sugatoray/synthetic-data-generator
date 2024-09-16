@@ -334,7 +334,7 @@ with gr.Blocks(
 
     gr.Markdown("## Or run this pipeline locally with distilabel")
 
-    with gr.Accordion("Run this pipeline on Distilabel", open=False):
+    with gr.Accordion("Run this pipeline using distilabel", open=False):
         pipeline_code = gr.Code(
             value=generate_pipeline_code(
                 system_prompt.value, num_turns.value, num_rows.value
