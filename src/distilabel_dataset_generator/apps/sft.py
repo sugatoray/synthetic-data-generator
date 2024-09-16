@@ -289,7 +289,7 @@ with gr.Blocks(
                     value="Generate Full Dataset", variant="primary"
                 )
                 gr.Column(scale=1)
-            success_message = gr.Markdown(visible=False)
+
             with gr.Row():
                 final_dataset = gr.DataFrame(
                     value=DEFAULT_DATASETS[0],
@@ -297,6 +297,8 @@ with gr.Blocks(
                     interactive=False,
                     wrap=True,
                 )
+            with gr.Row():
+                success_message = gr.Markdown(visible=False)
 
     def show_success_message(org_name, repo_name):
         return gr.Markdown(
