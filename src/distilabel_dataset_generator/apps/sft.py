@@ -304,7 +304,7 @@ with gr.Blocks(
             <div style="padding: 1em; background-color: #e6f3e6; border-radius: 5px; margin-top: 1em;">
                 <h3 style="color: #2e7d32; margin: 0;">Dataset Published Successfully!</h3>
                 <p style="margin-top: 0.5em;">
-                    The generated dataset is in the right format for Fine-tuning with TRL, AutoTrain or other frameworks.
+                    The generated dataset is in the right format for fine-tuning with TRL, AutoTrain or other frameworks.
                     Your dataset is now available at:
                     <a href="https://huggingface.co/datasets/{org_name}/{repo_name}" target="_blank" style="color: #1565c0; text-decoration: none;">
                         https://huggingface.co/datasets/{org_name}/{repo_name}
