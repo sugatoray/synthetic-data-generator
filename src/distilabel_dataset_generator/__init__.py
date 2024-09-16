@@ -95,7 +95,7 @@ class CustomDistisetWithAdditionalTag(distilabel.distiset.Distiset):
                 "synthetic",
                 "distilabel",
                 "rlaif",
-                "distilabel-dataset-generator",
+                "datacraft",
             ],
         }
 
