@@ -7,7 +7,7 @@ from distilabel.utils.card.dataset_card import (
     DistilabelDatasetCard,
     size_categories_parser,
 )
-from huggingface_hub import DatasetCardData, HfApi
+from huggingface_hub import DatasetCardData, HfApi, upload_file
 
 
 class CustomDistisetWithAdditionalTag(distilabel.distiset.Distiset):

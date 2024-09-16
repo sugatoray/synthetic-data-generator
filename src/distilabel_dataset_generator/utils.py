@@ -33,8 +33,7 @@ else:
 
 def get_login_button():
     return gr.LoginButton(
-        value="Sign in with Hugging Face!",
-        size="lg",
+        value="Sign in with Hugging Face!", size="lg", scale=2
     ).activate()
 
 

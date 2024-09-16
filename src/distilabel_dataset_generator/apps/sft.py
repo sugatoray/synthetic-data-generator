@@ -1,9 +1,11 @@
+import io
 import multiprocessing
 import time
 
 import gradio as gr
 import pandas as pd
 from distilabel.distiset import Distiset
+from huggingface_hub import upload_file
 
 from src.distilabel_dataset_generator.pipelines.sft import (
     DEFAULT_DATASET_DESCRIPTIONS,
@@ -140,7 +142,7 @@ def generate_dataset(
         distiset.push_to_hub(
             repo_id=repo_id,
             private=private,
-            include_script=False,
+            include_script=True,
             token=oauth_token,
         )
 
@@ -153,6 +155,18 @@ def generate_dataset(
 
     progress(1.0, desc="Dataset generation completed")
     return pd.DataFrame(outputs)
+
+
+def upload_pipeline_code(pipeline_code, org_name, repo_name, oauth_token):
+    with io.BytesIO(pipeline_code.encode("utf-8")) as f:
+        upload_file(
+            path_or_fileobj=f,
+            path_in_repo="pipeline.py",
+            repo_id=f"{org_name}/{repo_name}",
+            repo_type="dataset",
+            token=oauth_token,
+            commit_message="Include pipeline script",
+        )
 
 
 css = """
@@ -169,9 +183,9 @@ with gr.Blocks(
             "To push the dataset to the Hugging Face Hub you need to sign in. This will only be used for pushing the dataset not for data generation."
         )
     with gr.Row():
-        gr.Column(scale=0.5)
+        gr.Column()
         get_login_button()
-        gr.Column(scale=0.5)
+        gr.Column()
 
     gr.Markdown("## Iterate on a sample dataset")
     with gr.Column() as main_ui:
@@ -304,6 +318,17 @@ with gr.Blocks(
     def hide_success_message():
         return gr.Markdown(visible=False)
 
+    gr.Markdown("## Or run this pipeline locally with distilabel")
+
+    with gr.Accordion("Run this pipeline using distilabel", open=False):
+        pipeline_code = gr.Code(
+            value=generate_pipeline_code(
+                system_prompt.value, num_turns.value, num_rows.value
+            ),
+            language="python",
+            label="Distilabel Pipeline Code",
+        )
+
     sample_dataset.change(
         fn=lambda x: x,
         inputs=[sample_dataset],
@@ -326,22 +351,15 @@ with gr.Blocks(
         ],
         outputs=[final_dataset],
         show_progress=True,
+    ).then(
+        fn=upload_pipeline_code,
+        inputs=[pipeline_code, org_name, repo_name, oauth_token],
+        outputs=[],
     ).success(
         fn=show_success_message,
         inputs=[org_name, repo_name],
         outputs=[success_message],
     )
-
-    gr.Markdown("## Or run this pipeline locally with distilabel")
-
-    with gr.Accordion("Run this pipeline using distilabel", open=False):
-        pipeline_code = gr.Code(
-            value=generate_pipeline_code(
-                system_prompt.value, num_turns.value, num_rows.value
-            ),
-            language="python",
-            label="Distilabel Pipeline Code",
-        )
 
     system_prompt.change(
         fn=generate_pipeline_code,
