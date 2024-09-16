@@ -10,7 +10,7 @@ with gr.Blocks() as app:
                 <div style="text-align: justify;">
                     <h4 style="text-align: center;">What is Distilabel DataCraft?</h4>
 
-                    <p>Distilabel Dataset Generator is an experimental tool that allows you to easily create high-quality datasets for training and fine-tuning language models. It leverages the power of distilabel and advanced language models to generate synthetic data tailored to your specific needs.</p>
+                    <p>Distilabel DataCraft is an experimental tool that allows you to easily create high-quality datasets for training and fine-tuning language models. It leverages the power of distilabel and advanced language models to generate synthetic data tailored to your specific needs.</p>
 
                     <p>This tool simplifies the process of creating custom datasets, enabling you to:</p>
                     <ul>
