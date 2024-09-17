@@ -26,7 +26,7 @@ from src.distilabel_dataset_generator.utils import (
 
 def _run_pipeline(result_queue, num_turns, num_rows, system_prompt, is_sample):
     pipeline = get_pipeline(num_turns, num_rows, system_prompt, is_sample)
-    distiset: Distiset = pipeline.run(use_cache=True)
+    distiset: Distiset = pipeline.run(use_cache=False)
     result_queue.put(distiset)
 
 
