@@ -17,9 +17,9 @@ from src.distilabel_dataset_generator.pipelines.sft import (
     get_prompt_generation_step,
 )
 from src.distilabel_dataset_generator.utils import (
+    OAuthToken,
     get_login_button,
     get_org_dropdown,
-    get_token,
     swap_visibilty,
 )
 
@@ -76,7 +76,7 @@ def generate_dataset(
     private: bool = True,
     org_name: str = None,
     repo_name: str = None,
-    oauth_token: str = None,
+    oauth_token: OAuthToken = None,
     progress=gr.Progress(),
     is_sample: bool = False,
 ):
@@ -157,7 +157,9 @@ def generate_dataset(
     return pd.DataFrame(outputs)
 
 
-def upload_pipeline_code(pipeline_code, org_name, repo_name, oauth_token):
+def upload_pipeline_code(
+    pipeline_code, org_name, repo_name, oauth_token: OAuthToken = None
+):
     with io.BytesIO(pipeline_code.encode("utf-8")) as f:
         upload_file(
             path_or_fileobj=f,
@@ -269,13 +271,6 @@ with gr.Blocks(
                 )
 
             with gr.Row(variant="panel"):
-                oauth_token = gr.Textbox(
-                    value=get_token(),
-                    label="Hugging Face Token",
-                    placeholder="hf_...",
-                    type="password",
-                    visible=False,
-                )
                 org_name = get_org_dropdown()
                 repo_name = gr.Textbox(
                     label="Repo name", placeholder="dataset_name", value="my-distiset"
@@ -352,13 +347,12 @@ with gr.Blocks(
             private,
             org_name,
             repo_name,
-            oauth_token,
         ],
         outputs=[final_dataset],
         show_progress=True,
     ).then(
         fn=upload_pipeline_code,
-        inputs=[pipeline_code, org_name, repo_name, oauth_token],
+        inputs=[pipeline_code, org_name, repo_name],
         outputs=[],
     ).success(
         fn=show_success_message,
@@ -381,6 +375,5 @@ with gr.Blocks(
         inputs=[system_prompt, num_turns, num_rows],
         outputs=[pipeline_code],
     )
-    app.load(get_token, outputs=[oauth_token])
     app.load(get_org_dropdown, outputs=[org_name])
     app.load(fn=swap_visibilty, outputs=main_ui)

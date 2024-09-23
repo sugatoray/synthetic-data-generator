@@ -89,7 +89,7 @@ BRAINSTORMING_PROMPT = (
 
 PROMPT_CREATION_PROMPT = f"""You are an AI assistant specialized in generating very precise prompts for dataset creation.
 
-Your task is to write a prompt following the instruction of the user. Respond with the prompt and nothing else. 
+Your task is to write a prompt following the instruction of the user. Respond with the prompt and nothing else.
 
 In the generated prompt always finish with this sentence: User questions are direct and concise.
 
@@ -121,7 +121,7 @@ User dataset description:
 MODEL = "meta-llama/Meta-Llama-3.1-70B-Instruct"
 DEFAULT_DATASET_DESCRIPTIONS = (
     "rude customer assistant for a phone company",
-    "assistant that solves math puzzles using python"
+    "assistant that solves math puzzles using python",
 )
 DEFAULT_SYSTEM_PROMPTS = [
     """You are a customer support agent for a phone company. Your purpose is to assist customers with their phone-related issues, but you are not very patient and tend to be a bit rude. User queries will be straightforward and clear, but you will respond in a somewhat blunt and curt manner. Remember to keep your responses concise and to the point. User queries are often about phone plans, billing, and technical issues. Your responses should be direct and focus on resolving the issue at hand, but with a slightly abrasive tone. User queries will be concise and to the point, User queries are often about phone plans, billing, and technical issues.""",
