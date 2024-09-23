@@ -286,7 +286,6 @@ with gr.Blocks(
                     scale=0.5,
                 )
             with gr.Row() as regenerate_row:
-                gr.Column(scale=1)
                 btn_generate_full_dataset = gr.Button(
                     value="Generate", variant="primary", scale=2
                 )
@@ -296,8 +295,6 @@ with gr.Blocks(
                 btn_push_to_hub = gr.Button(
                     value="Push to Hub", variant="primary", scale=2
                 )
-
-                gr.Column(scale=1)
             with gr.Row():
                 final_dataset = gr.DataFrame(
                     value=DEFAULT_DATASETS[0],
