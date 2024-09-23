@@ -27,6 +27,10 @@ with gr.Blocks() as app:
 
                     <p>The current implementation is based on <a href="https://huggingface.co/docs/api-inference/index" target="_blank">Free Serverless Hugging Face Inference Endpoints</a>. They are rate limited but free to use for anyone on the Hugging Face Hub. You can re-use the underlying pipeline to generate data with other <a href="https://distilabel.argilla.io/dev/components-gallery/llms/" target="_blank">distilabel LLM integrations</a>.</p>
 
+                    <h4 style="text-align: center;">Can I run this locally?</h4>
+
+                    <p>Yes, you can run this locally by <a href="https://huggingface.co/spaces/argilla/distilabel-datacraft?clone=true" target="_blank">cloning the Space</a> and installing the requirements with `pip install -r requirements.txt` and running `python app.py`. Alternatively, you can install the <a href="https://github.com/argilla-io/distilabel" target="_blank">distilabel library</a> with `pip install distilabel[hf-inference-endpoints]` and use the pipeline code at the bottom of each application tab. Distilabel also supports running the pipeline with <a href="https://distilabel.argilla.io/latest/components-gallery/llms/" target="_blank">other LLMs</a>.</p>
+
                     <h4 style="text-align: center;">What is distilabel?</h4>
 
                     <p>Distilabel is the framework for synthetic data and AI feedback for engineers who need fast, reliable and scalable pipelines based on verified research papers.</p>

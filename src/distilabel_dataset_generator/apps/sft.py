@@ -4,6 +4,7 @@ import time
 
 import gradio as gr
 import pandas as pd
+from datasets import Dataset
 from distilabel.distiset import Distiset
 from huggingface_hub import upload_file
 
@@ -69,17 +70,7 @@ def generate_sample_dataset(system_prompt, progress=gr.Progress()):
     return result
 
 
-def generate_dataset(
-    system_prompt: str,
-    num_turns: int = 1,
-    num_rows: int = 5,
-    private: bool = True,
-    org_name: str = None,
-    repo_name: str = None,
-    oauth_token: OAuthToken = None,
-    progress=gr.Progress(),
-    is_sample: bool = False,
-):
+def _check_push_to_hub(org_name, repo_name):
     repo_id = (
         f"{org_name}/{repo_name}"
         if repo_name is not None and org_name is not None
@@ -90,15 +81,16 @@ def generate_dataset(
             raise gr.Error(
                 "Please provide a `repo_name` and `org_name` to push the dataset to."
             )
+    return repo_id
 
-    if num_turns > 4:
-        num_turns = 4
-        gr.Info("You can only generate a dataset with 4 or fewer turns. Setting to 4.")
-    if num_rows > 5000:
-        num_rows = 1000
-        gr.Info(
-            "You can only generate a dataset with 1000 or fewer rows. Setting to 1000."
-        )
+
+def generate_dataset(
+    system_prompt: str,
+    num_turns: int = 1,
+    num_rows: int = 5,
+    is_sample: bool = False,
+    progress=gr.Progress(),
+):
     if num_rows < 5:
         duration = 25
     elif num_rows < 10:
@@ -137,24 +129,37 @@ def generate_dataset(
 
     distiset = result_queue.get()
 
-    if repo_id is not None:
-        progress(0.95, desc="Pushing dataset to Hugging Face Hub.")
-        distiset.push_to_hub(
-            repo_id=repo_id,
-            private=private,
-            include_script=True,
-            token=oauth_token,
-        )
-
     # If not pushing to hub generate the dataset directly
     distiset = distiset["default"]["train"]
     if num_turns == 1:
         outputs = distiset.to_pandas()[["prompt", "completion"]]
     else:
         outputs = distiset.to_pandas()[["messages"]]
+    dataframe = pd.DataFrame(outputs)
 
     progress(1.0, desc="Dataset generation completed")
-    return pd.DataFrame(outputs)
+    return dataframe
+
+
+def push_to_hub(
+    dataframe,
+    private: bool = True,
+    org_name: str = None,
+    repo_name: str = None,
+    oauth_token: OAuthToken = None,
+):
+    distiset = Distiset(
+        {
+            "default": Dataset.from_pandas(dataframe),
+        }
+    )
+    distiset.push_to_hub(
+        repo_id=f"{org_name}/{repo_name}",
+        private=private,
+        include_script=True,
+        token=oauth_token,
+    )
+    return dataframe
 
 
 def upload_pipeline_code(
@@ -182,7 +187,7 @@ with gr.Blocks(
 ) as app:
     with gr.Row():
         gr.Markdown(
-            "To push the dataset to the Hugging Face Hub you need to sign in. This will only be used for pushing the dataset not for data generation."
+            "Want to run this locally or with other LLMs? Take a look at the FAQ tab. DataCraft is free, we use the authentication token to push the dataset to the Hugging Face Hub and not for data generation."
         )
     with gr.Row():
         gr.Column()
@@ -269,22 +274,30 @@ with gr.Blocks(
                     maximum=500,
                     info="The number of rows in the dataset. Note that you are able to generate more rows at once but that this will take time.",
                 )
-
             with gr.Row(variant="panel"):
                 org_name = get_org_dropdown()
                 repo_name = gr.Textbox(
                     label="Repo name", placeholder="dataset_name", value="my-distiset"
                 )
                 private = gr.Checkbox(
-                    label="Private dataset", value=True, interactive=True, scale=0.5
+                    label="Private dataset",
+                    value=True,
+                    interactive=True,
+                    scale=0.5,
                 )
             with gr.Row() as regenerate_row:
                 gr.Column(scale=1)
                 btn_generate_full_dataset = gr.Button(
-                    value="Generate Full Dataset", variant="primary"
+                    value="Generate", variant="primary", scale=2
                 )
-                gr.Column(scale=1)
+                btn_generate_and_push_to_hub = gr.Button(
+                    value="Generate and Push to Hub", variant="primary", scale=2
+                )
+                btn_push_to_hub = gr.Button(
+                    value="Push to Hub", variant="primary", scale=2
+                )
 
+                gr.Column(scale=1)
             with gr.Row():
                 final_dataset = gr.DataFrame(
                     value=DEFAULT_DATASETS[0],
@@ -292,6 +305,7 @@ with gr.Blocks(
                     interactive=False,
                     wrap=True,
                 )
+
             with gr.Row():
                 success_message = gr.Markdown(visible=False)
 
@@ -340,16 +354,37 @@ with gr.Blocks(
         outputs=[success_message],
     ).then(
         fn=generate_dataset,
-        inputs=[
-            system_prompt,
-            num_turns,
-            num_rows,
-            private,
-            org_name,
-            repo_name,
-        ],
+        inputs=[system_prompt, num_turns, num_rows],
         outputs=[final_dataset],
         show_progress=True,
+    )
+    btn_generate_and_push_to_hub.click(
+        fn=hide_success_message,
+        outputs=[success_message],
+    ).then(
+        fn=generate_dataset,
+        inputs=[system_prompt, num_turns, num_rows],
+        outputs=[final_dataset],
+        show_progress=True,
+    ).then(
+        fn=push_to_hub,
+        inputs=[final_dataset, private, org_name, repo_name],
+        outputs=[final_dataset],
+        show_progress=True,
+    ).then(
+        fn=upload_pipeline_code,
+        inputs=[pipeline_code, org_name, repo_name],
+        outputs=[],
+    ).success(
+        fn=show_success_message,
+        inputs=[org_name, repo_name],
+        outputs=[success_message],
+    )
+
+    btn_push_to_hub.click(
+        fn=push_to_hub,
+        inputs=[final_dataset, private, org_name, repo_name],
+        outputs=[final_dataset],
     ).then(
         fn=upload_pipeline_code,
         inputs=[pipeline_code, org_name, repo_name],
