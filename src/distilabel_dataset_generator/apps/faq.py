@@ -8,9 +8,9 @@ with gr.Blocks() as app:
             gr.HTML(
                 """
                 <div style="text-align: justify;">
-                    <h4 style="text-align: center;">What is Distilabel DataCraft?</h4>
+                    <h4 style="text-align: center;">What is Distilabel Synthetic Data Generator?</h4>
 
-                    <p>Distilabel DataCraft is an experimental tool that allows you to easily create high-quality datasets for training and fine-tuning language models. It leverages the power of distilabel and advanced language models to generate synthetic data tailored to your specific needs.</p>
+                    <p>Distilabel Synthetic Data Generator is an experimental tool that allows you to easily create high-quality datasets for training and fine-tuning language models. It leverages the power of distilabel and advanced language models to generate synthetic data tailored to your specific needs.</p>
 
                     <p>This tool simplifies the process of creating custom datasets, enabling you to:</p>
                     <ul>
@@ -21,7 +21,7 @@ with gr.Blocks() as app:
                         <li>Push your generated datasets directly to the Hugging Face Hub</li>
                     </ul>
 
-                    <p>By using Distilabel DataCraft, you can rapidly prototype and create datasets for, accelerating your AI development process.</p>
+                    <p>By using Distilabel Synthetic Data Generator, you can rapidly prototype and create datasets for, accelerating your AI development process.</p>
 
                     <h4 style="text-align: center;">How is this free?</h4>
 
@@ -29,7 +29,7 @@ with gr.Blocks() as app:
 
                     <h4 style="text-align: center;">Can I run this locally?</h4>
 
-                    <p>Yes, you can run this locally by <a href="https://huggingface.co/spaces/argilla/distilabel-datacraft?clone=true" target="_blank">cloning the Space</a> and installing the requirements with `pip install -r requirements.txt` and running `python app.py`. Alternatively, you can install the <a href="https://github.com/argilla-io/distilabel" target="_blank">distilabel library</a> with `pip install distilabel[hf-inference-endpoints]` and use the pipeline code at the bottom of each application tab. Distilabel also supports running the pipeline with <a href="https://distilabel.argilla.io/latest/components-gallery/llms/" target="_blank">other LLMs</a>.</p>
+                    <p>Yes, you can run this locally by <a href="https://huggingface.co/spaces/argilla/synthetic-data-generator?clone=true" target="_blank">cloning the Space</a> and installing the requirements with `pip install -r requirements.txt` and running `python app.py`. Alternatively, you can install the <a href="https://github.com/argilla-io/distilabel" target="_blank">distilabel library</a> with `pip install distilabel[hf-inference-endpoints]` and use the pipeline code at the bottom of each application tab. Distilabel also supports running the pipeline with <a href="https://distilabel.argilla.io/latest/components-gallery/llms/" target="_blank">other LLMs</a>.</p>
 
                     <h4 style="text-align: center;">What is distilabel?</h4>
 
