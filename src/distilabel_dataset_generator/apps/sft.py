@@ -181,13 +181,13 @@ css = """
 """
 
 with gr.Blocks(
-    title="🧶 DataCraft",
-    head="🧶 DataCraft",
+    title="🧬 Synthetic Data Generator",
+    head="🧬  Synthetic Data Generator",
     css=css,
 ) as app:
     with gr.Row():
         gr.Markdown(
-            "Want to run this locally or with other LLMs? Take a look at the FAQ tab. DataCraft is free, we use the authentication token to push the dataset to the Hugging Face Hub and not for data generation."
+            "Want to run this locally or with other LLMs? Take a look at the FAQ tab. distilabel Synthetic Data Generator is free, we use the authentication token to push the dataset to the Hugging Face Hub and not for data generation."
         )
     with gr.Row():
         gr.Column()
