@@ -2,7 +2,7 @@
 title: Synthetic Data Generator
 emoji: 🧬
 colorFrom: yellow
-colorTo: gray
+colorTo: pink
 sdk: gradio
 sdk_version: 4.44.0
 app_file: app.py
