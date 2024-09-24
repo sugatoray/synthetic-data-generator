@@ -6,7 +6,7 @@ colorTo: pink
 sdk: gradio
 sdk_version: 4.44.0
 app_file: app.py
-pinned: false
+pinned: true
 license: apache-2.0
 hf_oauth: true
 header: mini
