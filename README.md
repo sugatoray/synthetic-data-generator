@@ -1,7 +1,7 @@
 ---
-title: Distilabel DataCraft
-emoji: 🧶
-colorFrom: purple
+title: Synthetic Data Generator
+emoji: 🧬
+colorFrom: yellow
 colorTo: gray
 sdk: gradio
 sdk_version: 4.44.0
