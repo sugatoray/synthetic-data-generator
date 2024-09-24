@@ -62,7 +62,7 @@ demo = gr.TabbedInterface(
             </a>
         </div>
         <div class="title-container">
-            <h1 style="margin: 0; font-size: 2em;">🧶 DataCraft</h1>
+            <h1 style="margin: 0; font-size: 2em;">🧬  Synthetic Data Generator</h1>
             <p style="margin: 10px 0 0 0; color: #666; font-size: 1.1em;">Build datasets using natural language</p>
         </div>
     </div>
