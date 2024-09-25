@@ -143,30 +143,40 @@ def generate_dataset(
 
 
 def push_to_hub(
-    dataframe,
+    dataframe: pd.DataFrame,
     private: bool = True,
     org_name: str = None,
     repo_name: str = None,
     oauth_token: Union[OAuthToken, None] = None,
+    progress=gr.Progress(),
 ):
+    progress(0.1, desc="Setting up dataset")
     repo_id = _check_push_to_hub(org_name, repo_name)
     distiset = Distiset(
         {
             "default": Dataset.from_pandas(dataframe),
         }
     )
+    progress(0.2, desc="Pushing dataset to hub")
     distiset.push_to_hub(
         repo_id=repo_id,
         private=private,
-        include_script=True,
+        include_script=False,
         token=oauth_token.token,
+        create_pr=False,
     )
+    progress(1.0, desc="Dataset pushed to hub")
     return dataframe
 
 
 def upload_pipeline_code(
-    pipeline_code, org_name, repo_name, oauth_token: Union[OAuthToken, None] = None
+    pipeline_code,
+    org_name,
+    repo_name,
+    oauth_token: Union[OAuthToken, None] = None,
+    progress=gr.Progress(),
 ):
+    progress(0.1, desc="Uploading pipeline code")
     with io.BytesIO(pipeline_code.encode("utf-8")) as f:
         upload_file(
             path_or_fileobj=f,
@@ -176,6 +186,7 @@ def upload_pipeline_code(
             token=oauth_token,
             commit_message="Include pipeline script",
         )
+    progress(1.0, desc="Pipeline code uploaded")
 
 
 css = """
@@ -357,6 +368,7 @@ with gr.Blocks(
         outputs=[final_dataset],
         show_progress=True,
     )
+
     btn_generate_and_push_to_hub.click(
         fn=hide_success_message,
         outputs=[success_message],
@@ -374,6 +386,7 @@ with gr.Blocks(
         fn=upload_pipeline_code,
         inputs=[pipeline_code, org_name, repo_name],
         outputs=[],
+        show_progress=True,
     ).success(
         fn=show_success_message,
         inputs=[org_name, repo_name],
@@ -388,6 +401,7 @@ with gr.Blocks(
         fn=upload_pipeline_code,
         inputs=[pipeline_code, org_name, repo_name],
         outputs=[],
+        show_progress=True,
     ).success(
         fn=show_success_message,
         inputs=[org_name, repo_name],
