@@ -1,11 +1,13 @@
 import io
 import multiprocessing
 import time
+from typing import Union
 
 import gradio as gr
 import pandas as pd
 from datasets import Dataset
 from distilabel.distiset import Distiset
+from gradio.oauth import OAuthToken
 from huggingface_hub import upload_file
 
 from src.distilabel_dataset_generator.pipelines.sft import (
@@ -18,7 +20,6 @@ from src.distilabel_dataset_generator.pipelines.sft import (
     get_prompt_generation_step,
 )
 from src.distilabel_dataset_generator.utils import (
-    OAuthToken,
     get_login_button,
     get_org_dropdown,
     swap_visibilty,
@@ -146,7 +147,7 @@ def push_to_hub(
     private: bool = True,
     org_name: str = None,
     repo_name: str = None,
-    oauth_token: OAuthToken = None,
+    oauth_token: Union[OAuthToken, None] = None,
 ):
     distiset = Distiset(
         {
@@ -163,7 +164,7 @@ def push_to_hub(
 
 
 def upload_pipeline_code(
-    pipeline_code, org_name, repo_name, oauth_token: OAuthToken = None
+    pipeline_code, org_name, repo_name, oauth_token: Union[OAuthToken, None] = None
 ):
     with io.BytesIO(pipeline_code.encode("utf-8")) as f:
         upload_file(
