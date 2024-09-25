@@ -176,15 +176,17 @@ def upload_pipeline_code(
     oauth_token: Union[OAuthToken, None] = None,
     progress=gr.Progress(),
 ):
+    repo_id = _check_push_to_hub(org_name, repo_name)
     progress(0.1, desc="Uploading pipeline code")
     with io.BytesIO(pipeline_code.encode("utf-8")) as f:
         upload_file(
             path_or_fileobj=f,
             path_in_repo="pipeline.py",
-            repo_id=f"{org_name}/{repo_name}",
+            repo_id=repo_id,
             repo_type="dataset",
             token=oauth_token.token,
             commit_message="Include pipeline script",
+            create_pr=False,
         )
     progress(1.0, desc="Pipeline code uploaded")
 
