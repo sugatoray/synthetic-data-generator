@@ -159,7 +159,7 @@ def push_to_hub(
         repo_id=repo_id,
         private=private,
         include_script=True,
-        token=oauth_token,
+        token=oauth_token.token,
     )
     return dataframe
 
