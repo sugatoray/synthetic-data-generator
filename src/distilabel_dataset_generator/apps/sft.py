@@ -403,7 +403,7 @@ with gr.Blocks(
         inputs=[final_dataset, private, org_name, repo_name],
         outputs=[final_dataset],
         show_progress=True,
-    ).then().then(
+    ).then(
         fn=upload_pipeline_code,
         inputs=[pipeline_code, org_name, repo_name],
         outputs=[],
