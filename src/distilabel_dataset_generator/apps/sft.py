@@ -394,9 +394,13 @@ with gr.Blocks(
     )
 
     btn_push_to_hub.click(
+        fn=hide_success_message,
+        outputs=[success_message],
+    ).then(
         fn=push_to_hub,
         inputs=[final_dataset, private, org_name, repo_name],
         outputs=[final_dataset],
+        show_progress=True,
     ).then(
         fn=upload_pipeline_code,
         inputs=[pipeline_code, org_name, repo_name],
