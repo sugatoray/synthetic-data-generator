@@ -149,13 +149,14 @@ def push_to_hub(
     repo_name: str = None,
     oauth_token: Union[OAuthToken, None] = None,
 ):
+    repo_id = _check_push_to_hub(org_name, repo_name)
     distiset = Distiset(
         {
             "default": Dataset.from_pandas(dataframe),
         }
     )
     distiset.push_to_hub(
-        repo_id=f"{org_name}/{repo_name}",
+        repo_id=repo_id,
         private=private,
         include_script=True,
         token=oauth_token,

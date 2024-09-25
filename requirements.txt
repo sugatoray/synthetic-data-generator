@@ -1,3 +1,4 @@
 transformers
 gradio[oauth]
 distilabel[hf-inference-endpoints] @ git+https://github.com/argilla-io/distilabel.git@develop
+beautifulsoup4
