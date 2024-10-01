@@ -1,10 +1,12 @@
 import pandas as pd
+from datasets import Dataset
+from distilabel.distiset import Distiset
 from distilabel.llms import InferenceEndpointsLLM
 from distilabel.pipeline import Pipeline
 from distilabel.steps import KeepColumns
-from distilabel.steps.tasks import MagpieGenerator, TextGeneration
+from distilabel.steps.tasks import ChatGeneration, MagpieGenerator, TextGeneration
 
-from src.distilabel_dataset_generator.utils import HF_TOKENS
+from distilabel_dataset_generator.utils import HF_TOKENS
 
 INFORMATION_SEEKING_PROMPT = (
     "You are an AI assistant designed to provide accurate and concise information on a wide"
@@ -118,7 +120,7 @@ The prompt you write should follow the same style and structure as the following
 User dataset description:
 """
 
-MODEL = "meta-llama/Meta-Llama-3.1-70B-Instruct"
+MODEL = "meta-llama/Meta-Llama-3.1-8B-Instruct"
 DEFAULT_DATASET_DESCRIPTIONS = (
     "rude customer assistant for a phone company",
     "assistant that solves math puzzles using python",
@@ -155,7 +157,7 @@ _STOP_SEQUENCES = [
     "assistant",
     " \n\n",
 ]
-DEFAULT_BATCH_SIZE = 50
+DEFAULT_BATCH_SIZE = 5
 TOKEN_INDEX = 0
 
 
@@ -198,7 +200,7 @@ with Pipeline(name="sft") as pipeline:
         output_mappings={input_mappings},
     )
     keep_columns = KeepColumns(
-        columns={list(input_mappings.values())} + ["model_name"],
+        columns={list(input_mappings.values())} + ["model_name", "system_prompt"],
     )
     magpie.connect(keep_columns)
 
@@ -208,92 +210,101 @@ if __name__ == "__main__":
     return code
 
 
-def get_pipeline(num_turns, num_rows, system_prompt, is_sample):
+def _get_next_api_key():
     global TOKEN_INDEX
+    api_key = HF_TOKENS[TOKEN_INDEX % len(HF_TOKENS)]
+    TOKEN_INDEX += 1
+    return api_key
+
+
+def get_magpie_generator(num_turns, num_rows, system_prompt, is_sample):
     input_mappings = _get_output_mappings(num_turns)
-    output_mappings = input_mappings
-    api_key = HF_TOKENS[TOKEN_INDEX % len(HF_TOKENS)]
-    TOKEN_INDEX += 1
-    MODEL = "meta-llama/Meta-Llama-3.1-8B-Instruct"
-    print("is sample?", is_sample)
+    output_mappings = input_mappings.copy()
     if num_turns == 1:
-        with Pipeline(name="sft") as pipeline:
-            magpie = MagpieGenerator(
-                llm=InferenceEndpointsLLM(
-                    model_id=MODEL,
-                    tokenizer_id=MODEL,
-                    api_key=api_key,
-                    magpie_pre_query_template="llama3",
-                    generation_kwargs={
-                        "temperature": 0.8,  # it's the best value for Llama 3.1 70B Instruct
-                        "do_sample": True,
-                        "max_new_tokens": 256 if is_sample else 512,
-                        "stop_sequences": _STOP_SEQUENCES,
-                    },
-                ),
-                batch_size=DEFAULT_BATCH_SIZE,
-                n_turns=num_turns,
-                num_rows=num_rows,
-                system_prompt=system_prompt,
-                output_mappings={"instruction": "prompt"},
-                only_instruction=True,
-            )
-
-            generate_response = TextGeneration(
-                llm=InferenceEndpointsLLM(
-                    model_id=MODEL,
-                    tokenizer_id=MODEL,
-                    api_key=api_key,
-                    generation_kwargs={
-                        "temperature": 0.8,
-                        "max_new_tokens": 256 if is_sample else 1024,
-                    },
-                ),
-                system_prompt=system_prompt,
-                output_mappings={"generation": "completion"},
-                input_mappings={"instruction": "prompt"},
-            )
-
-            keep_columns = KeepColumns(
-                columns=list(output_mappings.values()) + ["model_name"],
-            )
-
-            magpie.connect(generate_response)
-            generate_response.connect(keep_columns)
-        return pipeline
+        magpie_generator = MagpieGenerator(
+            llm=InferenceEndpointsLLM(
+                model_id=MODEL,
+                tokenizer_id=MODEL,
+                api_key=_get_next_api_key(),
+                magpie_pre_query_template="llama3",
+                generation_kwargs={
+                    "temperature": 0.8,
+                    "do_sample": True,
+                    "max_new_tokens": 256 if is_sample else 512,
+                    "stop_sequences": _STOP_SEQUENCES,
+                },
+            ),
+            batch_size=DEFAULT_BATCH_SIZE,
+            n_turns=num_turns,
+            num_rows=num_rows,
+            system_prompt=system_prompt,
+            output_mappings=output_mappings,
+            only_instruction=True,
+        )
     else:
-        with Pipeline(name="sft") as pipeline:
-            magpie = MagpieGenerator(
-                llm=InferenceEndpointsLLM(
-                    model_id=MODEL,
-                    tokenizer_id=MODEL,
-                    api_key=api_key,
-                    magpie_pre_query_template="llama3",
-                    generation_kwargs={
-                        "temperature": 0.8,  # it's the best value for Llama 3.1 70B Instruct
-                        "do_sample": True,
-                        "max_new_tokens": 2048,
-                        "stop_sequences": _STOP_SEQUENCES,
-                    },
-                ),
-                batch_size=DEFAULT_BATCH_SIZE,
-                n_turns=num_turns,
-                num_rows=num_rows,
-                system_prompt=system_prompt,
-                output_mappings=output_mappings,
-            )
-            keep_columns = KeepColumns(
-                columns=list(output_mappings.values()) + ["model_name"],
-            )
-            magpie.connect(keep_columns)
-        return pipeline
+        magpie_generator = MagpieGenerator(
+            llm=InferenceEndpointsLLM(
+                model_id=MODEL,
+                tokenizer_id=MODEL,
+                api_key=_get_next_api_key(),
+                magpie_pre_query_template="llama3",
+                generation_kwargs={
+                    "temperature": 0.8,
+                    "do_sample": True,
+                    "max_new_tokens": 256 if is_sample else 1024,
+                    "stop_sequences": _STOP_SEQUENCES,
+                },
+            ),
+            batch_size=DEFAULT_BATCH_SIZE,
+            end_with_user=True,
+            n_turns=num_turns,
+            num_rows=num_rows,
+            system_prompt=system_prompt,
+            output_mappings=output_mappings,
+        )
+    magpie_generator.load()
+    return magpie_generator
 
 
-def get_prompt_generation_step():
+def get_response_generator(num_turns, system_prompt, is_sample):
+    if num_turns == 1:
+        response_generator = TextGeneration(
+            llm=InferenceEndpointsLLM(
+                model_id=MODEL,
+                tokenizer_id=MODEL,
+                api_key=_get_next_api_key(),
+                generation_kwargs={
+                    "temperature": 0.8,
+                    "max_new_tokens": 256 if is_sample else 1024,
+                },
+            ),
+            system_prompt=system_prompt,
+            output_mappings={"generation": "completion"},
+            input_mappings={"instruction": "prompt"},
+        )
+    else:
+        response_generator = ChatGeneration(
+            llm=InferenceEndpointsLLM(
+                model_id=MODEL,
+                tokenizer_id=MODEL,
+                api_key=_get_next_api_key(),
+                generation_kwargs={
+                    "temperature": 0.8,
+                    "max_new_tokens": 2048,
+                },
+            ),
+            output_mappings={"generation": "completion"},
+            input_mappings={"conversation": "messages"},
+        )
+    response_generator.load()
+    return response_generator
+
+
+def get_prompt_generator():
     global TOKEN_INDEX
     api_key = HF_TOKENS[TOKEN_INDEX % len(HF_TOKENS)]
     TOKEN_INDEX += 1
-    generate_description = TextGeneration(
+    prompt_generator = TextGeneration(
         llm=InferenceEndpointsLLM(
             api_key=api_key,
             model_id=MODEL,
@@ -306,13 +317,30 @@ def get_prompt_generation_step():
         ),
         use_system_prompt=True,
     )
-    return generate_description
+    prompt_generator.load()
+    return prompt_generator
+
+
+def get_pipeline(num_turns, num_rows, system_prompt, is_sample):
+    input_mappings = _get_output_mappings(num_turns)
+    output_mappings = input_mappings
+
+    with Pipeline(name="sft") as pipeline:
+        magpie = get_magpie_generator(num_turns, num_rows, system_prompt, is_sample)
+        generate_response = get_response_generator(system_prompt, is_sample)
+
+        keep_columns = KeepColumns(
+            columns=list(output_mappings.values()) + ["model_name"],
+        )
+
+        magpie.connect(generate_response)
+        generate_response.connect(keep_columns)
+        return pipeline
 
 
 if __name__ == "__main__":
-    prompt_generation_step = get_prompt_generation_step()
-    prompt_generation_step.load()
-    result = next(
+    prompt_generation_step = get_prompt_generator()
+    system_prompt = next(
         prompt_generation_step.process(
             [
                 {
@@ -322,5 +350,64 @@ if __name__ == "__main__":
             ]
         )
     )[0]["generation"]
-    pipeline = get_pipeline(num_rows=100, num_turns=1, system_prompt=result)
-    pipeline.run()
+    num_rows = 2
+    num_turns = 1
+    magpie_generator = get_magpie_generator(num_turns, num_rows, system_prompt, False)
+    response_generator = get_response_generator(num_turns, system_prompt, False)
+    total_steps = num_rows * 2
+    batch_size = 5  # Adjust this value as needed
+
+    # create instructions
+    magpie_results = []
+    for i in range(0, num_rows, batch_size):
+        batch = list(magpie_generator.process())[:batch_size]
+        magpie_results.extend([item[0] for item in batch])
+
+    # generate responses
+    response_results = []
+    if num_turns == 1:
+        for i in range(0, len(magpie_results), batch_size):
+            batch = magpie_results[i : i + batch_size]
+            batch = [entry[0] for entry in batch]
+            responses = list(response_generator.process(inputs=batch))
+            response_results.extend(responses)
+        for result in response_results:
+            result[0]["prompt"] = result[0]["instruction"]
+            result[0]["completion"] = result[0]["generation"]
+            result[0]["system_prompt"] = system_prompt
+    else:
+        for result in magpie_results:
+            result[0]["conversation"].insert(
+                0, {"role": "system", "content": system_prompt}
+            )
+            result[0]["messages"] = result[0]["conversation"]
+        for i in range(0, len(magpie_results), batch_size):
+            batch = magpie_results[i : i + batch_size]
+            batch = [entry[0] for entry in batch]
+            responses = list(response_generator.process(inputs=batch))
+            response_results.extend(responses)
+
+        for result in response_results:
+            result[0]["messages"].append(
+                {"role": "assistant", "content": result[0]["generation"]}
+            )
+
+    distiset_results = []
+    for result in response_results[0]:
+        record = {}
+        for relevant_keys in [
+            "messages",
+            "prompt",
+            "completion",
+            "model_name",
+            "system_prompt",
+        ]:
+            if relevant_keys in result:
+                record[relevant_keys] = result[relevant_keys]
+        distiset_results.append(record)
+
+    distiset = Distiset(
+        {
+            "default": Dataset.from_list(distiset_results),
+        }
+    )

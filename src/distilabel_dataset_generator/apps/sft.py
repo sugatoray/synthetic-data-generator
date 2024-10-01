@@ -1,23 +1,24 @@
 import io
-import multiprocessing
-import time
 from typing import Union
 
 import gradio as gr
 import pandas as pd
 from datasets import Dataset
 from distilabel.distiset import Distiset
+from distilabel.steps.tasks.text_generation import TextGeneration
 from gradio.oauth import OAuthToken
 from huggingface_hub import upload_file
 
 from src.distilabel_dataset_generator.pipelines.sft import (
+    DEFAULT_BATCH_SIZE,
     DEFAULT_DATASET_DESCRIPTIONS,
     DEFAULT_DATASETS,
     DEFAULT_SYSTEM_PROMPTS,
     PROMPT_CREATION_PROMPT,
     generate_pipeline_code,
-    get_pipeline,
-    get_prompt_generation_step,
+    get_magpie_generator,
+    get_prompt_generator,
+    get_response_generator,
 )
 from src.distilabel_dataset_generator.utils import (
     get_login_button,
@@ -26,22 +27,15 @@ from src.distilabel_dataset_generator.utils import (
 )
 
 
-def _run_pipeline(result_queue, num_turns, num_rows, system_prompt, is_sample):
-    pipeline = get_pipeline(num_turns, num_rows, system_prompt, is_sample)
-    distiset: Distiset = pipeline.run(use_cache=False)
-    result_queue.put(distiset)
-
-
 def generate_system_prompt(dataset_description, progress=gr.Progress()):
+    progress(0.0, desc="Generating system prompt")
     if dataset_description in DEFAULT_DATASET_DESCRIPTIONS:
         index = DEFAULT_DATASET_DESCRIPTIONS.index(dataset_description)
         if index < len(DEFAULT_SYSTEM_PROMPTS):
             return DEFAULT_SYSTEM_PROMPTS[index]
 
-    progress(0.1, desc="Initializing text generation")
-    generate_description = get_prompt_generation_step()
-    progress(0.4, desc="Loading model")
-    generate_description.load()
+    progress(0.3, desc="Initializing text generation")
+    generate_description: TextGeneration = get_prompt_generator()
     progress(0.7, desc="Generating system prompt")
     result = next(
         generate_description.process(
@@ -62,12 +56,9 @@ def generate_sample_dataset(system_prompt, progress=gr.Progress()):
         index = DEFAULT_SYSTEM_PROMPTS.index(system_prompt)
         if index < len(DEFAULT_DATASETS):
             return DEFAULT_DATASETS[index]
-
-    progress(0.1, desc="Initializing sample dataset generation")
     result = generate_dataset(
         system_prompt, num_turns=1, num_rows=1, progress=progress, is_sample=True
     )
-    progress(1.0, desc="Sample dataset generated")
     return result
 
 
@@ -92,52 +83,98 @@ def generate_dataset(
     is_sample: bool = False,
     progress=gr.Progress(),
 ):
-    if num_rows < 5:
-        duration = 25
-    elif num_rows < 10:
-        duration = 60
-    elif num_rows < 30:
-        duration = 120
-    elif num_rows < 100:
-        duration = 240
-    elif num_rows < 300:
-        duration = 600
-    elif num_rows < 1000:
-        duration = 1200
-    else:
-        duration = 2400
+    progress(0.0, desc="(1/2) Generating instructions")
+    magpie_generator = get_magpie_generator(
+        num_turns, num_rows, system_prompt, is_sample
+    )
+    response_generator = get_response_generator(num_turns, system_prompt, is_sample)
+    total_steps: int = num_rows * 2
+    batch_size = DEFAULT_BATCH_SIZE
 
-    result_queue = multiprocessing.Queue()
-    p = multiprocessing.Process(
-        target=_run_pipeline,
-        args=(result_queue, num_turns, num_rows, system_prompt, is_sample),
+    # create instructions
+    magpie_results = []
+    for i in range(0, num_rows, batch_size):
+        progress(
+            0.5 * min(i + batch_size, num_rows) / num_rows,
+            total=total_steps,
+            desc="(1/2) Generating instructions",
+        )
+        batch = list(magpie_generator.process())[:batch_size]
+        magpie_results.extend([item[0] for item in batch])
+    progress(0.5, desc="(1/2) Generating instructions")
+
+    # generate responses
+    response_results = []
+    if num_turns == 1:
+        for i in range(0, num_rows, batch_size):
+            progress(
+                0.5 + 0.5 * min(i + batch_size, num_rows) / num_rows,
+                total=total_steps,
+                desc="(2/2) Generating responses",
+            )
+            batch = magpie_results[i : i + batch_size]
+            batch = [entry[0] for entry in batch]
+            responses = list(response_generator.process(inputs=batch))
+            response_results.extend(responses)
+        for result in response_results[0]:
+            result["prompt"] = result["instruction"]
+            result["completion"] = result["generation"]
+            result["system_prompt"] = system_prompt
+    else:
+        for result in magpie_results:
+            result[0]["conversation"].insert(
+                0, {"role": "system", "content": system_prompt}
+            )
+            result[0]["messages"] = result[0]["conversation"]
+        for i in range(0, num_rows, batch_size):
+            progress(
+                0.5 + 0.5 * min(i + batch_size, num_rows) / num_rows,
+                total=total_steps,
+                desc="(2/2) Generating responses",
+            )
+            batch = magpie_results[i : i + batch_size]
+            batch = [entry[0] for entry in batch]
+            responses = list(response_generator.process(inputs=batch))
+            response_results.extend(responses)
+
+        for result in response_results[0]:
+            result["messages"].append(
+                {"role": "assistant", "content": result["generation"]}
+            )
+    progress(
+        1,
+        total=total_steps,
+        desc="(2/2) Generating responses",
     )
 
-    try:
-        p.start()
-        total_steps = 100
-        for step in range(total_steps):
-            if not p.is_alive() or p._popen.poll() is not None:
-                break
-            progress(
-                (step + 1) / total_steps,
-                desc=f"Generating dataset with {num_rows} rows. Don't close this window.",
-            )
-            time.sleep(duration / total_steps)  # Adjust this value based on your needs
-        p.join()
-    except Exception as e:
-        raise gr.Error(f"An error occurred during dataset generation: {str(e)}")
+    # create distiset
+    distiset_results = []
+    for result in response_results[0]:
+        record = {}
+        for relevant_keys in [
+            "messages",
+            "prompt",
+            "completion",
+            "model_name",
+            "system_prompt",
+        ]:
+            if relevant_keys in result:
+                record[relevant_keys] = result[relevant_keys]
+        distiset_results.append(record)
 
-    distiset = result_queue.get()
+    distiset = Distiset(
+        {
+            "default": Dataset.from_list(distiset_results),
+        }
+    )
 
     # If not pushing to hub generate the dataset directly
-    distiset = distiset["default"]["train"]
+    distiset = distiset["default"]
     if num_turns == 1:
-        outputs = distiset.to_pandas()[["prompt", "completion"]]
+        outputs = distiset.to_pandas()[["system_prompt", "prompt", "completion"]]
     else:
         outputs = distiset.to_pandas()[["messages"]]
     dataframe = pd.DataFrame(outputs)
-
     progress(1.0, desc="Dataset generation completed")
     return dataframe
 
@@ -233,7 +270,7 @@ with gr.Blocks(
         )
 
         with gr.Row():
-            sample_dataset = gr.DataFrame(
+            sample_dataset = gr.Dataframe(
                 value=DEFAULT_DATASETS[0],
                 label="Sample dataset. Prompts and completions truncated to 256 tokens.",
                 interactive=False,
@@ -311,7 +348,7 @@ with gr.Blocks(
                     value="Push to Hub", variant="primary", scale=2
                 )
             with gr.Row():
-                final_dataset = gr.DataFrame(
+                final_dataset = gr.Dataframe(
                     value=DEFAULT_DATASETS[0],
                     label="Generated dataset",
                     interactive=False,
