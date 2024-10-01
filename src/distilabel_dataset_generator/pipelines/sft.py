@@ -6,7 +6,7 @@ from distilabel.pipeline import Pipeline
 from distilabel.steps import KeepColumns
 from distilabel.steps.tasks import ChatGeneration, MagpieGenerator, TextGeneration
 
-from distilabel_dataset_generator.utils import HF_TOKENS
+from src.distilabel_dataset_generator.utils import HF_TOKENS
 
 INFORMATION_SEEKING_PROMPT = (
     "You are an AI assistant designed to provide accurate and concise information on a wide"
