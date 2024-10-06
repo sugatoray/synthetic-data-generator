@@ -265,7 +265,9 @@ with gr.Blocks(
         )
         with gr.Row():
             gr.Column(scale=1)
-            btn_generate_system_prompt = gr.Button(value="Generate sample")
+            btn_generate_system_prompt = gr.Button(
+                value="Generate system prompt and sample dataset"
+            )
             gr.Column(scale=1)
 
         system_prompt = gr.TextArea(
@@ -285,7 +287,7 @@ with gr.Blocks(
         with gr.Row():
             gr.Column(scale=1)
             btn_generate_sample_dataset = gr.Button(
-                value="Regenerate sample",
+                value="Generate sample dataset",
             )
             gr.Column(scale=1)
 
