@@ -128,10 +128,10 @@ def generate_dataset(
             result["system_prompt"] = system_prompt
     else:
         for result in magpie_results:
-            result[0]["conversation"].insert(
+            result["conversation"].insert(
                 0, {"role": "system", "content": system_prompt}
             )
-            result[0]["messages"] = result[0]["conversation"]
+            result["messages"] = result["conversation"]
         while n_processed < num_rows:
             progress(
                 0.5 + 0.5 * n_processed / num_rows,
