@@ -92,31 +92,37 @@ def generate_dataset(
     batch_size = DEFAULT_BATCH_SIZE
 
     # create instructions
+    n_processed = 0
     magpie_results = []
-    for i in range(0, num_rows, batch_size):
+    while n_processed < num_rows:
         progress(
-            0.5 * min(i + batch_size, num_rows) / num_rows,
+            0.5 * n_processed / num_rows,
             total=total_steps,
             desc="(1/2) Generating instructions",
         )
-        batch = list(magpie_generator.process())[:batch_size]
-        magpie_results.extend([item[0] for item in batch])
+        remaining_rows = num_rows - n_processed
+        batch_size = min(batch_size, remaining_rows)
+        inputs = [{"system_prompt": system_prompt} for _ in range(batch_size)]
+        batch = list(magpie_generator.process(inputs=inputs))
+        magpie_results.extend(batch[0])
+        n_processed += batch_size
     progress(0.5, desc="(1/2) Generating instructions")
 
     # generate responses
+    n_processed = 0
     response_results = []
     if num_turns == 1:
-        for i in range(0, num_rows, batch_size):
+        while n_processed < num_rows:
             progress(
-                0.5 + 0.5 * min(i + batch_size, num_rows) / num_rows,
+                0.5 + 0.5 * n_processed / num_rows,
                 total=total_steps,
                 desc="(2/2) Generating responses",
             )
-            batch = magpie_results[i : i + batch_size]
-            batch = [entry[0] for entry in batch]
+            batch = magpie_results[n_processed : n_processed + batch_size]
             responses = list(response_generator.process(inputs=batch))
-            response_results.extend(responses)
-        for result in response_results[0]:
+            response_results.extend(responses[0])
+            n_processed += batch_size
+        for result in response_results:
             result["prompt"] = result["instruction"]
             result["completion"] = result["generation"]
             result["system_prompt"] = system_prompt
@@ -126,18 +132,17 @@ def generate_dataset(
                 0, {"role": "system", "content": system_prompt}
             )
             result[0]["messages"] = result[0]["conversation"]
-        for i in range(0, num_rows, batch_size):
+        while n_processed < num_rows:
             progress(
-                0.5 + 0.5 * min(i + batch_size, num_rows) / num_rows,
+                0.5 + 0.5 * n_processed / num_rows,
                 total=total_steps,
                 desc="(2/2) Generating responses",
             )
-            batch = magpie_results[i : i + batch_size]
-            batch = [entry[0] for entry in batch]
+            batch = magpie_results[n_processed : n_processed + batch_size]
             responses = list(response_generator.process(inputs=batch))
-            response_results.extend(responses)
-
-        for result in response_results[0]:
+            response_results.extend(responses[0])
+            n_processed += batch_size
+        for result in response_results:
             result["messages"].append(
                 {"role": "assistant", "content": result["generation"]}
             )
@@ -149,7 +154,7 @@ def generate_dataset(
 
     # create distiset
     distiset_results = []
-    for result in response_results[0]:
+    for result in response_results:
         record = {}
         for relevant_keys in [
             "messages",

@@ -4,7 +4,7 @@ from distilabel.distiset import Distiset
 from distilabel.llms import InferenceEndpointsLLM
 from distilabel.pipeline import Pipeline
 from distilabel.steps import KeepColumns
-from distilabel.steps.tasks import ChatGeneration, MagpieGenerator, TextGeneration
+from distilabel.steps.tasks import ChatGeneration, Magpie, TextGeneration
 
 from src.distilabel_dataset_generator.utils import HF_TOKENS
 
@@ -221,7 +221,7 @@ def get_magpie_generator(num_turns, num_rows, system_prompt, is_sample):
     input_mappings = _get_output_mappings(num_turns)
     output_mappings = input_mappings.copy()
     if num_turns == 1:
-        magpie_generator = MagpieGenerator(
+        magpie_generator = Magpie(
             llm=InferenceEndpointsLLM(
                 model_id=MODEL,
                 tokenizer_id=MODEL,
@@ -234,15 +234,13 @@ def get_magpie_generator(num_turns, num_rows, system_prompt, is_sample):
                     "stop_sequences": _STOP_SEQUENCES,
                 },
             ),
-            batch_size=DEFAULT_BATCH_SIZE,
             n_turns=num_turns,
-            num_rows=num_rows,
             system_prompt=system_prompt,
             output_mappings=output_mappings,
             only_instruction=True,
         )
     else:
-        magpie_generator = MagpieGenerator(
+        magpie_generator = Magpie(
             llm=InferenceEndpointsLLM(
                 model_id=MODEL,
                 tokenizer_id=MODEL,
@@ -255,10 +253,8 @@ def get_magpie_generator(num_turns, num_rows, system_prompt, is_sample):
                     "stop_sequences": _STOP_SEQUENCES,
                 },
             ),
-            batch_size=DEFAULT_BATCH_SIZE,
             end_with_user=True,
             n_turns=num_turns,
-            num_rows=num_rows,
             system_prompt=system_prompt,
             output_mappings=output_mappings,
         )
