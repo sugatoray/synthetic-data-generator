@@ -180,7 +180,7 @@ from distilabel.llms import InferenceEndpointsLLM
 
 MODEL = "{MODEL}"
 SYSTEM_PROMPT = "{system_prompt}"
-os.environ["HF_TOKEN"] = "hf_xxx" # https://huggingface.co/settings/tokens/new?globalPermissions=inference.serverless.write&tokenType=fineGrained
+os.environ["HF_TOKEN"] = "hf_xxx" # https://huggingface.co/settings/tokens/new?ownUserPermissions=repo.content.read&ownUserPermissions=repo.write&globalPermissions=inference.serverless.write&canReadGatedRepos=true&tokenType=fineGrained
 
 with Pipeline(name="sft") as pipeline:
     magpie = MagpieGenerator(

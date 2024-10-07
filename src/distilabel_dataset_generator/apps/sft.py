@@ -386,6 +386,9 @@ with gr.Blocks(
         return gr.Markdown(visible=False)
 
     gr.Markdown("## Or run this pipeline locally with distilabel")
+    gr.Markdown(
+        "You can run this pipeline locally with distilabel. For more information, please refer to the [distilabel documentation](https://distilabel.argilla.io/) or go to the FAQ tab at the top of the page for more information."
+    )
 
     with gr.Accordion(
         "Run this pipeline using distilabel",
