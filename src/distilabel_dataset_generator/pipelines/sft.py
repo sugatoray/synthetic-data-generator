@@ -172,6 +172,7 @@ def generate_pipeline_code(system_prompt, num_turns, num_rows):
     input_mappings = _get_output_mappings(num_turns)
     code = f"""
 # Requirements: `pip install distilabel[hf-inference-endpoints]`
+import os
 from distilabel.pipeline import Pipeline
 from distilabel.steps import KeepColumns
 from distilabel.steps.tasks import MagpieGenerator
@@ -179,6 +180,7 @@ from distilabel.llms import InferenceEndpointsLLM
 
 MODEL = "{MODEL}"
 SYSTEM_PROMPT = "{system_prompt}"
+os.environ["HF_TOKEN"] = "hf_xxx" # https://huggingface.co/settings/tokens/new?globalPermissions=inference.serverless.write&tokenType=fineGrained
 
 with Pipeline(name="sft") as pipeline:
     magpie = MagpieGenerator(
@@ -191,7 +193,8 @@ with Pipeline(name="sft") as pipeline:
                 "do_sample": True,
                 "max_new_tokens": 2048,
                 "stop_sequences": {_STOP_SEQUENCES}
-            }}
+            }},
+            api_key=os.environ["HF_TOKEN"],
         ),
         n_turns={num_turns},
         num_rows={num_rows},
@@ -200,7 +203,7 @@ with Pipeline(name="sft") as pipeline:
         output_mappings={input_mappings},
     )
     keep_columns = KeepColumns(
-        columns={list(input_mappings.values())} + ["model_name", "system_prompt"],
+        columns={list(input_mappings.values())} + ["model_name"],
     )
     magpie.connect(keep_columns)
 
