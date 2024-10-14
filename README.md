@@ -1,5 +1,6 @@
 ---
 title: Synthetic Data Generator
+short_description: Build datasets using natural language
 emoji: 🧬
 colorFrom: yellow
 colorTo: pink
