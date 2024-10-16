@@ -54,6 +54,17 @@ demo = gr.TabbedInterface(
                 margin-bottom: 20px;
             }
         }
+        button[role="tab"].selected,
+        button[role="tab"][aria-selected="true"],
+        button[role="tab"][data-tab-id][aria-selected="true"] {
+            background-color: #000000;
+            color: white;
+            border: none;
+            font-size: 16px;
+            font-weight: bold;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
     </style>
     <div class="header-container">
         <div class="logo-container">
@@ -62,7 +73,7 @@ demo = gr.TabbedInterface(
             </a>
         </div>
         <div class="title-container">
-            <h1 style="margin: 0; font-size: 2em;">🧬  Synthetic Data Generator</h1>
+            <h1 style="margin: 0; font-size: 2em;">🧬 Synthetic Data Generator</h1>
             <p style="margin: 10px 0 0 0; color: #666; font-size: 1.1em;">Build datasets using natural language</p>
         </div>
     </div>

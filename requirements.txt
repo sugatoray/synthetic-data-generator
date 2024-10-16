@@ -1,4 +1,5 @@
 transformers
 gradio[oauth]
-distilabel[hf-inference-endpoints] @ git+https://github.com/argilla-io/distilabel.git@develop
+distilabel[hf-inference-endpoints,argilla]
 beautifulsoup4
+sentence-transformers

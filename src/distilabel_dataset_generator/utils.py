@@ -1,5 +1,7 @@
 import os
+from typing import Union
 
+import argilla as rg
 import gradio as gr
 from gradio.oauth import (
     OAUTH_CLIENT_ID,
@@ -81,3 +83,15 @@ def swap_visibilty(oauth_token: OAuthToken = None):
         return gr.update(elem_classes=["main_ui_logged_in"])
     else:
         return gr.update(elem_classes=["main_ui_logged_out"])
+
+
+def get_argilla_client() -> Union[rg.Argilla, None]:
+    try:
+        return rg.Argilla(
+            api_url=os.getenv("ARGILLA_API_URL_SDG_REVIEWER")
+            or os.getenv("ARGILLA_API_URL"),
+            api_key=os.getenv("ARGILLA_API_KEY_SDG_REVIEWER")
+            or os.getenv("ARGILLA_API_KEY"),
+        )
+    except Exception:
+        return None

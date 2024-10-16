@@ -6,11 +6,12 @@ authors = [
     {name = "davidberenstein1957", email = "david.m.berenstein@gmail.com"},
 ]
 dependencies = [
-    "distilabel[hf-inference-endpoints] @ git+https://github.com/argilla-io/distilabel.git@develop",
+    "distilabel[hf-inference-endpoints,argilla]==1.4.0",
     "gradio[oauth]<5,>=4.38",
     "transformers>=4.44.2",
+    "sentence-transformers>=3.2.0",
 ]
-requires-python = ">=3.10"
+requires-python = "<3.13,>=3.10"
 readme = "README.md"
 license = {text = "apache 2"}
 

@@ -1,6 +1,8 @@
+import ast
 import io
-from typing import Union
+from typing import Dict, List, Union
 
+import argilla as rg
 import gradio as gr
 import pandas as pd
 from datasets import Dataset
@@ -8,7 +10,12 @@ from distilabel.distiset import Distiset
 from distilabel.steps.tasks.text_generation import TextGeneration
 from gradio.oauth import OAuthToken
 from huggingface_hub import upload_file
+from huggingface_hub.hf_api import HfApi
 
+from src.distilabel_dataset_generator.pipelines.embeddings import (
+    get_embeddings,
+    get_sentence_embedding_dimensions,
+)
 from src.distilabel_dataset_generator.pipelines.sft import (
     DEFAULT_BATCH_SIZE,
     DEFAULT_DATASET_DESCRIPTIONS,
@@ -21,10 +28,19 @@ from src.distilabel_dataset_generator.pipelines.sft import (
     get_response_generator,
 )
 from src.distilabel_dataset_generator.utils import (
+    get_argilla_client,
     get_login_button,
     get_org_dropdown,
     swap_visibilty,
 )
+
+
+def convert_to_list_of_dicts(messages: str) -> List[Dict[str, str]]:
+    return ast.literal_eval(
+        messages.replace("'user'}", "'user'},")
+        .replace("'system'}", "'system'},")
+        .replace("'assistant'}", "'assistant'},")
+    )
 
 
 def generate_system_prompt(dataset_description, progress=gr.Progress()):
@@ -82,7 +98,7 @@ def generate_dataset(
     num_rows: int = 5,
     is_sample: bool = False,
     progress=gr.Progress(),
-):
+) -> pd.DataFrame:
     progress(0.0, desc="(1/2) Generating instructions")
     magpie_generator = get_magpie_generator(
         num_turns, num_rows, system_prompt, is_sample
@@ -191,7 +207,12 @@ def push_to_hub(
     repo_name: str = None,
     oauth_token: Union[OAuthToken, None] = None,
     progress=gr.Progress(),
-):
+) -> pd.DataFrame:
+    original_dataframe = dataframe.copy(deep=True)
+    if "messages" in dataframe.columns:
+        dataframe["messages"] = dataframe["messages"].apply(
+            lambda x: convert_to_list_of_dicts(x) if isinstance(x, str) else x
+        )
     progress(0.1, desc="Setting up dataset")
     repo_id = _check_push_to_hub(org_name, repo_name)
     distiset = Distiset(
@@ -208,7 +229,167 @@ def push_to_hub(
         create_pr=False,
     )
     progress(1.0, desc="Dataset pushed to hub")
-    return dataframe
+    return original_dataframe
+
+
+def push_to_argilla(
+    dataframe: pd.DataFrame,
+    dataset_name: str,
+    oauth_token: Union[OAuthToken, None] = None,
+    progress=gr.Progress(),
+) -> pd.DataFrame:
+    original_dataframe = dataframe.copy(deep=True)
+    if "messages" in dataframe.columns:
+        dataframe["messages"] = dataframe["messages"].apply(
+            lambda x: convert_to_list_of_dicts(x) if isinstance(x, str) else x
+        )
+    try:
+        progress(0.1, desc="Setting up user and workspace")
+        client = get_argilla_client()
+        hf_user = HfApi().whoami(token=oauth_token.token)["name"]
+
+        # Create user if it doesn't exist
+        rg_user = client.users(username=hf_user)
+        if rg_user is None:
+            rg_user = client.users.add(rg.User(username=hf_user, role="admin"))
+
+        # Create workspace if it doesn't exist
+        workspace = client.workspaces(name=rg_user.username)
+        if workspace is None:
+            workspace = client.workspaces.add(rg.Workspace(name=rg_user.username))
+            workspace.add_user(rg_user)
+
+        if "messages" in dataframe.columns:
+            settings = rg.Settings(
+                fields=[
+                    rg.ChatField(
+                        name="messages",
+                        description="The messages in the conversation",
+                        title="Messages",
+                    ),
+                ],
+                questions=[
+                    rg.RatingQuestion(
+                        name="rating",
+                        title="Rating",
+                        description="The rating of the conversation",
+                        values=list(range(1, 6)),
+                    ),
+                ],
+                metadata=[
+                    rg.IntegerMetadataProperty(
+                        name="user_message_length", title="User Message Length"
+                    ),
+                    rg.IntegerMetadataProperty(
+                        name="assistant_message_length",
+                        title="Assistant Message Length",
+                    ),
+                ],
+                vectors=[
+                    rg.VectorField(
+                        name="messages_embeddings",
+                        dimensions=get_sentence_embedding_dimensions(),
+                    )
+                ],
+                guidelines="Please review the conversation and provide a score for the assistant's response.",
+            )
+
+            dataframe["user_message_length"] = dataframe["messages"].apply(
+                lambda x: sum([len(y["content"]) for y in x if y["role"] == "user"])
+            )
+            dataframe["assistant_message_length"] = dataframe["messages"].apply(
+                lambda x: sum(
+                    [len(y["content"]) for y in x if y["role"] == "assistant"]
+                )
+            )
+            dataframe["messages_embeddings"] = get_embeddings(
+                dataframe["messages"].apply(
+                    lambda x: " ".join([y["content"] for y in x])
+                )
+            )
+        else:
+            settings = rg.Settings(
+                fields=[
+                    rg.TextField(
+                        name="system_prompt",
+                        title="System Prompt",
+                        description="The system prompt used for the conversation",
+                        required=False,
+                    ),
+                    rg.TextField(
+                        name="prompt",
+                        title="Prompt",
+                        description="The prompt used for the conversation",
+                    ),
+                    rg.TextField(
+                        name="completion",
+                        title="Completion",
+                        description="The completion from the assistant",
+                    ),
+                ],
+                questions=[
+                    rg.RatingQuestion(
+                        name="rating",
+                        title="Rating",
+                        description="The rating of the conversation",
+                        values=list(range(1, 6)),
+                    ),
+                ],
+                metadata=[
+                    rg.IntegerMetadataProperty(
+                        name="prompt_length", title="Prompt Length"
+                    ),
+                    rg.IntegerMetadataProperty(
+                        name="completion_length", title="Completion Length"
+                    ),
+                ],
+                vectors=[
+                    rg.VectorField(
+                        name="prompt_embeddings",
+                        dimensions=get_sentence_embedding_dimensions(),
+                    )
+                ],
+                guidelines="Please review the conversation and correct the prompt and completion where needed.",
+            )
+            dataframe["prompt_length"] = dataframe["prompt"].apply(len)
+            dataframe["completion_length"] = dataframe["completion"].apply(len)
+            dataframe["prompt_embeddings"] = get_embeddings(dataframe["prompt"])
+
+        progress(0.5, desc="Creating dataset")
+        rg_dataset = client.datasets(name=dataset_name, workspace=rg_user.username)
+        if rg_dataset is None:
+            rg_dataset = rg.Dataset(
+                name=dataset_name,
+                workspace=rg_user.username,
+                settings=settings,
+                client=client,
+            )
+            rg_dataset = rg_dataset.create()
+        progress(0.7, desc="Pushing dataset to Argilla")
+        hf_dataset = Dataset.from_pandas(dataframe)
+        rg_dataset.records.log(records=hf_dataset)
+        progress(1.0, desc="Dataset pushed to Argilla")
+    except Exception as e:
+        raise gr.Error(f"Error pushing dataset to Argilla: {e}")
+    return original_dataframe
+
+
+def validate_argilla_dataset_name(
+    dataset_name: str,
+    final_dataset: pd.DataFrame,
+    add_to_existing_dataset: bool,
+    oauth_token: Union[OAuthToken, None] = None,
+    progress=gr.Progress(),
+) -> str:
+    progress(0, desc="Validating dataset configuration")
+    hf_user = HfApi().whoami(token=oauth_token.token)["name"]
+    client = get_argilla_client()
+    if dataset_name is None or dataset_name == "":
+        raise gr.Error("Dataset name is required")
+    dataset = client.datasets(name=dataset_name, workspace=hf_user)
+    if dataset and not add_to_existing_dataset:
+        raise gr.Error(f"Dataset {dataset_name} already exists")
+    return final_dataset
 
 
 def upload_pipeline_code(
@@ -313,7 +494,7 @@ with gr.Blocks(
         # Add a header for the full dataset generation section
         gr.Markdown("## Generate full dataset")
         gr.Markdown(
-            "Once you're satisfied with the sample, generate a larger dataset and push it to the Hub."
+            "Once you're satisfied with the sample, generate a larger dataset and push it to Argilla or the Hugging Face Hub."
         )
 
         with gr.Column() as push_to_hub_ui:
@@ -333,27 +514,64 @@ with gr.Blocks(
                     maximum=500,
                     info="The number of rows in the dataset. Note that you are able to generate more rows at once but that this will take time.",
                 )
-            with gr.Row(variant="panel"):
-                org_name = get_org_dropdown()
-                repo_name = gr.Textbox(
-                    label="Repo name", placeholder="dataset_name", value="my-distiset"
-                )
-                private = gr.Checkbox(
-                    label="Private dataset",
-                    value=True,
-                    interactive=True,
-                    scale=0.5,
-                )
-            with gr.Row() as regenerate_row:
-                btn_generate_full_dataset = gr.Button(
-                    value="Generate", variant="primary", scale=2
-                )
-                btn_generate_and_push_to_hub = gr.Button(
-                    value="Generate and Push to Hub", variant="primary", scale=2
-                )
-                btn_push_to_hub = gr.Button(
-                    value="Push to Hub", variant="primary", scale=2
-                )
+
+            with gr.Tab(label="Argilla"):
+                if get_argilla_client():
+                    with gr.Row(variant="panel"):
+                        dataset_name = gr.Textbox(
+                            label="Dataset name",
+                            placeholder="dataset_name",
+                            value="my-distiset",
+                        )
+                        add_to_existing_dataset = gr.Checkbox(
+                            label="Allow adding records to existing dataset",
+                            info="When selected, you do need to ensure the number of turns in the conversation is the same as the number of turns in the existing dataset.",
+                            value=False,
+                            interactive=True,
+                            scale=0.5,
+                        )
+
+                    with gr.Row(variant="panel"):
+                        btn_generate_full_dataset_copy = gr.Button(
+                            value="Generate", variant="primary", scale=2
+                        )
+                        btn_generate_and_push_to_argilla = gr.Button(
+                            value="Generate and Push to Argilla",
+                            variant="primary",
+                            scale=2,
+                        )
+                        btn_push_to_argilla = gr.Button(
+                            value="Push to Argilla", variant="primary", scale=2
+                        )
+                else:
+                    gr.Markdown(
+                        "Please add `ARGILLA_API_URL` and `ARGILLA_API_KEY` to use Argilla."
+                    )
+            with gr.Tab("Hugging Face Hub"):
+                with gr.Row(variant="panel"):
+                    org_name = get_org_dropdown()
+                    repo_name = gr.Textbox(
+                        label="Repo name",
+                        placeholder="dataset_name",
+                        value="my-distiset",
+                    )
+                    private = gr.Checkbox(
+                        label="Private dataset",
+                        value=True,
+                        interactive=True,
+                        scale=0.5,
+                    )
+                with gr.Row(variant="panel"):
+                    btn_generate_full_dataset = gr.Button(
+                        value="Generate", variant="primary", scale=2
+                    )
+                    btn_generate_and_push_to_hub = gr.Button(
+                        value="Generate and Push to Hub", variant="primary", scale=2
+                    )
+                    btn_push_to_hub = gr.Button(
+                        value="Push to Hub", variant="primary", scale=2
+                    )
+
             with gr.Row():
                 final_dataset = gr.Dataframe(
                     value=DEFAULT_DATASETS[0],
@@ -365,7 +583,25 @@ with gr.Blocks(
             with gr.Row():
                 success_message = gr.Markdown(visible=False)
 
-    def show_success_message(org_name, repo_name):
+    def show_success_message_argilla():
+        client = get_argilla_client()
+        argilla_api_url = client.api_url
+        return gr.Markdown(
+            value=f"""
+            <div style="padding: 1em; background-color: #e6f3e6; border-radius: 5px; margin-top: 1em;">
+                <h3 style="color: #2e7d32; margin: 0;">Dataset Published Successfully!</h3>
+                <p style="margin-top: 0.5em;">
+                    Your dataset is now available at:
+                    <a href="{argilla_api_url}" target="_blank" style="color: #1565c0; text-decoration: none;">
+                        {argilla_api_url}
+                    </a>
+                </p>
+            </div>
+            """,
+            visible=True,
+        )
+
+    def show_success_message_hub(org_name, repo_name):
         return gr.Markdown(
             value=f"""
             <div style="padding: 1em; background-color: #e6f3e6; border-radius: 5px; margin-top: 1em;">
@@ -378,7 +614,7 @@ with gr.Blocks(
                     </a>
                 </p>
             </div>
-        """,
+            """,
             visible=True,
         )
 
@@ -407,8 +643,11 @@ with gr.Blocks(
         inputs=[sample_dataset],
         outputs=[final_dataset],
     )
-
-    btn_generate_full_dataset.click(
+    gr.on(
+        triggers=[
+            btn_generate_full_dataset.click,
+            btn_generate_full_dataset_copy.click,
+        ],
         fn=hide_success_message,
         outputs=[success_message],
     ).then(
@@ -416,6 +655,30 @@ with gr.Blocks(
         inputs=[system_prompt, num_turns, num_rows],
         outputs=[final_dataset],
         show_progress=True,
+    )
+
+    btn_generate_and_push_to_argilla.click(
+        fn=validate_argilla_dataset_name,
+        inputs=[dataset_name, final_dataset, add_to_existing_dataset],
+        outputs=[final_dataset],
+        show_progress=True,
+    ).success(
+        fn=hide_success_message,
+        outputs=[success_message],
+    ).success(
+        fn=generate_dataset,
+        inputs=[system_prompt, num_turns, num_rows],
+        outputs=[final_dataset],
+        show_progress=True,
+    ).success(
+        fn=push_to_argilla,
+        inputs=[final_dataset, dataset_name],
+        outputs=[final_dataset],
+        show_progress=True,
+    ).success(
+        fn=show_success_message_argilla,
+        inputs=[],
+        outputs=[success_message],
     )
 
     btn_generate_and_push_to_hub.click(
@@ -437,7 +700,7 @@ with gr.Blocks(
         outputs=[],
         show_progress=True,
     ).success(
-        fn=show_success_message,
+        fn=show_success_message_hub,
         inputs=[org_name, repo_name],
         outputs=[success_message],
     )
@@ -456,8 +719,27 @@ with gr.Blocks(
         outputs=[],
         show_progress=True,
     ).success(
-        fn=show_success_message,
+        fn=show_success_message_hub,
         inputs=[org_name, repo_name],
+        outputs=[success_message],
+    )
+
+    btn_push_to_argilla.click(
+        fn=hide_success_message,
+        outputs=[success_message],
+    ).success(
+        fn=validate_argilla_dataset_name,
+        inputs=[dataset_name, final_dataset, add_to_existing_dataset],
+        outputs=[final_dataset],
+        show_progress=True,
+    ).success(
+        fn=push_to_argilla,
+        inputs=[final_dataset, dataset_name],
+        outputs=[final_dataset],
+        show_progress=True,
+    ).success(
+        fn=show_success_message_argilla,
+        inputs=[],
         outputs=[success_message],
     )
 

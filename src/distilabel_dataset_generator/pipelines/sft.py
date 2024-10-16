@@ -189,7 +189,7 @@ with Pipeline(name="sft") as pipeline:
             tokenizer_id=MODEL,
             magpie_pre_query_template="llama3",
             generation_kwargs={{
-                "temperature": 0.8,
+                "temperature": 1,
                 "do_sample": True,
                 "max_new_tokens": 2048,
                 "stop_sequences": {_STOP_SEQUENCES}
@@ -231,7 +231,7 @@ def get_magpie_generator(num_turns, num_rows, system_prompt, is_sample):
                 api_key=_get_next_api_key(),
                 magpie_pre_query_template="llama3",
                 generation_kwargs={
-                    "temperature": 0.8,
+                    "temperature": 1,
                     "do_sample": True,
                     "max_new_tokens": 256 if is_sample else 512,
                     "stop_sequences": _STOP_SEQUENCES,
@@ -250,7 +250,7 @@ def get_magpie_generator(num_turns, num_rows, system_prompt, is_sample):
                 api_key=_get_next_api_key(),
                 magpie_pre_query_template="llama3",
                 generation_kwargs={
-                    "temperature": 0.8,
+                    "temperature": 1,
                     "do_sample": True,
                     "max_new_tokens": 256 if is_sample else 1024,
                     "stop_sequences": _STOP_SEQUENCES,
