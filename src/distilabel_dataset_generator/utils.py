@@ -87,11 +87,14 @@ def swap_visibilty(oauth_token: OAuthToken = None):
 
 def get_argilla_client() -> Union[rg.Argilla, None]:
     try:
+        api_url = os.getenv("ARGILLA_API_URL_SDG_REVIEWER")
+        api_key = os.getenv("ARGILLA_API_KEY_SDG_REVIEWER")
+        if api_url is None or api_key is None:
+            api_url = os.getenv("ARGILLA_API_URL")
+            api_key = os.getenv("ARGILLA_API_KEY")
         return rg.Argilla(
-            api_url=os.getenv("ARGILLA_API_URL_SDG_REVIEWER")
-            or os.getenv("ARGILLA_API_URL"),
-            api_key=os.getenv("ARGILLA_API_KEY_SDG_REVIEWER")
-            or os.getenv("ARGILLA_API_KEY"),
+            api_url=api_url,
+            api_key=api_key,
         )
     except Exception:
         return None

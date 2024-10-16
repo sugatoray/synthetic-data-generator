@@ -516,7 +516,7 @@ with gr.Blocks(
                 )
 
             with gr.Tab(label="Argilla"):
-                if get_argilla_client():
+                if get_argilla_client() is not None:
                     with gr.Row(variant="panel"):
                         dataset_name = gr.Textbox(
                             label="Dataset name",
