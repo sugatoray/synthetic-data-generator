@@ -247,18 +247,6 @@ def push_to_argilla(
         progress(0.1, desc="Setting up user and workspace")
         client = get_argilla_client()
         hf_user = HfApi().whoami(token=oauth_token.token)["name"]
-
-        # Create user if it doesn't exist
-        rg_user = client.users(username=hf_user)
-        if rg_user is None:
-            rg_user = client.users.add(rg.User(username=hf_user, role="admin"))
-
-        # Create workspace if it doesn't exist
-        workspace = client.workspaces(name=rg_user.username)
-        if workspace is None:
-            workspace = client.workspaces.add(rg.Workspace(name=rg_user.username))
-            workspace.add_user(rg_user)
-
         if "messages" in dataframe.columns:
             settings = rg.Settings(
                 fields=[
@@ -356,11 +344,11 @@ def push_to_argilla(
             dataframe["prompt_embeddings"] = get_embeddings(dataframe["prompt"])
 
         progress(0.5, desc="Creating dataset")
-        rg_dataset = client.datasets(name=dataset_name, workspace=rg_user.username)
+        rg_dataset = client.datasets(name=dataset_name, workspace=hf_user)
         if rg_dataset is None:
             rg_dataset = rg.Dataset(
                 name=dataset_name,
-                workspace=rg_user.username,
+                workspace=hf_user,
                 settings=settings,
                 client=client,
             )
@@ -386,6 +374,16 @@ def validate_argilla_dataset_name(
     client = get_argilla_client()
     if dataset_name is None or dataset_name == "":
         raise gr.Error("Dataset name is required")
+    # Create user if it doesn't exist
+    rg_user = client.users(username=hf_user)
+    if rg_user is None:
+        rg_user = client.users.add(rg.User(username=hf_user, role="admin"))
+    # Create workspace if it doesn't exist
+    workspace = client.workspaces(name=hf_user)
+    if workspace is None:
+        workspace = client.workspaces.add(rg.Workspace(name=hf_user))
+        workspace.add_user(hf_user)
+    # Check if dataset exists
     dataset = client.datasets(name=dataset_name, workspace=hf_user)
     if dataset and not add_to_existing_dataset:
         raise gr.Error(f"Dataset {dataset_name} already exists")
