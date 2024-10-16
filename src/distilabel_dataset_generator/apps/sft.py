@@ -595,6 +595,9 @@ with gr.Blocks(
                     <a href="{argilla_api_url}" target="_blank" style="color: #1565c0; text-decoration: none;">
                         {argilla_api_url}
                     </a>
+                    <br>Unfamiliar with Argilla? Here are some docs to help you get started:
+                    <br>• <a href="https://docs.argilla.io/latest/how_to_guides/annotate/" target="_blank">How to curate data in Argilla</a>
+                    <br>• <a href="https://docs.argilla.io/latest/how_to_guides/import_export/" target="_blank">How to export data once you have reviewed the dataset</a>
                 </p>
             </div>
             """,
