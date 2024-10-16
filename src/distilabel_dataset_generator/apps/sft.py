@@ -1,5 +1,6 @@
 import ast
 import io
+import uuid
 from typing import Dict, List, Union
 
 import argilla as rg
@@ -377,12 +378,14 @@ def validate_argilla_dataset_name(
     # Create user if it doesn't exist
     rg_user = client.users(username=hf_user)
     if rg_user is None:
-        rg_user = client.users.add(rg.User(username=hf_user, role="admin"))
+        rg_user = client.users.add(
+            rg.User(username=hf_user, role="admin", password=str(uuid.uuid4()))
+        )
     # Create workspace if it doesn't exist
     workspace = client.workspaces(name=hf_user)
     if workspace is None:
         workspace = client.workspaces.add(rg.Workspace(name=hf_user))
-        workspace.add_user(hf_user)
+        workspace.add_user(rg_user)
     # Check if dataset exists
     dataset = client.datasets(name=dataset_name, workspace=hf_user)
     if dataset and not add_to_existing_dataset:
