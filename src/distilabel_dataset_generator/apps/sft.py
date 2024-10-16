@@ -545,7 +545,7 @@ with gr.Blocks(
                         )
                 else:
                     gr.Markdown(
-                        "Please add `ARGILLA_API_URL` and `ARGILLA_API_KEY` to use Argilla."
+                        "Please add `ARGILLA_API_URL` and `ARGILLA_API_KEY` to use Argilla or export the dataset to the Hugging Face Hub."
                     )
             with gr.Tab("Hugging Face Hub"):
                 with gr.Row(variant="panel"):
