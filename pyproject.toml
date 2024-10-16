@@ -10,6 +10,7 @@ dependencies = [
     "gradio[oauth]<5,>=4.38",
     "transformers>=4.44.2",
     "sentence-transformers>=3.2.0",
+    "model2vec>=0.2.4",
 ]
 requires-python = "<3.13,>=3.10"
 readme = "README.md"

@@ -5,7 +5,7 @@
 groups = ["default"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:81410bd4007595d561942ec17c867075f27d00535be59e5a4a408bb24cae6a8f"
+content_hash = "sha256:6ec73b2fcc5807fa5a1ce8ebb49059a8f7cef981c4ecc881c254cda44f09152d"
 
 [[metadata.targets]]
 requires_python = ">=3.10,<3.13"
@@ -1150,6 +1150,29 @@ groups = ["default"]
 files = [
     {file = "mdurl-0.1.2-py3-none-any.whl", hash = "sha256:84008a41e51615a49fc9966191ff91509e3c40b939176e643fd50a5c2196b8f8"},
     {file = "mdurl-0.1.2.tar.gz", hash = "sha256:bb413d29f5eea38f31dd4754dd7377d4465116fb207585f97bf925588687c1ba"},
+]
+
+[[package]]
+name = "model2vec"
+version = "0.2.4"
+requires_python = ">=3.10"
+summary = "Distill a Small Fast Model from any Sentence Transformer"
+groups = ["default"]
+dependencies = [
+    "click",
+    "numpy",
+    "rich",
+    "scikit-learn",
+    "setuptools",
+    "tokenizers",
+    "torch",
+    "tqdm",
+    "transformers",
+    "typer",
+]
+files = [
+    {file = "model2vec-0.2.4-py3-none-any.whl", hash = "sha256:1c4eebf7c7a536a40ebf7e1dd0332c1586103164eba3ed39ed661f453f3ffa83"},
+    {file = "model2vec-0.2.4.tar.gz", hash = "sha256:08776b57a5c8f7d536534ba8b9fdf6dc1a4ee13fa25b15750aa4d79c7e399b21"},
 ]
 
 [[package]]
