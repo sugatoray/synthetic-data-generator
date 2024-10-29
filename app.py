@@ -2,6 +2,7 @@ import gradio as gr
 
 from src.distilabel_dataset_generator.apps.faq import app as faq_app
 from src.distilabel_dataset_generator.apps.sft import app as sft_app
+from src.distilabel_dataset_generator.apps.textcat import app as textcat_app
 
 theme = gr.themes.Monochrome(
     spacing_size="md",
@@ -25,8 +26,8 @@ css = """
 """
 
 demo = gr.TabbedInterface(
-    [sft_app, faq_app],
-    ["Supervised Fine-Tuning", "FAQ"],
+    [textcat_app, sft_app, faq_app],
+    ["Text Classification", "Supervised Fine-Tuning", "FAQ"],
     css=css,
     title="""
     <style>

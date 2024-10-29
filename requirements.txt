@@ -4,3 +4,4 @@ distilabel[hf-inference-endpoints,argilla]
 beautifulsoup4
 sentence-transformers
 model2vec
+outlines

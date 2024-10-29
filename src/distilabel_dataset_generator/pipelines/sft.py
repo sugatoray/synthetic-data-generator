@@ -1,12 +1,11 @@
 import pandas as pd
-from datasets import Dataset
-from distilabel.distiset import Distiset
 from distilabel.llms import InferenceEndpointsLLM
-from distilabel.pipeline import Pipeline
-from distilabel.steps import KeepColumns
 from distilabel.steps.tasks import ChatGeneration, Magpie, TextGeneration
 
-from src.distilabel_dataset_generator.utils import HF_TOKENS
+from src.distilabel_dataset_generator.pipelines.base import (
+    MODEL,
+    _get_next_api_key,
+)
 
 INFORMATION_SEEKING_PROMPT = (
     "You are an AI assistant designed to provide accurate and concise information on a wide"
@@ -120,7 +119,6 @@ The prompt you write should follow the same style and structure as the following
 User dataset description:
 """
 
-MODEL = "meta-llama/Meta-Llama-3.1-8B-Instruct"
 DEFAULT_DATASET_DESCRIPTIONS = (
     "rude customer assistant for a phone company",
     "assistant that solves math puzzles using python",
@@ -157,8 +155,6 @@ _STOP_SEQUENCES = [
     "assistant",
     " \n\n",
 ]
-DEFAULT_BATCH_SIZE = 5
-TOKEN_INDEX = 0
 
 
 def _get_output_mappings(num_turns):
@@ -211,13 +207,6 @@ if __name__ == "__main__":
     distiset = pipeline.run()
 """
     return code
-
-
-def _get_next_api_key():
-    global TOKEN_INDEX
-    api_key = HF_TOKENS[TOKEN_INDEX % len(HF_TOKENS)]
-    TOKEN_INDEX += 1
-    return api_key
 
 
 def get_magpie_generator(num_turns, num_rows, system_prompt, is_sample):
@@ -300,12 +289,9 @@ def get_response_generator(num_turns, system_prompt, is_sample):
 
 
 def get_prompt_generator():
-    global TOKEN_INDEX
-    api_key = HF_TOKENS[TOKEN_INDEX % len(HF_TOKENS)]
-    TOKEN_INDEX += 1
     prompt_generator = TextGeneration(
         llm=InferenceEndpointsLLM(
-            api_key=api_key,
+            api_key=_get_next_api_key(),
             model_id=MODEL,
             tokenizer_id=MODEL,
             generation_kwargs={
@@ -318,95 +304,3 @@ def get_prompt_generator():
     )
     prompt_generator.load()
     return prompt_generator
-
-
-def get_pipeline(num_turns, num_rows, system_prompt, is_sample):
-    input_mappings = _get_output_mappings(num_turns)
-    output_mappings = input_mappings
-
-    with Pipeline(name="sft") as pipeline:
-        magpie = get_magpie_generator(num_turns, num_rows, system_prompt, is_sample)
-        generate_response = get_response_generator(system_prompt, is_sample)
-
-        keep_columns = KeepColumns(
-            columns=list(output_mappings.values()) + ["model_name"],
-        )
-
-        magpie.connect(generate_response)
-        generate_response.connect(keep_columns)
-        return pipeline
-
-
-if __name__ == "__main__":
-    prompt_generation_step = get_prompt_generator()
-    system_prompt = next(
-        prompt_generation_step.process(
-            [
-                {
-                    "system_prompt": PROMPT_CREATION_PROMPT,
-                    "instruction": DEFAULT_DATASET_DESCRIPTIONS[0],
-                }
-            ]
-        )
-    )[0]["generation"]
-    num_rows = 2
-    num_turns = 1
-    magpie_generator = get_magpie_generator(num_turns, num_rows, system_prompt, False)
-    response_generator = get_response_generator(num_turns, system_prompt, False)
-    total_steps = num_rows * 2
-    batch_size = 5  # Adjust this value as needed
-
-    # create instructions
-    magpie_results = []
-    for i in range(0, num_rows, batch_size):
-        batch = list(magpie_generator.process())[:batch_size]
-        magpie_results.extend([item[0] for item in batch])
-
-    # generate responses
-    response_results = []
-    if num_turns == 1:
-        for i in range(0, len(magpie_results), batch_size):
-            batch = magpie_results[i : i + batch_size]
-            batch = [entry[0] for entry in batch]
-            responses = list(response_generator.process(inputs=batch))
-            response_results.extend(responses)
-        for result in response_results:
-            result[0]["prompt"] = result[0]["instruction"]
-            result[0]["completion"] = result[0]["generation"]
-            result[0]["system_prompt"] = system_prompt
-    else:
-        for result in magpie_results:
-            result[0]["conversation"].insert(
-                0, {"role": "system", "content": system_prompt}
-            )
-            result[0]["messages"] = result[0]["conversation"]
-        for i in range(0, len(magpie_results), batch_size):
-            batch = magpie_results[i : i + batch_size]
-            batch = [entry[0] for entry in batch]
-            responses = list(response_generator.process(inputs=batch))
-            response_results.extend(responses)
-
-        for result in response_results:
-            result[0]["messages"].append(
-                {"role": "assistant", "content": result[0]["generation"]}
-            )
-
-    distiset_results = []
-    for result in response_results[0]:
-        record = {}
-        for relevant_keys in [
-            "messages",
-            "prompt",
-            "completion",
-            "model_name",
-            "system_prompt",
-        ]:
-            if relevant_keys in result:
-                record[relevant_keys] = result[relevant_keys]
-        distiset_results.append(record)
-
-    distiset = Distiset(
-        {
-            "default": Dataset.from_list(distiset_results),
-        }
-    )

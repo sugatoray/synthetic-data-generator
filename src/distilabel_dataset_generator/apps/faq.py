@@ -15,7 +15,7 @@ with gr.Blocks() as app:
                     <p>This tool simplifies the process of creating custom datasets, enabling you to:</p>
                     <ul>
                         <li>Define the characteristics of your desired application</li>
-                        <li>Generate system prompts automatically</li>
+                        <li>Generate system prompts and tasks automatically</li>
                         <li>Create sample datasets for quick iteration</li>
                         <li>Produce full-scale datasets with customizable parameters</li>
                         <li>Push your generated datasets directly to the Hugging Face Hub</li>

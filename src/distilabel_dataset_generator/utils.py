@@ -1,5 +1,5 @@
 import os
-from typing import Union
+from typing import Union, List, Optional
 
 import argilla as rg
 import gradio as gr
@@ -11,6 +11,8 @@ from gradio.oauth import (
     get_space,
 )
 from huggingface_hub import whoami
+
+_LOGGED_OUT_CSS = ".main_ui_logged_out{opacity: 0.3; pointer-events: none}"
 
 HF_TOKENS = [os.getenv("HF_TOKEN")] + [os.getenv(f"HF_TOKEN_{i}") for i in range(1, 10)]
 HF_TOKENS = [token for token in HF_TOKENS if token]
@@ -78,11 +80,33 @@ def get_token(oauth_token: OAuthToken = None):
         return ""
 
 
-def swap_visibilty(oauth_token: OAuthToken = None):
+def swap_visibilty(oauth_token: Optional[OAuthToken] = None):
     if oauth_token:
         return gr.update(elem_classes=["main_ui_logged_in"])
     else:
         return gr.update(elem_classes=["main_ui_logged_out"])
+
+
+def get_base_app():
+    with gr.Blocks(
+        title="🧬 Synthetic Data Generator",
+        head="🧬  Synthetic Data Generator",
+        css=_LOGGED_OUT_CSS,
+    ) as app:
+        with gr.Row():
+            gr.Markdown(
+                "Want to run this locally or with other LLMs? Take a look at the FAQ tab. distilabel Synthetic Data Generator is free, we use the authentication token to push the dataset to the Hugging Face Hub and not for data generation."
+            )
+        with gr.Row():
+            gr.Column()
+            get_login_button()
+            gr.Column()
+
+        gr.Markdown("## Iterate on a sample dataset")
+        with gr.Column() as main_ui:
+            pass
+
+    return app
 
 
 def get_argilla_client() -> Union[rg.Argilla, None]:
@@ -98,3 +122,6 @@ def get_argilla_client() -> Union[rg.Argilla, None]:
         )
     except Exception:
         return None
+
+def get_preprocess_labels(labels: Optional[List[str]]) -> List[str]:
+    return [label.lower().strip() for label in labels] if labels else []
