@@ -53,6 +53,9 @@ def push_dataset_to_hub(
     num_labels: int = 1,
 ):
     original_dataframe = dataframe.copy(deep=True)
+    dataframe = dataframe[
+        (dataframe["text"].str.strip() != "") & (dataframe["text"].notna())
+    ]
     labels = get_preprocess_labels(labels)
     try:
         push_to_hub_base(
@@ -80,6 +83,9 @@ def push_dataset_to_argilla(
     labels: List[str] = None,
 ) -> pd.DataFrame:
     original_dataframe = dataframe.copy(deep=True)
+    dataframe = dataframe[
+        (dataframe["text"].str.strip() != "") & (dataframe["text"].notna())
+    ]
     try:
         progress(0.1, desc="Setting up user and workspace")
         client = get_argilla_client()

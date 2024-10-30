@@ -124,4 +124,4 @@ def get_argilla_client() -> Union[rg.Argilla, None]:
         return None
 
 def get_preprocess_labels(labels: Optional[List[str]]) -> List[str]:
-    return [label.lower().strip() for label in labels] if labels else []
+    return list(set([label.lower().strip() for label in labels])) if labels else []

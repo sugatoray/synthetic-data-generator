@@ -114,9 +114,11 @@ with Pipeline(name="textcat") as pipeline:
                 "temperature": 0.8,
                 "max_new_tokens": 2048,
                 "do_sample": True,
-                "seed": random.randint(0, 2**32 - 1),
+                "top_k": 50,
+                "top_p": 0.95,
             }},
         ),
+        seed=random.randint(0, 2**32 - 1),
         difficulty={None if difficulty == "mixed" else repr(difficulty)},
         clarity={None if clarity == "mixed" else repr(clarity)},
         num_generations={num_rows},
@@ -182,11 +184,13 @@ def get_textcat_generator(difficulty, clarity, is_sample):
                 "temperature": 0.9,
                 "max_new_tokens": 256 if is_sample else 2048,
                 "do_sample": True,
-                "seed": random.randint(0, 2**32 - 1),
+                "top_k": 50,
+                "top_p": 0.95,
             },
         ),
         difficulty=None if difficulty == "mixed" else difficulty,
         clarity=None if clarity == "mixed" else clarity,
+        seed=random.randint(0, 2**32 - 1),
     )
     textcat_generator.load()
     return textcat_generator

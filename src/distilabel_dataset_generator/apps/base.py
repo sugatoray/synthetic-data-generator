@@ -427,6 +427,7 @@ def push_dataset_to_hub(
 
     if task == TEXTCAT_TASK:
         if num_labels == 1:
+            dataframe["label"] = dataframe["label"].replace("", None)
             features = Features(
                 {"text": Value("string"), "label": ClassLabel(names=labels)}
             )
