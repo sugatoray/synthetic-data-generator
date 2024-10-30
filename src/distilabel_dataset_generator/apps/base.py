@@ -38,8 +38,8 @@ def get_main_ui(
         if task == TEXTCAT_TASK:
             result = fn_generate_dataset(
                 system_prompt=system_prompt,
-                difficulty="mixed",
-                clarity="mixed",
+                difficulty="high school",
+                clarity="clear",
                 labels=[],
                 num_labels=1,
                 num_rows=1,
@@ -271,7 +271,11 @@ def get_iterate_on_sample_dataset_ui(
         with gr.Row():
             sample_dataset = gr.Dataframe(
                 value=default_datasets[0],
-                label="Sample dataset. Prompts and completions truncated to 256 tokens.",
+                label=(
+                    "Sample dataset. Text truncated to 256 tokens."
+                    if task == TEXTCAT_TASK
+                    else "Sample dataset. Prompts and completions truncated to 256 tokens."
+                ),
                 interactive=False,
                 wrap=True,
             )

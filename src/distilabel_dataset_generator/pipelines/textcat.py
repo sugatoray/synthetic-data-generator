@@ -1,6 +1,7 @@
 from typing import List
 
 import pandas as pd
+import random
 from distilabel.llms import InferenceEndpointsLLM
 from distilabel.steps.tasks import (
     GenerateTextClassificationData,
@@ -88,6 +89,7 @@ def generate_pipeline_code(
     base_code = f"""
 # Requirements: `pip install distilabel[hf-inference-endpoints]`
 import os
+import random
 from distilabel.llms import InferenceEndpointsLLM
 from distilabel.pipeline import Pipeline
 from distilabel.steps import LoadDataFromDicts, KeepColumns
@@ -111,6 +113,8 @@ with Pipeline(name="textcat") as pipeline:
             generation_kwargs={{
                 "temperature": 0.8,
                 "max_new_tokens": 2048,
+                "do_sample": True,
+                "seed": random.randint(0, 2**32 - 1),
             }},
         ),
         difficulty={None if difficulty == "mixed" else repr(difficulty)},
@@ -175,8 +179,10 @@ def get_textcat_generator(difficulty, clarity, is_sample):
             tokenizer_id=MODEL,
             api_key=_get_next_api_key(),
             generation_kwargs={
-                "temperature": 0.8,
-                "max_new_tokens": 256 if is_sample else 1024,
+                "temperature": 0.9,
+                "max_new_tokens": 256 if is_sample else 2048,
+                "do_sample": True,
+                "seed": random.randint(0, 2**32 - 1),
             },
         ),
         difficulty=None if difficulty == "mixed" else difficulty,
@@ -186,15 +192,15 @@ def get_textcat_generator(difficulty, clarity, is_sample):
     return textcat_generator
 
 
-def get_labeller_generator(system_prompt, labels, num_labels, is_sample):
+def get_labeller_generator(system_prompt, labels, num_labels):
     labeller_generator = TextClassification(
         llm=InferenceEndpointsLLM(
             model_id=MODEL,
             tokenizer_id=MODEL,
             api_key=_get_next_api_key(),
             generation_kwargs={
-                "temperature": 0.8,
-                "max_new_tokens": 256 if is_sample else 1024,
+                "temperature": 0.7,
+                "max_new_tokens": 2048,
             },
         ),
         context=system_prompt,

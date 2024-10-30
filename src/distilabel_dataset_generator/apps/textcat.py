@@ -215,7 +215,6 @@ def generate_dataset(
         system_prompt=system_prompt,
         labels=labels,
         num_labels=num_labels,
-        is_sample=is_sample,
     )
     total_steps: int = num_rows * 2
     batch_size = DEFAULT_BATCH_SIZE
@@ -280,11 +279,13 @@ def generate_dataset(
         else:
             dataframe["labels"] = dataframe["labels"].apply(
                 lambda x: (
-                    [
-                        label.lower().strip()
-                        for label in x
-                        if label.lower().strip() in labels
-                    ]
+                    list(
+                        set(
+                            label.lower().strip()
+                            for label in x
+                            if label.lower().strip() in labels
+                        )
+                    )
                     if isinstance(x, list)
                     else None
                 )
@@ -308,6 +309,9 @@ def validate_input_labels(labels):
             f"Please select at least 2 labels to classify your text. You selected {len(labels) if labels else 0}."
         )
     return labels
+
+def update_max_num_labels(labels):
+    return gr.update(maximum=len(labels) if labels else 1)
 
 
 (
@@ -354,7 +358,7 @@ with app:
                 ],
                 value="mixed",
                 label="Difficulty",
-                info="The difficulty of the text to be generated.",
+                info="Select the comprehension level for the text. Ensure it matches the task context.",
             )
             clarity = gr.Dropdown(
                 choices=[
@@ -368,7 +372,7 @@ with app:
                 ],
                 value="mixed",
                 label="Clarity",
-                info="The clarity of the text to be generated.",
+                info="Set how easily the correct label or labels can be identified.",
             )
             with gr.Column():
                 labels = gr.Dropdown(
@@ -385,18 +389,18 @@ with app:
                         size="sm",
                     )
             num_labels = gr.Number(
-                label="Number of labels",
+                label="Number of labels per text",
                 value=1,
                 minimum=1,
                 maximum=10,
-                info="The number of labels to classify the text.",
+                info="Select 1 for single-label and >1 for multi-label.",
             )
             num_rows = gr.Number(
                 label="Number of rows",
                 value=10,
                 minimum=1,
                 maximum=500,
-                info="More rows will take longer to generate.",
+                info="Select the number of rows in the dataset. More rows will take more time.",
             )
 
         pipeline_code = get_pipeline_code_ui(
@@ -415,6 +419,10 @@ with app:
         fn=update_suggested_labels,
         inputs=[system_prompt],
         outputs=labels,
+    ).then(
+        fn=update_max_num_labels,
+        inputs=[labels],
+        outputs=[num_labels],
     )
 
     gr.on(
@@ -540,8 +548,17 @@ with app:
         fn=generate_pipeline_code,
         inputs=[system_prompt, difficulty, clarity, labels, num_labels, num_rows],
         outputs=[pipeline_code],
+    ).then(
+        fn=update_max_num_labels,
+        inputs=[labels],
+        outputs=[num_labels],
     )
     num_labels.change(
+        fn=generate_pipeline_code,
+        inputs=[system_prompt, difficulty, clarity, labels, num_labels, num_rows],
+        outputs=[pipeline_code],
+    )
+    num_rows.change(
         fn=generate_pipeline_code,
         inputs=[system_prompt, difficulty, clarity, labels, num_labels, num_rows],
         outputs=[pipeline_code],
