@@ -10,7 +10,7 @@ app_file: app.py
 pinned: true
 license: apache-2.0
 hf_oauth: true
-header: mini
+#header: mini
 hf_oauth_scopes:
 - read-repos
 - write-repos
