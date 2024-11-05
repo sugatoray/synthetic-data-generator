@@ -13,9 +13,9 @@ from huggingface_hub import HfApi, upload_file
 from src.distilabel_dataset_generator.utils import (
     _LOGGED_OUT_CSS,
     get_argilla_client,
+    get_login_button,
     list_orgs,
     swap_visibilty,
-    get_login_button,
 )
 
 TEXTCAT_TASK = "text_classification"
@@ -258,7 +258,7 @@ def get_iterate_on_sample_dataset_ui(
         with gr.Row():
             gr.Column(scale=1)
             btn_generate_system_prompt = gr.Button(
-                value="Generate system prompt and sample dataset"
+                value="Generate system prompt and sample dataset", variant="primary"
             )
             gr.Column(scale=1)
 
@@ -283,7 +283,7 @@ def get_iterate_on_sample_dataset_ui(
         with gr.Row():
             gr.Column(scale=1)
             btn_generate_sample_dataset = gr.Button(
-                value="Generate sample dataset",
+                value="Generate sample dataset", variant="primary"
             )
             gr.Column(scale=1)
 
@@ -432,17 +432,17 @@ def push_dataset_to_hub(
                 {"text": Value("string"), "label": ClassLabel(names=labels)}
             )
         else:
-            features = Features({
-                "text": Value("string"),
-                "labels": Sequence(feature=ClassLabel(names=labels))
-            })
-        distiset = Distiset({
-            "default": Dataset.from_pandas(dataframe, features=features)
-        })
+            features = Features(
+                {
+                    "text": Value("string"),
+                    "labels": Sequence(feature=ClassLabel(names=labels)),
+                }
+            )
+        distiset = Distiset(
+            {"default": Dataset.from_pandas(dataframe, features=features)}
+        )
     else:
-        distiset = Distiset({
-            "default": Dataset.from_pandas(dataframe)
-        })
+        distiset = Distiset({"default": Dataset.from_pandas(dataframe)})
     progress(0.2, desc="Pushing dataset to hub")
     distiset.push_to_hub(
         repo_id=repo_id,

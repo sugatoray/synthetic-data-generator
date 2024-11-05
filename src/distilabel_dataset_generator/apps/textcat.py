@@ -316,6 +316,7 @@ def validate_input_labels(labels):
         )
     return labels
 
+
 def update_max_num_labels(labels):
     return gr.update(maximum=len(labels) if labels else 1)
 
@@ -392,6 +393,7 @@ with app:
                 with gr.Blocks():
                     btn_suggested_labels = gr.Button(
                         value="Add suggested labels",
+                        variant="primary",
                         size="sm",
                     )
             num_labels = gr.Number(
