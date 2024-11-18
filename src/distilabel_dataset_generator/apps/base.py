@@ -63,6 +63,10 @@ def get_main_ui(
     ) as app:
         with gr.Row():
             gr.Markdown(
+                """<details style='display: inline-block;'><summary><h2 style='display: inline;'>How does it work?</h2></summary><img src='https://huggingface.co/spaces/argilla/synthetic-data-generator/resolve/main/assets/flow.png' width='100%' style='margin: 0 auto; display: block;'></details>"""
+            )
+        with gr.Row():
+            gr.Markdown(
                 "Want to run this locally or with other LLMs? Take a look at the FAQ tab. distilabel Synthetic Data Generator is free, we use the authentication token to push the dataset to the Hugging Face Hub and not for data generation."
             )
         with gr.Row():
