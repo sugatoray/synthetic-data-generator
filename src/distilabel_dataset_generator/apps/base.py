@@ -62,7 +62,7 @@ def get_main_ui(
         css=_LOGGED_OUT_CSS,
     ) as app:
         with gr.Row():
-            gr.Markdown(
+            gr.HTML(
                 """<details style='display: inline-block;'><summary><h2 style='display: inline;'>How does it work?</h2></summary><img src='https://huggingface.co/spaces/argilla/synthetic-data-generator/resolve/main/assets/flow.png' width='100%' style='margin: 0 auto; display: block;'></details>"""
             )
         with gr.Row():
