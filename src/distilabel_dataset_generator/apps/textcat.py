@@ -383,7 +383,7 @@ with app:
             )
             with gr.Column():
                 labels = gr.Dropdown(
-                    choices=[],
+                    choices=["negative", "positive"],
                     allow_custom_value=True,
                     interactive=True,
                     label="Labels",
