@@ -1,13 +1,13 @@
+import random
 from typing import List
 
-import pandas as pd
-import random
 from distilabel.llms import InferenceEndpointsLLM
 from distilabel.steps.tasks import (
     GenerateTextClassificationData,
     TextClassification,
     TextGeneration,
 )
+
 from src.distilabel_dataset_generator.pipelines.base import (
     MODEL,
     _get_next_api_key,
@@ -48,32 +48,6 @@ User dataset description:
 DEFAULT_DATASET_DESCRIPTIONS = [
     "A dataset covering customer reviews for an e-commerce website.",
     "A dataset covering news articles about various topics.",
-]
-
-DEFAULT_DATASETS = [
-    pd.DataFrame.from_dict(
-        {
-            "text": [
-                "I love the product! It's amazing and I'll buy it again.",
-                "The product was okay, but I wouldn't buy it again.",
-            ],
-            "label": ["positive", "negative"],
-        }
-    ),
-    pd.DataFrame.from_dict(
-        {
-            "text": [
-                "Yesterday, the US stock market had a significant increase.",
-                "New research suggests that the Earth is not a perfect sphere.",
-            ],
-            "labels": [["economy", "politics"], ["science", "environment"]],
-        }
-    ),
-]
-
-DEFAULT_SYSTEM_PROMPTS = [
-    "Classify the following customer review as either 'positive' or 'negative'.",
-    "Classify the following news article into one of the following categories: 'politics', 'economy', 'environment', 'science', 'health'.",
 ]
 
 

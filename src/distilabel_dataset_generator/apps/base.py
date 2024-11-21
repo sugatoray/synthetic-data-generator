@@ -168,8 +168,7 @@ def get_main_ui(
 
 def validate_argilla_user_workspace_dataset(
     dataset_name: str,
-    final_dataset: pd.DataFrame,
-    add_to_existing_dataset: bool,
+    add_to_existing_dataset: bool = True,
     oauth_token: Union[OAuthToken, None] = None,
     progress=gr.Progress(),
 ) -> str:
@@ -193,7 +192,7 @@ def validate_argilla_user_workspace_dataset(
     dataset = client.datasets(name=dataset_name, workspace=hf_user)
     if dataset and not add_to_existing_dataset:
         raise gr.Error(f"Dataset {dataset_name} already exists")
-    return final_dataset
+    return ""
 
 
 def get_org_dropdown(oauth_token: OAuthToken = None):
@@ -302,7 +301,8 @@ def get_iterate_on_sample_dataset_ui(
 
 
 def get_pipeline_code_ui(pipeline_code: str) -> gr.Code:
-    gr.Markdown("## Or run this pipeline locally with distilabel")
+    gr.Markdown("## Customize and run locally with distilabel")
+    gr.HTML("<hr>")
     gr.Markdown(
         "You can run this pipeline locally with distilabel. For more information, please refer to the [distilabel documentation](https://distilabel.argilla.io/) or go to the FAQ tab at the top of the page for more information."
     )
@@ -400,7 +400,7 @@ def push_pipeline_code_to_hub(
     oauth_token: Union[OAuthToken, None] = None,
     progress=gr.Progress(),
 ):
-    repo_id = _check_push_to_hub(org_name, repo_name)
+    repo_id = validate_push_to_hub(org_name, repo_name)
     progress(0.1, desc="Uploading pipeline code")
     with io.BytesIO(pipeline_code.encode("utf-8")) as f:
         upload_file(
@@ -427,7 +427,7 @@ def push_dataset_to_hub(
     task: str = TEXTCAT_TASK,
 ) -> pd.DataFrame:
     progress(0.1, desc="Setting up dataset")
-    repo_id = _check_push_to_hub(org_name, repo_name)
+    repo_id = validate_push_to_hub(org_name, repo_name)
 
     if task == TEXTCAT_TASK:
         if num_labels == 1:
@@ -459,7 +459,7 @@ def push_dataset_to_hub(
     return dataframe
 
 
-def _check_push_to_hub(org_name, repo_name):
+def validate_push_to_hub(org_name, repo_name):
     repo_id = (
         f"{org_name}/{repo_name}"
         if repo_name is not None and org_name is not None
@@ -491,7 +491,7 @@ def get_success_message_row() -> gr.Markdown:
     return success_message
 
 
-def show_success_message_argilla() -> gr.Markdown:
+def show_success_message_hub(org_name, repo_name) -> gr.Markdown:
     client = get_argilla_client()
     argilla_api_url = client.api_url
     return gr.Markdown(
@@ -499,7 +499,13 @@ def show_success_message_argilla() -> gr.Markdown:
         <div style="padding: 1em; background-color: #e6f3e6; border-radius: 5px; margin-top: 1em;">
             <h3 style="color: #2e7d32; margin: 0;">Dataset Published Successfully!</h3>
             <p style="margin-top: 0.5em;">
-                Your dataset is now available at:
+                Your dataset is now available the Hugging Face Hub:
+                <a href="https://huggingface.co/datasets/{org_name}/{repo_name}" target="_blank" style="color: #1565c0; text-decoration: none;">
+                    https://huggingface.co/datasets/{org_name}/{repo_name}
+                </a>
+            </p>
+            <p style="margin-top: 0.5em;">
+                Your dataset is now available within Argilla:
                 <a href="{argilla_api_url}" target="_blank" style="color: #1565c0; text-decoration: none;">
                     {argilla_api_url}
                 </a>
@@ -513,23 +519,5 @@ def show_success_message_argilla() -> gr.Markdown:
     )
 
 
-def show_success_message_hub(org_name, repo_name) -> gr.Markdown:
-    return gr.Markdown(
-        value=f"""
-        <div style="padding: 1em; background-color: #e6f3e6; border-radius: 5px; margin-top: 1em;">
-            <h3 style="color: #2e7d32; margin: 0;">Dataset Published Successfully!</h3>
-            <p style="margin-top: 0.5em;">
-                The generated dataset is in the right format for fine-tuning with TRL, AutoTrain or other frameworks.
-                Your dataset is now available at:
-                <a href="https://huggingface.co/datasets/{org_name}/{repo_name}" target="_blank" style="color: #1565c0; text-decoration: none;">
-                    https://huggingface.co/datasets/{org_name}/{repo_name}
-                </a>
-            </p>
-        </div>
-        """,
-        visible=True,
-    )
-
-
 def hide_success_message() -> gr.Markdown:
-    return gr.Markdown(visible=False)
+    return gr.Markdown(value="")

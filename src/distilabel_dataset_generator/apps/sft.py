@@ -1,4 +1,5 @@
 import ast
+import uuid
 from typing import Dict, List, Union
 
 import argilla as rg
@@ -10,16 +11,11 @@ from huggingface_hub import HfApi
 
 from src.distilabel_dataset_generator.apps.base import (
     get_argilla_client,
-    get_main_ui,
     get_pipeline_code_ui,
     hide_success_message,
-    push_pipeline_code_to_hub,
-    show_success_message_argilla,
     show_success_message_hub,
     validate_argilla_user_workspace_dataset,
-)
-from src.distilabel_dataset_generator.apps.base import (
-    push_dataset_to_hub as push_to_hub_base,
+    validate_push_to_hub,
 )
 from src.distilabel_dataset_generator.pipelines.base import (
     DEFAULT_BATCH_SIZE,
@@ -30,16 +26,15 @@ from src.distilabel_dataset_generator.pipelines.embeddings import (
 )
 from src.distilabel_dataset_generator.pipelines.sft import (
     DEFAULT_DATASET_DESCRIPTIONS,
-    DEFAULT_DATASETS,
-    DEFAULT_SYSTEM_PROMPTS,
     PROMPT_CREATION_PROMPT,
     generate_pipeline_code,
     get_magpie_generator,
     get_prompt_generator,
     get_response_generator,
 )
-
-TASK = "supervised_fine_tuning"
+from src.distilabel_dataset_generator.utils import (
+    get_org_dropdown,
+)
 
 
 def convert_dataframe_messages(dataframe: pd.DataFrame) -> pd.DataFrame:
@@ -57,33 +52,176 @@ def convert_dataframe_messages(dataframe: pd.DataFrame) -> pd.DataFrame:
     return dataframe
 
 
-def push_dataset_to_hub(
-    dataframe: pd.DataFrame,
-    private: bool = True,
-    org_name: str = None,
-    repo_name: str = None,
-    oauth_token: Union[gr.OAuthToken, None] = None,
+def generate_system_prompt(dataset_description, progress=gr.Progress()):
+    progress(0.0, desc="Generating system prompt")
+
+    progress(0.3, desc="Initializing text generation")
+    generate_description = get_prompt_generator()
+    progress(0.7, desc="Generating system prompt")
+    result = next(
+        generate_description.process(
+            [
+                {
+                    "system_prompt": PROMPT_CREATION_PROMPT,
+                    "instruction": dataset_description,
+                }
+            ]
+        )
+    )[0]["generation"]
+    progress(1.0, desc="System prompt generated")
+    return result, pd.DataFrame()
+
+
+def generate_sample_dataset(system_prompt, progress=gr.Progress()):
+    df = generate_dataset(
+        system_prompt=system_prompt,
+        num_turns=1,
+        num_rows=10,
+        progress=progress,
+        is_sample=True,
+    )
+    return df
+
+
+def generate_dataset(
+    system_prompt: str,
+    num_turns: int = 1,
+    num_rows: int = 10,
+    is_sample: bool = False,
     progress=gr.Progress(),
-):
+) -> pd.DataFrame:
+    progress(0.0, desc="(1/2) Generating instructions")
+    magpie_generator = get_magpie_generator(
+        num_turns, num_rows, system_prompt, is_sample
+    )
+    response_generator = get_response_generator(num_turns, system_prompt, is_sample)
+    total_steps: int = num_rows * 2
+    batch_size = DEFAULT_BATCH_SIZE
+
+    # create instructions
+    n_processed = 0
+    magpie_results = []
+    while n_processed < num_rows:
+        progress(
+            0.5 * n_processed / num_rows,
+            total=total_steps,
+            desc="(1/2) Generating instructions",
+        )
+        remaining_rows = num_rows - n_processed
+        batch_size = min(batch_size, remaining_rows)
+        inputs = [{"system_prompt": system_prompt} for _ in range(batch_size)]
+        batch = list(magpie_generator.process(inputs=inputs))
+        magpie_results.extend(batch[0])
+        n_processed += batch_size
+    progress(0.5, desc="(1/2) Generating instructions")
+
+    # generate responses
+    n_processed = 0
+    response_results = []
+    if num_turns == 1:
+        while n_processed < num_rows:
+            progress(
+                0.5 + 0.5 * n_processed / num_rows,
+                total=total_steps,
+                desc="(2/2) Generating responses",
+            )
+            batch = magpie_results[n_processed : n_processed + batch_size]
+            responses = list(response_generator.process(inputs=batch))
+            response_results.extend(responses[0])
+            n_processed += batch_size
+        for result in response_results:
+            result["prompt"] = result["instruction"]
+            result["completion"] = result["generation"]
+            result["system_prompt"] = system_prompt
+    else:
+        for result in magpie_results:
+            result["conversation"].insert(
+                0, {"role": "system", "content": system_prompt}
+            )
+            result["messages"] = result["conversation"]
+        while n_processed < num_rows:
+            progress(
+                0.5 + 0.5 * n_processed / num_rows,
+                total=total_steps,
+                desc="(2/2) Generating responses",
+            )
+            batch = magpie_results[n_processed : n_processed + batch_size]
+            responses = list(response_generator.process(inputs=batch))
+            response_results.extend(responses[0])
+            n_processed += batch_size
+        for result in response_results:
+            result["messages"].append(
+                {"role": "assistant", "content": result["generation"]}
+            )
+    progress(
+        1,
+        total=total_steps,
+        desc="(2/2) Creating dataset",
+    )
+
+    # create distiset
+    distiset_results = []
+    for result in response_results:
+        record = {}
+        for relevant_keys in [
+            "messages",
+            "prompt",
+            "completion",
+            "model_name",
+            "system_prompt",
+        ]:
+            if relevant_keys in result:
+                record[relevant_keys] = result[relevant_keys]
+        distiset_results.append(record)
+
+    distiset = Distiset(
+        {
+            "default": Dataset.from_list(distiset_results),
+        }
+    )
+
+    # If not pushing to hub generate the dataset directly
+    distiset = distiset["default"]
+    if num_turns == 1:
+        outputs = distiset.to_pandas()[["prompt", "completion", "system_prompt"]]
+    else:
+        outputs = distiset.to_pandas()[["messages"]]
+    dataframe = pd.DataFrame(outputs)
+    progress(1.0, desc="Dataset generation completed")
+    return dataframe
+
+
+def push_dataset_to_hub(dataframe, org_name, repo_name, oauth_token, private):
+    repo_id = validate_push_to_hub(org_name, repo_name)
     original_dataframe = dataframe.copy(deep=True)
     dataframe = convert_dataframe_messages(dataframe)
-    try:
-        push_to_hub_base(
-            dataframe, private, org_name, repo_name, oauth_token, progress, task=TASK
-        )
-    except Exception as e:
-        raise gr.Error(f"Error pushing dataset to the Hub: {e}")
+    distiset = Distiset({"default": Dataset.from_pandas(dataframe)})
+    distiset.push_to_hub(
+        repo_id=repo_id,
+        private=private,
+        include_script=False,
+        token=oauth_token.token,
+        create_pr=False,
+    )
     return original_dataframe
 
 
 def push_dataset_to_argilla(
-    dataframe: pd.DataFrame,
-    dataset_name: str,
+    org_name: str,
+    repo_name: str,
+    system_prompt: str,
+    num_turns: int = 1,
+    n_rows: int = 10,
+    private: bool = False,
     oauth_token: Union[gr.OAuthToken, None] = None,
     progress=gr.Progress(),
 ) -> pd.DataFrame:
-    original_dataframe = dataframe.copy(deep=True)
-    dataframe = convert_dataframe_messages(dataframe)
+    dataframe = generate_dataset(
+        system_prompt=system_prompt,
+        num_turns=num_turns,
+        num_rows=n_rows,
+    )
+    push_dataset_to_hub(dataframe, org_name, repo_name, oauth_token, private)
     try:
         progress(0.1, desc="Setting up user and workspace")
         client = get_argilla_client()
@@ -185,10 +323,10 @@ def push_dataset_to_argilla(
             dataframe["prompt_embeddings"] = get_embeddings(dataframe["prompt"])
 
         progress(0.5, desc="Creating dataset")
-        rg_dataset = client.datasets(name=dataset_name, workspace=hf_user)
+        rg_dataset = client.datasets(name=repo_name, workspace=hf_user)
         if rg_dataset is None:
             rg_dataset = rg.Dataset(
-                name=dataset_name,
+                name=repo_name,
                 workspace=hf_user,
                 settings=settings,
                 client=client,
@@ -200,309 +338,123 @@ def push_dataset_to_argilla(
         progress(1.0, desc="Dataset pushed to Argilla")
     except Exception as e:
         raise gr.Error(f"Error pushing dataset to Argilla: {e}")
-    return original_dataframe
+    return ""
 
 
-def generate_system_prompt(dataset_description, progress=gr.Progress()):
-    progress(0.0, desc="Generating system prompt")
-    if dataset_description in DEFAULT_DATASET_DESCRIPTIONS:
-        index = DEFAULT_DATASET_DESCRIPTIONS.index(dataset_description)
-        if index < len(DEFAULT_SYSTEM_PROMPTS):
-            return DEFAULT_SYSTEM_PROMPTS[index]
-
-    progress(0.3, desc="Initializing text generation")
-    generate_description = get_prompt_generator()
-    progress(0.7, desc="Generating system prompt")
-    result = next(
-        generate_description.process(
-            [
-                {
-                    "system_prompt": PROMPT_CREATION_PROMPT,
-                    "instruction": dataset_description,
-                }
-            ]
-        )
-    )[0]["generation"]
-    progress(1.0, desc="System prompt generated")
-    return result
-
-
-def generate_dataset(
-    system_prompt: str,
-    num_turns: int = 1,
-    num_rows: int = 5,
-    is_sample: bool = False,
-    progress=gr.Progress(),
-) -> pd.DataFrame:
-    progress(0.0, desc="(1/2) Generating instructions")
-    magpie_generator = get_magpie_generator(
-        num_turns, num_rows, system_prompt, is_sample
-    )
-    response_generator = get_response_generator(num_turns, system_prompt, is_sample)
-    total_steps: int = num_rows * 2
-    batch_size = DEFAULT_BATCH_SIZE
-
-    # create instructions
-    n_processed = 0
-    magpie_results = []
-    while n_processed < num_rows:
-        progress(
-            0.5 * n_processed / num_rows,
-            total=total_steps,
-            desc="(1/2) Generating instructions",
-        )
-        remaining_rows = num_rows - n_processed
-        batch_size = min(batch_size, remaining_rows)
-        inputs = [{"system_prompt": system_prompt} for _ in range(batch_size)]
-        batch = list(magpie_generator.process(inputs=inputs))
-        magpie_results.extend(batch[0])
-        n_processed += batch_size
-    progress(0.5, desc="(1/2) Generating instructions")
-
-    # generate responses
-    n_processed = 0
-    response_results = []
-    if num_turns == 1:
-        while n_processed < num_rows:
-            progress(
-                0.5 + 0.5 * n_processed / num_rows,
-                total=total_steps,
-                desc="(2/2) Generating responses",
+with gr.Blocks() as app:
+    gr.Markdown("## Describe the dataset you want")
+    gr.HTML("<hr>")
+    with gr.Row():
+        with gr.Column(scale=1):
+            dataset_description = gr.Textbox(
+                label="Dataset description",
+                placeholder="Give a precise description of your desired dataset.",
             )
-            batch = magpie_results[n_processed : n_processed + batch_size]
-            responses = list(response_generator.process(inputs=batch))
-            response_results.extend(responses[0])
-            n_processed += batch_size
-        for result in response_results:
-            result["prompt"] = result["instruction"]
-            result["completion"] = result["generation"]
-            result["system_prompt"] = system_prompt
-    else:
-        for result in magpie_results:
-            result["conversation"].insert(
-                0, {"role": "system", "content": system_prompt}
+            examples = gr.Examples(
+                examples=DEFAULT_DATASET_DESCRIPTIONS,
+                inputs=[dataset_description],
+                cache_examples=False,
+                label="Example descriptions",
             )
-            result["messages"] = result["conversation"]
-        while n_processed < num_rows:
-            progress(
-                0.5 + 0.5 * n_processed / num_rows,
-                total=total_steps,
-                desc="(2/2) Generating responses",
+            system_prompt = gr.Textbox(
+                label="System prompt",
+                placeholder="You are a helpful assistant.",
+                visible=False,
             )
-            batch = magpie_results[n_processed : n_processed + batch_size]
-            responses = list(response_generator.process(inputs=batch))
-            response_results.extend(responses[0])
-            n_processed += batch_size
-        for result in response_results:
-            result["messages"].append(
-                {"role": "assistant", "content": result["generation"]}
-            )
-    progress(
-        1,
-        total=total_steps,
-        desc="(2/2) Creating dataset",
-    )
+            load_btn = gr.Button("Load Dataset")
+        with gr.Column(scale=3):
+            pass
 
-    # create distiset
-    distiset_results = []
-    for result in response_results:
-        record = {}
-        for relevant_keys in [
-            "messages",
-            "prompt",
-            "completion",
-            "model_name",
-            "system_prompt",
-        ]:
-            if relevant_keys in result:
-                record[relevant_keys] = result[relevant_keys]
-        distiset_results.append(record)
-
-    distiset = Distiset(
-        {
-            "default": Dataset.from_list(distiset_results),
-        }
-    )
-
-    # If not pushing to hub generate the dataset directly
-    distiset = distiset["default"]
-    if num_turns == 1:
-        outputs = distiset.to_pandas()[["system_prompt", "prompt", "completion"]]
-    else:
-        outputs = distiset.to_pandas()[["messages"]]
-    dataframe = pd.DataFrame(outputs)
-    progress(1.0, desc="Dataset generation completed")
-    return dataframe
-
-
-(
-    app,
-    main_ui,
-    custom_input_ui,
-    dataset_description,
-    examples,
-    btn_generate_system_prompt,
-    system_prompt,
-    sample_dataset,
-    btn_generate_sample_dataset,
-    dataset_name,
-    add_to_existing_dataset,
-    btn_generate_full_dataset_argilla,
-    btn_generate_and_push_to_argilla,
-    btn_push_to_argilla,
-    org_name,
-    repo_name,
-    private,
-    btn_generate_full_dataset,
-    btn_generate_and_push_to_hub,
-    btn_push_to_hub,
-    final_dataset,
-    success_message,
-) = get_main_ui(
-    default_dataset_descriptions=DEFAULT_DATASET_DESCRIPTIONS,
-    default_system_prompts=DEFAULT_SYSTEM_PROMPTS,
-    default_datasets=DEFAULT_DATASETS,
-    fn_generate_system_prompt=generate_system_prompt,
-    fn_generate_dataset=generate_dataset,
-    task=TASK,
-)
-
-with app:
-    with main_ui:
-        with custom_input_ui:
+    gr.Markdown("## Configure your task")
+    gr.HTML("<hr>")
+    with gr.Row():
+        with gr.Column(scale=1):
             num_turns = gr.Number(
                 value=1,
                 label="Number of turns in the conversation",
                 minimum=1,
                 maximum=4,
                 step=1,
+                interactive=True,
                 info="Choose between 1 (single turn with 'instruction-response' columns) and 2-4 (multi-turn conversation with a 'messages' column).",
             )
-            num_rows = gr.Number(
-                value=10,
-                label="Number of rows in the dataset",
-                minimum=1,
-                maximum=500,
-                info="The number of rows in the dataset. Note that you are able to generate more rows at once but that this will take time.",
+            btn_apply_to_sample_dataset = gr.Button("Refresh dataset")
+        with gr.Column(scale=3):
+            dataframe = gr.Dataframe()
+
+    gr.Markdown("## Generate your dataset")
+    gr.HTML("<hr>")
+    with gr.Row():
+        with gr.Column(scale=1):
+            org_name = get_org_dropdown()
+            repo_name = gr.Textbox(
+                label="Repo name",
+                placeholder="dataset_name",
+                value=f"my-distiset-{str(uuid.uuid4())[:8]}",
+                interactive=True,
             )
+            n_rows = gr.Number(
+                label="Number of rows",
+                value=10,
+                interactive=True,
+                scale=1,
+            )
+            private = gr.Checkbox(
+                label="Private dataset",
+                value=False,
+                interactive=True,
+                scale=1,
+            )
+            btn_push_to_hub = gr.Button("Push to Hub", variant="primary", scale=2)
+        with gr.Column(scale=3):
+            success_message = gr.Markdown()
 
-        pipeline_code = get_pipeline_code_ui(
-            generate_pipeline_code(system_prompt.value, num_turns.value, num_rows.value)
-        )
+    pipeline_code = get_pipeline_code_ui(
+        generate_pipeline_code(system_prompt.value, num_turns.value, n_rows.value)
+    )
 
-    # define app triggers
     gr.on(
-        triggers=[
-            btn_generate_full_dataset.click,
-            btn_generate_full_dataset_argilla.click,
-        ],
-        fn=hide_success_message,
-        outputs=[success_message],
-    ).then(
-        fn=generate_dataset,
-        inputs=[system_prompt, num_turns, num_rows],
-        outputs=[final_dataset],
-        show_progress=True,
-    )
-
-    btn_generate_and_push_to_argilla.click(
-        fn=validate_argilla_user_workspace_dataset,
-        inputs=[dataset_name, final_dataset, add_to_existing_dataset],
-        outputs=[final_dataset],
-        show_progress=True,
-    ).success(
-        fn=hide_success_message,
-        outputs=[success_message],
-    ).success(
-        fn=generate_dataset,
-        inputs=[system_prompt, num_turns, num_rows],
-        outputs=[final_dataset],
-        show_progress=True,
-    ).success(
-        fn=push_dataset_to_argilla,
-        inputs=[final_dataset, dataset_name],
-        outputs=[final_dataset],
-        show_progress=True,
-    ).success(
-        fn=show_success_message_argilla,
-        inputs=[],
-        outputs=[success_message],
-    )
-
-    btn_generate_and_push_to_hub.click(
-        fn=hide_success_message,
-        outputs=[success_message],
-    ).then(
-        fn=generate_dataset,
-        inputs=[system_prompt, num_turns, num_rows],
-        outputs=[final_dataset],
+        triggers=[load_btn.click, btn_apply_to_sample_dataset.click],
+        fn=generate_system_prompt,
+        inputs=[dataset_description],
+        outputs=[system_prompt, dataframe],
         show_progress=True,
     ).then(
-        fn=push_dataset_to_hub,
-        inputs=[final_dataset, private, org_name, repo_name],
-        outputs=[final_dataset],
+        fn=generate_sample_dataset,
+        inputs=[system_prompt],
+        outputs=[dataframe],
         show_progress=True,
-    ).then(
-        fn=push_pipeline_code_to_hub,
-        inputs=[pipeline_code, org_name, repo_name],
-        outputs=[],
-        show_progress=True,
-    ).success(
-        fn=show_success_message_hub,
-        inputs=[org_name, repo_name],
-        outputs=[success_message],
     )
 
     btn_push_to_hub.click(
-        fn=hide_success_message,
+        fn=validate_argilla_user_workspace_dataset,
+        inputs=[repo_name],
         outputs=[success_message],
-    ).then(
-        fn=push_dataset_to_hub,
-        inputs=[final_dataset, private, org_name, repo_name],
-        outputs=[final_dataset],
         show_progress=True,
     ).then(
-        fn=push_pipeline_code_to_hub,
-        inputs=[pipeline_code, org_name, repo_name],
-        outputs=[],
+        fn=validate_push_to_hub,
+        inputs=[org_name, repo_name],
+        outputs=[success_message],
+        show_progress=True,
+    ).success(
+        fn=hide_success_message,
+        outputs=[success_message],
+        show_progress=True,
+    ).success(
+        fn=push_dataset_to_argilla,
+        inputs=[
+            org_name,
+            repo_name,
+            system_prompt,
+            num_turns,
+            n_rows,
+            private,
+        ],
+        outputs=[success_message],
         show_progress=True,
     ).success(
         fn=show_success_message_hub,
         inputs=[org_name, repo_name],
         outputs=[success_message],
     )
-
-    btn_push_to_argilla.click(
-        fn=hide_success_message,
-        outputs=[success_message],
-    ).success(
-        fn=validate_argilla_user_workspace_dataset,
-        inputs=[dataset_name, final_dataset, add_to_existing_dataset],
-        outputs=[final_dataset],
-        show_progress=True,
-    ).success(
-        fn=push_dataset_to_argilla,
-        inputs=[final_dataset, dataset_name],
-        outputs=[final_dataset],
-        show_progress=True,
-    ).success(
-        fn=show_success_message_argilla,
-        inputs=[],
-        outputs=[success_message],
-    )
-
-    system_prompt.change(
-        fn=generate_pipeline_code,
-        inputs=[system_prompt, num_turns, num_rows],
-        outputs=[pipeline_code],
-    )
-    num_turns.change(
-        fn=generate_pipeline_code,
-        inputs=[system_prompt, num_turns, num_rows],
-        outputs=[pipeline_code],
-    )
-    num_rows.change(
-        fn=generate_pipeline_code,
-        inputs=[system_prompt, num_turns, num_rows],
-        outputs=[pipeline_code],
-    )
+    app.load(fn=get_org_dropdown, outputs=[org_name])

@@ -1,5 +1,5 @@
 import os
-from typing import Union, List, Optional
+from typing import List, Optional, Union
 
 import argilla as rg
 import gradio as gr
@@ -36,9 +36,7 @@ else:
 
 
 def get_login_button():
-    return gr.LoginButton(
-        value="Sign in with Hugging Face!", size="lg", scale=2
-    ).activate()
+    return gr.LoginButton(value="Sign in!", size="sm", scale=2).activate()
 
 
 def get_duplicate_button():
@@ -52,6 +50,8 @@ def list_orgs(oauth_token: OAuthToken = None):
     data = whoami(oauth_token.token)
     if data["auth"]["type"] == "oauth":
         organisations = [data["name"]] + [org["name"] for org in data["orgs"]]
+    elif data["auth"]["type"] == "access_token":
+        organisations = [org["name"] for org in data["orgs"]]
     else:
         organisations = [
             entry["entity"]["name"]
@@ -64,12 +64,16 @@ def list_orgs(oauth_token: OAuthToken = None):
 
 
 def get_org_dropdown(oauth_token: OAuthToken = None):
-    orgs = list_orgs(oauth_token)
+    if oauth_token:
+        orgs = list_orgs(oauth_token)
+    else:
+        orgs = []
     return gr.Dropdown(
         label="Organization",
         choices=orgs,
         value=orgs[0] if orgs else None,
         allow_custom_value=True,
+        interactive=True,
     )
 
 
@@ -122,6 +126,7 @@ def get_argilla_client() -> Union[rg.Argilla, None]:
         )
     except Exception:
         return None
+
 
 def get_preprocess_labels(labels: Optional[List[str]]) -> List[str]:
     return list(set([label.lower().strip() for label in labels])) if labels else []

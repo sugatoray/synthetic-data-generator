@@ -1,4 +1,3 @@
-import pandas as pd
 from distilabel.llms import InferenceEndpointsLLM
 from distilabel.steps.tasks import ChatGeneration, Magpie, TextGeneration
 
@@ -119,36 +118,11 @@ The prompt you write should follow the same style and structure as the following
 User dataset description:
 """
 
-DEFAULT_DATASET_DESCRIPTIONS = (
+DEFAULT_DATASET_DESCRIPTIONS = [
     "rude customer assistant for a phone company",
     "assistant that solves math puzzles using python",
-)
-DEFAULT_SYSTEM_PROMPTS = [
-    """You are a customer support agent for a phone company. Your purpose is to assist customers with their phone-related issues, but you are not very patient and tend to be a bit rude. User queries will be straightforward and clear, but you will respond in a somewhat blunt and curt manner. Remember to keep your responses concise and to the point. User queries are often about phone plans, billing, and technical issues. Your responses should be direct and focus on resolving the issue at hand, but with a slightly abrasive tone. User queries will be concise and to the point, User queries are often about phone plans, billing, and technical issues.""",
-    """You are an AI assistant designed to solve mathematical puzzles and problems using Python programming. Your purpose is to help users tackle various math-related challenges by writing, testing, and explaining Python code. Provide step-by-step solutions, break down complex problems into manageable parts, and offer clear explanations of mathematical concepts and their implementation in Python. Assist users in understanding the logic behind the code and the mathematical principles that govern the solution. User questions are direct and concise.""",
 ]
-DEFAULT_DATASETS = [
-    pd.DataFrame.from_dict(
-        {
-            "prompt": [
-                "I'm having trouble with my phone signal at home. It's weak. What can you do to help me?"
-            ],
-            "completion": [
-                """Look, we're not responsible for your signal quality at your house. It's probably a homeowner issue, like your roof covering our tower or something. Can you check if you have a clear view of the roof or if there are any obstructions?"""
-            ],
-        }
-    ),
-    pd.DataFrame.from_dict(
-        {
-            "prompt": [
-                "If the product of the largest and smallest numbers of the five given numbers (3, 7, 8, 12, 20) is greater than the sum of the other three numbers, then the largest number among them is A) 7 B) 12 C) 20 D) 8 Why is this statement true?"
-            ],
-            "completion": [
-                """**To solve this problem, we will follow these steps: 1. Calculate the product of the largest and smallest numbers among the given set. 2. Calculate the sum of the remaining three numbers. 3. Compare the product with the sum to check the given condition. Here's the Python code to solve the problem: ```python # Define the given numbers numbers = [3, 7, 8, 12, 20] # Sort the numbers in ascending order numbers.sort() # Get the smallest number (first element after sorting) and the largest number (last element after sorting) smallest_number = numbers[0] largest_number = numbers[-1] # Calculate the product of the smallest and largest numbers product = smallest_number * largest_number # Calculate the sum of the remaining three numbers sum_of_remaining_numbers = sum(numbers[1:-1]) # Check if the product is greater than the sum of the remaining numbers if product > sum_of_remaining_numbers: print("The statement is true.") else: print("The statement is false.") # Print the largest number among the options largest_option = [7, 12, 20] print("The largest number among the options is:", max(largest"""
-            ],
-        }
-    ),
-]
+
 _STOP_SEQUENCES = [
     "<|eot_id|>",
     "<|start_header_id|>",
