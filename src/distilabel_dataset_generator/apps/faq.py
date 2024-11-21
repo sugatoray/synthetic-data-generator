@@ -2,13 +2,11 @@ import gradio as gr
 
 with gr.Blocks() as app:
     with gr.Row():
-        with gr.Column(scale=1):
-            pass
-        with gr.Column(scale=3):
+        with gr.Column(scale=2):
             gr.HTML(
                 """
                 <div style="text-align: justify;">
-                    <h4 style="text-align: center;">What is Distilabel Synthetic Data Generator?</h4>
+                    <h4 style="text-align: left;">What is Distilabel Synthetic Data Generator?</h4>
 
                     <p>Distilabel Synthetic Data Generator is an experimental tool that allows you to easily create high-quality datasets for training and fine-tuning language models. It leverages the power of distilabel and advanced language models to generate synthetic data tailored to your specific needs.</p>
 
@@ -59,5 +57,5 @@ with gr.Blocks() as app:
                 </div>
                 """
             )
-        with gr.Column(scale=1):
+        with gr.Column(scale=2):
             pass
