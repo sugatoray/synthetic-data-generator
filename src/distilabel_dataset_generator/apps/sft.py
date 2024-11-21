@@ -33,7 +33,10 @@ from src.distilabel_dataset_generator.pipelines.sft import (
     get_response_generator,
 )
 from src.distilabel_dataset_generator.utils import (
+    _LOGGED_OUT_CSS,
+    get_argilla_client,
     get_org_dropdown,
+    swap_visibilty,
 )
 
 
@@ -341,77 +344,78 @@ def push_dataset_to_argilla(
     return ""
 
 
-with gr.Blocks() as app:
-    gr.Markdown("## Describe the dataset you want")
-    gr.HTML("<hr>")
-    with gr.Row():
-        with gr.Column(scale=1):
-            dataset_description = gr.Textbox(
-                label="Dataset description",
-                placeholder="Give a precise description of your desired dataset.",
-            )
-            examples = gr.Examples(
-                examples=DEFAULT_DATASET_DESCRIPTIONS,
-                inputs=[dataset_description],
-                cache_examples=False,
-                label="Example descriptions",
-            )
-            system_prompt = gr.Textbox(
-                label="System prompt",
-                placeholder="You are a helpful assistant.",
-                visible=False,
-            )
-            load_btn = gr.Button("Load Dataset")
-        with gr.Column(scale=3):
-            pass
+with gr.Blocks(css=_LOGGED_OUT_CSS) as app:
+    with gr.Column() as main_ui:
+        gr.Markdown("## Describe the dataset you want")
+        gr.HTML("<hr>")
+        with gr.Row():
+            with gr.Column(scale=1):
+                dataset_description = gr.Textbox(
+                    label="Dataset description",
+                    placeholder="Give a precise description of your desired dataset.",
+                )
+                examples = gr.Examples(
+                    examples=DEFAULT_DATASET_DESCRIPTIONS,
+                    inputs=[dataset_description],
+                    cache_examples=False,
+                    label="Example descriptions",
+                )
+                system_prompt = gr.Textbox(
+                    label="System prompt",
+                    placeholder="You are a helpful assistant.",
+                    visible=False,
+                )
+                load_btn = gr.Button("Load Dataset")
+            with gr.Column(scale=3):
+                pass
 
-    gr.Markdown("## Configure your task")
-    gr.HTML("<hr>")
-    with gr.Row():
-        with gr.Column(scale=1):
-            num_turns = gr.Number(
-                value=1,
-                label="Number of turns in the conversation",
-                minimum=1,
-                maximum=4,
-                step=1,
-                interactive=True,
-                info="Choose between 1 (single turn with 'instruction-response' columns) and 2-4 (multi-turn conversation with a 'messages' column).",
-            )
-            btn_apply_to_sample_dataset = gr.Button("Refresh dataset")
-        with gr.Column(scale=3):
-            dataframe = gr.Dataframe()
+        gr.Markdown("## Configure your task")
+        gr.HTML("<hr>")
+        with gr.Row():
+            with gr.Column(scale=1):
+                num_turns = gr.Number(
+                    value=1,
+                    label="Number of turns in the conversation",
+                    minimum=1,
+                    maximum=4,
+                    step=1,
+                    interactive=True,
+                    info="Choose between 1 (single turn with 'instruction-response' columns) and 2-4 (multi-turn conversation with a 'messages' column).",
+                )
+                btn_apply_to_sample_dataset = gr.Button("Refresh dataset")
+            with gr.Column(scale=3):
+                dataframe = gr.Dataframe()
 
-    gr.Markdown("## Generate your dataset")
-    gr.HTML("<hr>")
-    with gr.Row():
-        with gr.Column(scale=1):
-            org_name = get_org_dropdown()
-            repo_name = gr.Textbox(
-                label="Repo name",
-                placeholder="dataset_name",
-                value=f"my-distiset-{str(uuid.uuid4())[:8]}",
-                interactive=True,
-            )
-            n_rows = gr.Number(
-                label="Number of rows",
-                value=10,
-                interactive=True,
-                scale=1,
-            )
-            private = gr.Checkbox(
-                label="Private dataset",
-                value=False,
-                interactive=True,
-                scale=1,
-            )
-            btn_push_to_hub = gr.Button("Push to Hub", variant="primary", scale=2)
-        with gr.Column(scale=3):
-            success_message = gr.Markdown()
+        gr.Markdown("## Generate your dataset")
+        gr.HTML("<hr>")
+        with gr.Row():
+            with gr.Column(scale=1):
+                org_name = get_org_dropdown()
+                repo_name = gr.Textbox(
+                    label="Repo name",
+                    placeholder="dataset_name",
+                    value=f"my-distiset-{str(uuid.uuid4())[:8]}",
+                    interactive=True,
+                )
+                n_rows = gr.Number(
+                    label="Number of rows",
+                    value=10,
+                    interactive=True,
+                    scale=1,
+                )
+                private = gr.Checkbox(
+                    label="Private dataset",
+                    value=False,
+                    interactive=True,
+                    scale=1,
+                )
+                btn_push_to_hub = gr.Button("Push to Hub", variant="primary", scale=2)
+            with gr.Column(scale=3):
+                success_message = gr.Markdown()
 
-    pipeline_code = get_pipeline_code_ui(
-        generate_pipeline_code(system_prompt.value, num_turns.value, n_rows.value)
-    )
+        pipeline_code = get_pipeline_code_ui(
+            generate_pipeline_code(system_prompt.value, num_turns.value, n_rows.value)
+        )
 
     gr.on(
         triggers=[load_btn.click, btn_apply_to_sample_dataset.click],
@@ -457,4 +461,5 @@ with gr.Blocks() as app:
         inputs=[org_name, repo_name],
         outputs=[success_message],
     )
+    app.load(fn=swap_visibilty, outputs=main_ui)
     app.load(fn=get_org_dropdown, outputs=[org_name])
