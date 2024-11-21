@@ -21,24 +21,20 @@ hf_oauth_scopes:
 Check out the configuration reference at https://huggingface.co/docs/hub/spaces-config-reference
 
 <div class="header-container">
-    <div class="logo-container">
-        <a href="https://github.com/argilla-io/distilabel" target="_blank" rel="noopener noreferrer">
-            <img src="https://distilabel.argilla.io/latest/assets/distilabel-black.svg" alt="Distilabel Logo" style="width: 150px; height: auto;">
-        </a>
-    </div>
     <div class="title-container">
         <h1 style="margin: 0; font-size: 2em;">🧬 Synthetic Data Generator</h1>
         <p style="margin: 10px 0 0 0; color: #666; font-size: 1.1em;">Build datasets using natural language</p>
     </div>
 </div>
 <br>
+
 This repository contains the code for the [free Synthetic Data Generator app](https://huggingface.co/spaces/argilla/synthetic-data-generator), which is hosted on the Hugging Face Hub.
 
 ## How it works?
 
 ![Synthetic Data Generator](https://huggingface.co/spaces/argilla/synthetic-data-generator/resolve/main/assets/flow.png)
 
-Distilabel Synthetic Data Generator is an experimental tool that allows you to easily create high-quality datasets for training and fine-tuning language models. It leverages the power of distilabel and advanced language models to generate synthetic data tailored to your specific needs.
+Distilabel Synthetic Data Generator is a tool that allows you to easily create high-quality datasets for training and fine-tuning language models. It leverages the power of distilabel and advanced language models to generate synthetic data tailored to your specific needs.
 
 This tool simplifies the process of creating custom datasets, enabling you to:
 
@@ -58,6 +54,8 @@ You can simply clone the repository and run it locally with:
 pip install -r requirements.txt
 python app.py
 ```
+
+Note that you do need to have an `HF_TOKEN` that can make calls to the free serverless Hugging Face Inference Endpoints. You can get one [here](https://huggingface.co/settings/tokens/new?ownUserPermissions=repo.content.read&ownUserPermissions=repo.write&globalPermissions=inference.serverless.write&tokenType=fineGrained).
 
 ## Do you need more control?
 
