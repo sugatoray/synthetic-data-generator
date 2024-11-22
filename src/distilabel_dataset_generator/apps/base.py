@@ -301,15 +301,16 @@ def get_iterate_on_sample_dataset_ui(
 
 
 def get_pipeline_code_ui(pipeline_code: str) -> gr.Code:
-    gr.Markdown("## Customize and run locally with distilabel")
+    gr.Markdown("## Customize and run with distilabel")
     gr.HTML("<hr>")
-    gr.Markdown(
-        "You can run this pipeline locally with distilabel. For more information, please refer to the [distilabel documentation](https://distilabel.argilla.io/) or go to the FAQ tab at the top of the page for more information."
-    )
+
     with gr.Accordion(
         "Run this pipeline using distilabel",
         open=False,
     ):
+        gr.Markdown(
+            "You can run this pipeline locally with distilabel. For more information, please refer to the [distilabel documentation](https://distilabel.argilla.io/) or go to the FAQ tab at the top of the page for more information."
+        )
         pipeline_code = gr.Code(
             value=pipeline_code,
             language="python",

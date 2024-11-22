@@ -38,8 +38,18 @@ button[role="tab"][data-tab-id][aria-selected="true"] {
 .gallery {
     color: black !important;
 }
+@media (prefers-color-scheme: dark) {
+    .gallery {
+        color: white !important;
+    }
+}
 .flex-shrink-0.truncate.px-1 {
     color: black !important;
+}
+@media (prefers-color-scheme: dark) {
+    .flex-shrink-0.truncate.px-1 {
+        color: white !important;
+    }
 }
 """
 

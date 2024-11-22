@@ -200,7 +200,7 @@ with gr.Blocks() as app:
         with gr.Column(scale=1):
             eval_type = gr.Dropdown(
                 label="Evaluation Type",
-                choices=["instruction", "instruction-response", "custom"],
+                choices=["instruction", "instruction-response", "custom-template"],
                 visible=False,
             )
             with gr.Tab("instruction") as tab_instruction:
@@ -243,7 +243,7 @@ with gr.Blocks() as app:
                     interactive=True,
                 )
                 tab_custom.select(
-                    lambda: "custom",
+                    lambda: "custom-template",
                     inputs=[],
                     outputs=[eval_type],
                 )
