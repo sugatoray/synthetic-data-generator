@@ -73,7 +73,7 @@ def define_evaluation_aspects(task_type: str):
             interactive=True,
         )
     else:
-        return gr.Dropdown(interactive=False)
+        return gr.Dropdown(interactive=False, visible=False)
 
 
 def evaluate_instruction(df: pd.DataFrame, aspects: list[str], instruction_column: str):
@@ -176,12 +176,10 @@ def push_to_hub(
         structured_output,
     )
     new_repo_id = f"{org_name}/{repo_name}"
-    print(df)
 
 
 with gr.Blocks() as app:
-    gr.Markdown("## Select your input dataset")
-    gr.HTML("<hr>")
+    gr.Markdown("## 1. Select your input dataset")
     with gr.Row():
         with gr.Column(scale=1):
             search_in = HuggingfaceHubSearch(
@@ -190,12 +188,12 @@ with gr.Blocks() as app:
                 search_type="dataset",
                 sumbit_on_select=True,
             )
-            load_btn = gr.Button("Load Dataset")
+            load_btn = gr.Button("Load dataset")
         with gr.Column(scale=3):
             search_out = gr.HTML(label="Dataset Preview")
 
-    gr.Markdown("## Configure your task")
     gr.HTML("<hr>")
+    gr.Markdown("## 2. Configure your task")
     with gr.Row():
         with gr.Column(scale=1):
             eval_type = gr.Dropdown(
@@ -251,8 +249,8 @@ with gr.Blocks() as app:
         with gr.Column(scale=3):
             dataframe = gr.Dataframe()
 
-    gr.Markdown("## Generate your dataset")
     gr.HTML("<hr>")
+    gr.Markdown("## 3. Generate your dataset")
     with gr.Row():
         with gr.Column(scale=1):
             org_name = get_org_dropdown()

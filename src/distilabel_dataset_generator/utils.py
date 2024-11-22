@@ -45,26 +45,31 @@ def get_duplicate_button():
 
 
 def list_orgs(oauth_token: OAuthToken = None):
-    if oauth_token is None:
-        return []
-    data = whoami(oauth_token.token)
-    if data["auth"]["type"] == "oauth":
-        organisations = [data["name"]] + [org["name"] for org in data["orgs"]]
-    elif data["auth"]["type"] == "access_token":
-        organisations = [org["name"] for org in data["orgs"]]
-    else:
-        organisations = [
-            entry["entity"]["name"]
-            for entry in data["auth"]["accessToken"]["fineGrained"]["scoped"]
-            if "repo.write" in entry["permissions"]
-        ]
-        organisations = [org for org in organisations if org != data["name"]]
-        organisations = [data["name"]] + organisations
+    try:
+        if oauth_token is None:
+            return []
+        data = whoami(oauth_token.token)
+        if data["auth"]["type"] == "oauth":
+            organisations = [data["name"]] + [org["name"] for org in data["orgs"]]
+        elif data["auth"]["type"] == "access_token":
+            organisations = [org["name"] for org in data["orgs"]]
+        else:
+            organisations = [
+                entry["entity"]["name"]
+                for entry in data["auth"]["accessToken"]["fineGrained"]["scoped"]
+                if "repo.write" in entry["permissions"]
+            ]
+            organisations = [org for org in organisations if org != data["name"]]
+            organisations = [data["name"]] + organisations
+    except Exception as e:
+        raise gr.Error(
+            f"Failed to get organizations: {e}. See if you are logged and connected: https://huggingface.co/settings/connected-applications."
+        )
     return organisations
 
 
 def get_org_dropdown(oauth_token: OAuthToken = None):
-    if oauth_token:
+    if oauth_token is not None:
         orgs = list_orgs(oauth_token)
     else:
         orgs = []

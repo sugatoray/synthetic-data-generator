@@ -355,8 +355,7 @@ def update_max_num_labels(labels):
 
 with gr.Blocks(css=_LOGGED_OUT_CSS) as app:
     with gr.Column() as main_ui:
-        gr.Markdown("## Describe the dataset you want")
-        gr.HTML("<hr>")
+        gr.Markdown("## 1. Describe the dataset you want")
         with gr.Row():
             with gr.Column(scale=1):
                 dataset_description = gr.Textbox(
@@ -369,19 +368,19 @@ with gr.Blocks(css=_LOGGED_OUT_CSS) as app:
                     cache_examples=False,
                     label="Example descriptions",
                 )
-                system_prompt = gr.Textbox(
-                    label="System prompt",
-                    placeholder="You are a helpful assistant.",
-                    visible=False,
-                )
-                load_btn = gr.Button("Load Dataset")
+                load_btn = gr.Button("Load dataset")
             with gr.Column(scale=3):
                 pass
 
-        gr.Markdown("## Configure your task")
         gr.HTML("<hr>")
+        gr.Markdown("## 2. Configure your task")
         with gr.Row():
             with gr.Column(scale=1):
+                system_prompt = gr.Textbox(
+                    label="System prompt",
+                    placeholder="You are a helpful assistant.",
+                    visible=True,
+                )
                 difficulty = gr.Dropdown(
                     choices=[
                         ("High School", "high school"),
@@ -429,8 +428,8 @@ with gr.Blocks(css=_LOGGED_OUT_CSS) as app:
             with gr.Column(scale=3):
                 dataframe = gr.Dataframe()
 
-        gr.Markdown("## Generate your dataset")
         gr.HTML("<hr>")
+        gr.Markdown("## 3. Generate your dataset")
         with gr.Row():
             with gr.Column(scale=1):
                 org_name = get_org_dropdown()
