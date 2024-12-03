@@ -607,7 +607,7 @@ with gr.Blocks() as app:
         gr.HTML(value="<hr>")
         gr.Markdown(value="## 2. Configure your task")
         with gr.Row(equal_height=False):
-            with gr.Column(scale=1):
+            with gr.Column(scale=2):
                 eval_type = gr.Dropdown(
                     label="Evaluation type",
                     choices=["ultrafeedback", "custom"],
@@ -666,7 +666,7 @@ with gr.Blocks() as app:
                         outputs=[eval_type],
                     )
                 btn_apply_to_sample_dataset = gr.Button(
-                    "Refresh dataset", variant="secondary", size="sm"
+                    "Refresh dataset", variant="secondary"
                 )
             with gr.Column(scale=3):
                 dataframe = gr.Dataframe(

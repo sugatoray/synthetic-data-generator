@@ -385,7 +385,7 @@ with gr.Blocks(css=_LOGGED_OUT_CSS) as app:
         gr.HTML(value="<hr>")
         gr.Markdown(value="## 2. Configure your dataset")
         with gr.Row(equal_height=False):
-            with gr.Column(scale=1):
+            with gr.Column(scale=2):
                 system_prompt = gr.Textbox(
                     label="System prompt",
                     placeholder="You are a helpful assistant.",
@@ -400,7 +400,7 @@ with gr.Blocks(css=_LOGGED_OUT_CSS) as app:
                     info="Choose between 1 (single turn with 'instruction-response' columns) and 2-4 (multi-turn conversation with a 'messages' column).",
                 )
                 btn_apply_to_sample_dataset = gr.Button(
-                    "Refresh dataset", variant="secondary", size="sm"
+                    "Refresh dataset", variant="secondary"
                 )
             with gr.Column(scale=3):
                 dataframe = gr.Dataframe(

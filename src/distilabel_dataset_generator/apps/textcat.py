@@ -367,7 +367,7 @@ with gr.Blocks(css=_LOGGED_OUT_CSS) as app:
         gr.HTML("<hr>")
         gr.Markdown("## 2. Configure your dataset")
         with gr.Row(equal_height=False):
-            with gr.Column(scale=1):
+            with gr.Column(scale=2):
                 system_prompt = gr.Textbox(
                     label="System prompt",
                     placeholder="You are a helpful assistant.",
@@ -417,7 +417,7 @@ with gr.Blocks(css=_LOGGED_OUT_CSS) as app:
                     interactive=True,
                 )
                 btn_apply_to_sample_dataset = gr.Button(
-                    "Refresh dataset", variant="secondary", size="sm"
+                    "Refresh dataset", variant="secondary"
                 )
             with gr.Column(scale=3):
                 dataframe = gr.Dataframe(
