@@ -7,8 +7,8 @@ from synthetic_dataset_generator.apps.textcat import app as textcat_app
 theme = "argilla/argilla-theme"
 
 css = """
-button[role="tab"][aria-selected="true"] { border: 0; background: var(--neutral-800); color: white; border-top-right-radius: var(--radius-md); border-top-left-radius: var(--radius-md)}
-button[role="tab"][aria-selected="true"]:hover {border-color: var(--button-primary-background-fill)}
+button[role="tab"][aria-selected="true"] { border: 0; background: var(--button-primary-background-fill); color: white; border-top-right-radius: var(--radius-md); border-top-left-radius: var(--radius-md)}
+button[role="tab"][aria-selected="true"]:hover {border-color: var(--button-primary-background-fill); background: var(--button-primary-background-fill-hover)}
 .tabitem { border: 0; padding-inline: 0}
 .main_ui_logged_out{opacity: 0.3; pointer-events: none}
 .group_padding{padding: .55em}
