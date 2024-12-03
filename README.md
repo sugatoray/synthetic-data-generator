@@ -32,7 +32,7 @@ hf_oauth_scopes:
 <img alt="CI" src="https://img.shields.io/pypi/v/synthetic-dataset-generator.svg?style=flat-round&logo=pypi&logoColor=white">
 </a>
 <a href="https://pepy.tech/project/synthetic-dataset-generator">
-<img alt="CI" src="https://static.pepy.tech/personalized-badge/argilla?period=month&units=international_system&left_color=grey&right_color=blue&left_text=pypi%20downloads/month">
+<img alt="CI" src="https://static.pepy.tech/personalized-badge/synthetic-dataset-generator?period=month&units=international_system&left_color=grey&right_color=blue&left_text=pypi%20downloads/month">
 </a>
 <a href="https://huggingface.co/spaces/argilla/synthetic-data-generator?duplicate=true">
 <img src="https://huggingface.co/datasets/huggingface/badges/raw/main/duplicate-this-space-sm.svg"/>
@@ -80,15 +80,24 @@ pip install synthetic-dataset-generator
 
 ### Environment Variables
 
-- `HF_TOKEN`: Your Hugging Face token to push your datasets to the Hugging Face Hub and run Inference Endpoints Requests. You can get one [here](https://huggingface.co/settings/tokens/new?ownUserPermissions=repo.content.read&ownUserPermissions=repo.write&globalPermissions=inference.serverless.write&tokenType=fineGrained).
+- `HF_TOKEN`: Your Hugging Face token to push your datasets to the Hugging Face Hub and run *Free* Inference Endpoints Requests. You can get one [here](https://huggingface.co/settings/tokens/new?ownUserPermissions=repo.content.read&ownUserPermissions=repo.write&globalPermissions=inference.serverless.write&tokenType=fineGrained).
+
+Optionally, you can also push your datasets to Argilla for further curation by setting the following environment variables:
+
 - `ARGILLA_API_KEY`: Your Argilla API key to push your datasets to Argilla.
 - `ARGILLA_API_URL`: Your Argilla API URL to push your datasets to Argilla.
 
-## Quick Start
+## Quickstart
 
 ```bash
 python app.py
 ```
+
+### Argilla integration
+
+Argilla is a open source tool for data curation. It allows you to annotate and review datasets, and push curated datasets to the Hugging Face Hub. You can easily get started with Argilla by following the [quickstart guide](https://docs.argilla.io/latest/getting_started/quickstart/).
+
+![Argilla integration](https://huggingface.co/spaces/argilla/synthetic-data-generator/resolve/main/assets/argilla.png)
 
 ## Custom synthetic data generation?
 
