@@ -1,5 +1,4 @@
 import json
-import os
 from typing import List, Optional, Union
 
 import argilla as rg
@@ -16,10 +15,10 @@ from gradio.oauth import (
 from huggingface_hub import whoami
 from jinja2 import Environment, meta
 
+from src.distilabel_dataset_generator import argilla_client
+
 _LOGGED_OUT_CSS = ".main_ui_logged_out{opacity: 0.3; pointer-events: none}"
 
-HF_TOKENS = [os.getenv("HF_TOKEN")] + [os.getenv(f"HF_TOKEN_{i}") for i in range(1, 10)]
-HF_TOKENS = [token for token in HF_TOKENS if token]
 
 _CHECK_IF_SPACE_IS_SET = (
     all(
@@ -48,7 +47,7 @@ def get_duplicate_button():
         return gr.DuplicateButton(size="lg")
 
 
-def list_orgs(oauth_token: OAuthToken = None):
+def list_orgs(oauth_token: Union[OAuthToken, None] = None):
     try:
         if oauth_token is None:
             return []
@@ -72,7 +71,7 @@ def list_orgs(oauth_token: OAuthToken = None):
     return organizations
 
 
-def get_org_dropdown(oauth_token: OAuthToken = None):
+def get_org_dropdown(oauth_token: Union[OAuthToken, None] = None):
     if oauth_token is not None:
         orgs = list_orgs(oauth_token)
     else:
@@ -86,14 +85,14 @@ def get_org_dropdown(oauth_token: OAuthToken = None):
     )
 
 
-def get_token(oauth_token: OAuthToken = None):
+def get_token(oauth_token: Union[OAuthToken, None]):
     if oauth_token:
         return oauth_token.token
     else:
         return ""
 
 
-def swap_visibility(oauth_token: Optional[OAuthToken] = None):
+def swap_visibility(oauth_token: Union[OAuthToken, None]):
     if oauth_token:
         return gr.update(elem_classes=["main_ui_logged_in"])
     else:
@@ -123,18 +122,8 @@ def get_base_app():
 
 
 def get_argilla_client() -> Union[rg.Argilla, None]:
-    try:
-        api_url = os.getenv("ARGILLA_API_URL_SDG_REVIEWER")
-        api_key = os.getenv("ARGILLA_API_KEY_SDG_REVIEWER")
-        if api_url is None or api_key is None:
-            api_url = os.getenv("ARGILLA_API_URL")
-            api_key = os.getenv("ARGILLA_API_KEY")
-        return rg.Argilla(
-            api_url=api_url,
-            api_key=api_key,
-        )
-    except Exception:
-        return None
+    return argilla_client
+
 
 def get_preprocess_labels(labels: Optional[List[str]]) -> List[str]:
     return list(set([label.lower().strip() for label in labels])) if labels else []

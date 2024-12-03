@@ -1,4 +1,4 @@
-from src.distilabel_dataset_generator.utils import HF_TOKENS
+from src.distilabel_dataset_generator import HF_TOKENS
 
 DEFAULT_BATCH_SIZE = 5
 TOKEN_INDEX = 0

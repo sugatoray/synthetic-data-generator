@@ -1,6 +1,9 @@
+import os
+import warnings
 from pathlib import Path
 from typing import Optional, Union
 
+import argilla as rg
 import distilabel
 import distilabel.distiset
 from distilabel.utils.card.dataset_card import (
@@ -8,6 +11,29 @@ from distilabel.utils.card.dataset_card import (
     size_categories_parser,
 )
 from huggingface_hub import DatasetCardData, HfApi, upload_file
+
+HF_TOKENS = [os.getenv("HF_TOKEN")] + [os.getenv(f"HF_TOKEN_{i}") for i in range(1, 10)]
+HF_TOKENS = [token for token in HF_TOKENS if token]
+
+if len(HF_TOKENS) == 0:
+    raise ValueError(
+        "HF_TOKEN is not set. Ensure you have set the HF_TOKEN environment variable that has access to the Hugging Face Hub repositories and Inference Endpoints."
+    )
+
+ARGILLA_API_URL = os.getenv("ARGILLA_API_URL")
+ARGILLA_API_KEY = os.getenv("ARGILLA_API_KEY")
+if ARGILLA_API_URL is None or ARGILLA_API_KEY is None:
+    ARGILLA_API_URL = os.getenv("ARGILLA_API_URL_SDG_REVIEWER")
+    ARGILLA_API_KEY = os.getenv("ARGILLA_API_KEY_SDG_REVIEWER")
+
+if ARGILLA_API_URL is None or ARGILLA_API_KEY is None:
+    warnings.warn("ARGILLA_API_URL or ARGILLA_API_KEY is not set")
+    argilla_client = None
+else:
+    argilla_client = rg.Argilla(
+        api_url=ARGILLA_API_URL,
+        api_key=ARGILLA_API_KEY,
+    )
 
 
 class CustomDistisetWithAdditionalTag(distilabel.distiset.Distiset):

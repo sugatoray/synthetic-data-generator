@@ -195,7 +195,7 @@ def validate_argilla_user_workspace_dataset(
     return ""
 
 
-def get_org_dropdown(oauth_token: OAuthToken = None):
+def get_org_dropdown(oauth_token: Union[OAuthToken, None]):
     orgs = list_orgs(oauth_token)
     return gr.Dropdown(
         label="Organization",
@@ -488,7 +488,7 @@ def show_success_message(org_name, repo_name) -> gr.Markdown:
                 </strong>
             </p>
             <p style="margin-top: 0.5em;">
-                The generated dataset is in the right format for fine-tuning with TRL, AutoTrain, or other frameworks. Your dataset is now available at: 
+                The generated dataset is in the right format for fine-tuning with TRL, AutoTrain, or other frameworks. Your dataset is now available at:
                 <a href="https://huggingface.co/datasets/{org_name}/{repo_name}" target="_blank" style="color: #1565c0; text-decoration: none;">
                     https://huggingface.co/datasets/{org_name}/{repo_name}
                 </a>
@@ -502,6 +502,7 @@ def show_success_message(org_name, repo_name) -> gr.Markdown:
         """,
         visible=True,
     )
+
 
 def hide_success_message() -> gr.Markdown:
     return gr.Markdown(value="")

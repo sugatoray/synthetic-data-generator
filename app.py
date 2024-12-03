@@ -1,12 +1,10 @@
-import gradio as gr
-
 from src.distilabel_dataset_generator._tabbedinterface import TabbedInterface
+from src.distilabel_dataset_generator.apps.eval import app as eval_app
 from src.distilabel_dataset_generator.apps.faq import app as faq_app
 from src.distilabel_dataset_generator.apps.sft import app as sft_app
-from src.distilabel_dataset_generator.apps.eval import app as eval_app
 from src.distilabel_dataset_generator.apps.textcat import app as textcat_app
 
-theme ='argilla/argilla-theme'
+theme = "argilla/argilla-theme"
 
 css = """
 button[role="tab"][aria-selected="true"] { border: 0; background: var(--neutral-800); color: white; border-top-right-radius: var(--radius-md); border-top-left-radius: var(--radius-md)}
@@ -29,9 +27,7 @@ demo = TabbedInterface(
     [textcat_app, sft_app, eval_app, faq_app],
     ["Text Classification", "Supervised Fine-Tuning", "Evaluation", "FAQ"],
     css=css,
-    title="""
-    <h1>Synthetic Data Generator</h1>
-    """,
+    title="Synthetic Data Generator",
     head="Synthetic Data Generator",
     theme=theme,
 )

@@ -1,7 +1,7 @@
 [project]
 name = "distilabel-dataset-generator"
 version = "0.1.0"
-description = "Default template for PDM package"
+description = "Build datasets using natural language"
 authors = [
     {name = "davidberenstein1957", email = "david.m.berenstein@gmail.com"},
 ]

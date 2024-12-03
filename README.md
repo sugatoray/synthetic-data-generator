@@ -18,47 +18,80 @@ hf_oauth_scopes:
 - inference-api
 ---
 
-Check out the configuration reference at https://huggingface.co/docs/hub/spaces-config-reference
+<h1 align="center">
+  <br>
+  🧬 Synthetic Data Generator
+  <br>
+</h1>
+<h3 align="center">Build datasets using natural language</h2>
 
-<div class="header-container">
-    <div class="title-container">
-        <h1 style="margin: 0; font-size: 2em;">🧬 Synthetic Data Generator</h1>
-        <p style="margin: 10px 0 0 0; color: #666; font-size: 1.1em;">Build datasets using natural language</p>
-    </div>
-</div>
-<br>
+![Synthetic Data Generator](https://huggingface.co/spaces/argilla/synthetic-data-generator/resolve/main/assets/ui.png)
 
-This repository contains the code for the [free Synthetic Data Generator app](https://huggingface.co/spaces/argilla/synthetic-data-generator), which is hosted on the Hugging Face Hub.
+<p align="center">
+<a  href="https://pypi.org/project/synthetic-dataset-generator/">
+<img alt="CI" src="https://img.shields.io/pypi/v/synthetic-dataset-generator.svg?style=flat-round&logo=pypi&logoColor=white">
+</a>
+<a href="https://pepy.tech/project/synthetic-dataset-generator">
+<img alt="CI" src="https://static.pepy.tech/personalized-badge/argilla?period=month&units=international_system&left_color=grey&right_color=blue&left_text=pypi%20downloads/month">
+</a>
+<a href="https://huggingface.co/spaces/argilla/synthetic-data-generator?duplicate=true">
+<img src="https://huggingface.co/datasets/huggingface/badges/raw/main/duplicate-this-space-sm.svg"/>
+</a>
+</p>
 
-## How it works?
+<p align="center">
+<a href="https://twitter.com/argilla_io">
+<img src="https://img.shields.io/badge/twitter-black?logo=x"/>
+</a>
+<a href="https://www.linkedin.com/company/argilla-io">
+<img src="https://img.shields.io/badge/linkedin-blue?logo=linkedin"/>
+</a>
+<a href="http://hf.co/join/discord">
+<img src="https://img.shields.io/badge/Discord-7289DA?&logo=discord&logoColor=white"/>
+</a>
+</p>
 
-![Synthetic Data Generator](https://huggingface.co/spaces/argilla/synthetic-data-generator/resolve/main/assets/flow.png)
+## Introduction
 
-Distilabel Synthetic Data Generator is a tool that allows you to easily create high-quality datasets for training and fine-tuning language models. It leverages the power of distilabel and advanced language models to generate synthetic data tailored to your specific needs.
+Synthetic Data Generator is a tool that allows you to create high-quality datasets for training and fine-tuning language models. It leverages the power of distilabel and LLMs to generate synthetic data tailored to your specific needs.
+
+Supported Tasks:
+
+- Text Classification
+- Supervised Fine-Tuning
+- Judging and rationale evaluation
 
 This tool simplifies the process of creating custom datasets, enabling you to:
 
-- Define the characteristics of your desired application
-- Generate system prompts and tasks automatically
-- Create sample datasets for quick iteration
-- Produce full-scale datasets with customizable parameters
-- Push your generated datasets directly to the Hugging Face Hub
+- Describe the characteristics of your desired application
+- Iterate on sample datasets
+- Produce full-scale datasets
+- Push your datasets to the [Hugging Face Hub](https://huggingface.co/datasets?other=datacraft) and/or Argilla
 
-By using Distilabel Synthetic Data Generator, you can rapidly prototype and create datasets for, accelerating your AI development process.
+By using the Synthetic Data Generator, you can rapidly prototype and create datasets for, accelerating your AI development process.
 
-## Do you want to run this locally?
+## Installation
 
-You can simply clone the repository and run it locally with:
+You can simply install the package with:
 
 ```bash
-pip install -r requirements.txt
+pip install synthetic-dataset-generator
+```
+
+### Environment Variables
+
+- `HF_TOKEN`: Your Hugging Face token to push your datasets to the Hugging Face Hub and run Inference Endpoints Requests. You can get one [here](https://huggingface.co/settings/tokens/new?ownUserPermissions=repo.content.read&ownUserPermissions=repo.write&globalPermissions=inference.serverless.write&tokenType=fineGrained).
+- `ARGILLA_API_KEY`: Your Argilla API key to push your datasets to Argilla.
+- `ARGILLA_API_URL`: Your Argilla API URL to push your datasets to Argilla.
+
+## Quick Start
+
+```bash
 python app.py
 ```
 
-Note that you do need to have an `HF_TOKEN` that can make calls to the free serverless Hugging Face Inference Endpoints. You can get one [here](https://huggingface.co/settings/tokens/new?ownUserPermissions=repo.content.read&ownUserPermissions=repo.write&globalPermissions=inference.serverless.write&tokenType=fineGrained).
+## Custom synthetic data generation?
 
-## Do you need more control?
-
-Each pipeline is based on a distilabel component, so you can easily run it locally or with other LLMs.
+Each pipeline is based on distilabel, so you can easily change the LLM or the pipeline steps.
 
 Check out the [distilabel library](https://github.com/argilla-io/distilabel) for more information.
