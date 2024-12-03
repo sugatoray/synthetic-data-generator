@@ -1,7 +1,6 @@
 import os
 import warnings
-from pathlib import Path
-from typing import Optional, Union
+from typing import Optional
 
 import argilla as rg
 import distilabel
@@ -10,7 +9,7 @@ from distilabel.utils.card.dataset_card import (
     DistilabelDatasetCard,
     size_categories_parser,
 )
-from huggingface_hub import DatasetCardData, HfApi, upload_file
+from huggingface_hub import DatasetCardData, HfApi
 
 HF_TOKENS = [os.getenv("HF_TOKEN")] + [os.getenv(f"HF_TOKEN_{i}") for i in range(1, 10)]
 HF_TOKENS = [token for token in HF_TOKENS if token]

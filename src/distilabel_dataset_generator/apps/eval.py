@@ -39,9 +39,9 @@ from src.distilabel_dataset_generator.utils import (
     extract_column_names,
     get_argilla_client,
     get_org_dropdown,
+    pad_or_truncate_list,
     process_columns,
     swap_visibility,
-    pad_or_truncate_list,
 )
 
 
@@ -580,6 +580,7 @@ def push_dataset(
 def show_pipeline_code_visibility():
     return {pipeline_code_ui: gr.Accordion(visible=True)}
 
+
 def hide_pipeline_code_visibility():
     return {pipeline_code_ui: gr.Accordion(visible=False)}
 
@@ -708,15 +709,15 @@ with gr.Blocks() as app:
                     visible=False,
                 ) as pipeline_code_ui:
                     code = generate_pipeline_code(
-                            repo_id=search_in.value,
-                            aspects=aspects_instruction_response.value,
-                            instruction_column=instruction_instruction_response,
-                            response_columns=response_instruction_response,
-                            prompt_template=prompt_template.value,
-                            structured_output=structured_output.value,
-                            num_rows=num_rows.value,
-                            eval_type=eval_type.value,
-                        )
+                        repo_id=search_in.value,
+                        aspects=aspects_instruction_response.value,
+                        instruction_column=instruction_instruction_response,
+                        response_columns=response_instruction_response,
+                        prompt_template=prompt_template.value,
+                        structured_output=structured_output.value,
+                        num_rows=num_rows.value,
+                        eval_type=eval_type.value,
+                    )
                     pipeline_code = gr.Code(
                         value=code,
                         language="python",
