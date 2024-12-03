@@ -28,7 +28,6 @@ from distilabel_dataset_generator.pipelines.sft import (
     get_response_generator,
 )
 from distilabel_dataset_generator.utils import (
-    _LOGGED_OUT_CSS,
     get_argilla_client,
     get_org_dropdown,
     swap_visibility,
@@ -350,7 +349,7 @@ def hide_pipeline_code_visibility():
 ######################
 
 
-with gr.Blocks(css=_LOGGED_OUT_CSS) as app:
+with gr.Blocks() as app:
     with gr.Column() as main_ui:
         if not SFT_AVAILABLE:
             gr.Markdown(

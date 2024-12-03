@@ -6,40 +6,13 @@ import gradio as gr
 import numpy as np
 import pandas as pd
 from gradio.oauth import (
-    OAUTH_CLIENT_ID,
-    OAUTH_CLIENT_SECRET,
-    OAUTH_SCOPES,
-    OPENID_PROVIDER_URL,
+    OAuthToken,
     get_space,
 )
 from huggingface_hub import whoami
 from jinja2 import Environment, meta
 
 from distilabel_dataset_generator.constants import argilla_client
-
-_LOGGED_OUT_CSS = ".main_ui_logged_out{opacity: 0.3; pointer-events: none}"
-
-
-_CHECK_IF_SPACE_IS_SET = (
-    all(
-        [
-            OAUTH_CLIENT_ID,
-            OAUTH_CLIENT_SECRET,
-            OAUTH_SCOPES,
-            OPENID_PROVIDER_URL,
-        ]
-    )
-    or get_space() is None
-)
-
-if _CHECK_IF_SPACE_IS_SET:
-    from gradio.oauth import OAuthToken
-else:
-    OAuthToken = str
-
-
-def get_login_button():
-    return gr.LoginButton(value="Sign in!", size="sm", scale=2).activate()
 
 
 def get_duplicate_button():
@@ -85,40 +58,11 @@ def get_org_dropdown(oauth_token: Union[OAuthToken, None] = None):
     )
 
 
-def get_token(oauth_token: Union[OAuthToken, None]):
-    if oauth_token:
-        return oauth_token.token
-    else:
-        return ""
-
-
 def swap_visibility(oauth_token: Union[OAuthToken, None]):
     if oauth_token:
         return gr.update(elem_classes=["main_ui_logged_in"])
     else:
         return gr.update(elem_classes=["main_ui_logged_out"])
-
-
-def get_base_app():
-    with gr.Blocks(
-        title="🧬 Synthetic Data Generator",
-        head="🧬  Synthetic Data Generator",
-        css=_LOGGED_OUT_CSS,
-    ) as app:
-        with gr.Row():
-            gr.Markdown(
-                "Want to run this locally or with other LLMs? Take a look at the FAQ tab. distilabel Synthetic Data Generator is free, we use the authentication token to push the dataset to the Hugging Face Hub and not for data generation."
-            )
-        with gr.Row():
-            gr.Column()
-            get_login_button()
-            gr.Column()
-
-        gr.Markdown("## Iterate on a sample dataset")
-        with gr.Column() as main_ui:
-            pass
-
-    return app
 
 
 def get_argilla_client() -> Union[rg.Argilla, None]:
