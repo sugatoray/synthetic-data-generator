@@ -21,6 +21,7 @@ button.hf-login:hover {background: var(--neutral-700); color: white}
     color: var(--body-text-color) !important;
     background-color: var(--block-background-fill) !important;
 }
+.container {padding-inline: 0 !important}
 """
 
 demo = TabbedInterface(
