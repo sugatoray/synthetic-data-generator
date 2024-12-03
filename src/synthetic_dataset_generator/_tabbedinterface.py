@@ -48,7 +48,7 @@ class TabbedInterface(Blocks):
             a Gradio Tabbed Interface for the given interfaces
         """
         super().__init__(
-            title=title or "Gradio",
+            title="Synthetic Data Generator",
             theme=theme,
             analytics_enabled=analytics_enabled,
             mode="tabbed_interface",
@@ -59,7 +59,7 @@ class TabbedInterface(Blocks):
         if tab_names is None:
             tab_names = [f"Tab {i}" for i in range(len(interface_list))]
         with self:
-            h3 = "<div style='text-align: center;'><h3>Build datasets using natural language</h3></div>"
+            h3 = "<div style='text-align: center;'><h2>Build datasets using natural language</h2></div>"
             if title:
                 gr.HTML(value=title + h3)
             gr.LoginButton(value="Sign in", variant="primary", scale=2)

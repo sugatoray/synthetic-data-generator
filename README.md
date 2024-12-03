@@ -22,21 +22,9 @@ hf_oauth_scopes:
 <h2 align="center">
   <a href=""><img src="https://raw.githubusercontent.com/argilla-io/synthetic-data-generator/main/assets/logo.svg" alt="Synthetic Data Generator Logo" width="80%"></a>
 </h2>
-<h3 align="center">Build high quality datasets for your AI models</h3>
+<h3 align="center">Build datasets using natural language</h3>
 
 ![Synthetic Data Generator](https://huggingface.co/spaces/argilla/synthetic-data-generator/resolve/main/assets/ui-full.png)
-
-<p align="center">
-<a href="https://twitter.com/argilla_io">
-<img src="https://img.shields.io/badge/twitter-black?logo=x"/>
-</a>
-<a href="https://www.linkedin.com/company/argilla-io">
-<img src="https://img.shields.io/badge/linkedin-blue?logo=linkedin"/>
-</a>
-<a href="http://hf.co/join/discord">
-<img src="https://img.shields.io/badge/Discord-7289DA?&logo=discord&logoColor=white"/>
-</a>
-</p>
 
 ## Introduction
 
@@ -56,6 +44,18 @@ This tool simplifies the process of creating custom datasets, enabling you to:
 - Push your datasets to the [Hugging Face Hub](https://huggingface.co/datasets?other=datacraft) and/or [Argilla](https://docs.argilla.io/)
 
 By using the Synthetic Data Generator, you can rapidly prototype and create datasets for, accelerating your AI development process.
+
+<p align="center">
+<a href="https://twitter.com/argilla_io">
+<img src="https://img.shields.io/badge/twitter-black?logo=x"/>
+</a>
+<a href="https://www.linkedin.com/company/argilla-io">
+<img src="https://img.shields.io/badge/linkedin-blue?logo=linkedin"/>
+</a>
+<a href="http://hf.co/join/discord">
+<img src="https://img.shields.io/badge/Discord-7289DA?&logo=discord&logoColor=white"/>
+</a>
+</p>
 
 ## Installation
 
