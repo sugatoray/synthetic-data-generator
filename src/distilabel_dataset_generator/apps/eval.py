@@ -188,7 +188,7 @@ with gr.Blocks() as app:
                 search_type="dataset",
                 sumbit_on_select=True,
             )
-            load_btn = gr.Button("Load dataset")
+            load_btn = gr.Button("Load dataset", variant="primary")
         with gr.Column(scale=3):
             search_out = gr.HTML(label="Dataset Preview")
 

@@ -368,7 +368,7 @@ with gr.Blocks(css=_LOGGED_OUT_CSS) as app:
                     cache_examples=False,
                     label="Example descriptions",
                 )
-                load_btn = gr.Button("Load dataset")
+                load_btn = gr.Button("Load dataset", variant="primary")
             with gr.Column(scale=3):
                 pass
 

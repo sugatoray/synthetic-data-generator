@@ -64,7 +64,7 @@ class TabbedInterface(Blocks):
                 HTML(value=title)
                 with gr.Row():
                     with gr.Column(scale=1):
-                        gr.LoginButton(value="Sign in!", size="sm", scale=2)
+                        gr.LoginButton(value="Sign in!", variant="hf-login", size="sm", scale=2)
                     with gr.Column(scale=3):
                         pass
             with Tabs():
