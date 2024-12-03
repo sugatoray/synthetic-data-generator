@@ -58,7 +58,10 @@ def generate_system_prompt(dataset_description, temperature, progress=gr.Progres
     labels = data["labels"]
     return system_prompt, labels
 
-def generate_sample_dataset(system_prompt, difficulty, clarity, labels, num_labels, progress=gr.Progress()):
+
+def generate_sample_dataset(
+    system_prompt, difficulty, clarity, labels, num_labels, progress=gr.Progress()
+):
     dataframe = generate_dataset(
         system_prompt=system_prompt,
         difficulty=difficulty,
@@ -138,11 +141,7 @@ def generate_dataset(
     # create final dataset
     distiset_results = []
     for result in labeller_results:
-        record = {
-            key: result[key]
-            for key in ["labels", "text"]
-            if key in result
-        }
+        record = {key: result[key] for key in ["labels", "text"] if key in result}
         distiset_results.append(record)
 
     dataframe = pd.DataFrame(distiset_results)
@@ -212,13 +211,16 @@ def push_dataset(
     push_dataset_to_hub(
         dataframe, org_name, repo_name, num_labels, labels, oauth_token, private
     )
+
     dataframe = dataframe[
         (dataframe["text"].str.strip() != "") & (dataframe["text"].notna())
     ]
     try:
         progress(0.1, desc="Setting up user and workspace")
-        client = get_argilla_client()
         hf_user = HfApi().whoami(token=oauth_token.token)["name"]
+        client = get_argilla_client()
+        if client is None:
+            return ""
         labels = get_preprocess_labels(labels)
         settings = rg.Settings(
             fields=[
