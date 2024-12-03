@@ -1,8 +1,8 @@
-from src.distilabel_dataset_generator._tabbedinterface import TabbedInterface
-from src.distilabel_dataset_generator.apps.eval import app as eval_app
-from src.distilabel_dataset_generator.apps.faq import app as faq_app
-from src.distilabel_dataset_generator.apps.sft import app as sft_app
-from src.distilabel_dataset_generator.apps.textcat import app as textcat_app
+from distilabel_dataset_generator._tabbedinterface import TabbedInterface
+from distilabel_dataset_generator.apps.eval import app as eval_app
+from distilabel_dataset_generator.apps.faq import app as faq_app
+from distilabel_dataset_generator.apps.sft import app as sft_app
+from distilabel_dataset_generator.apps.textcat import app as textcat_app
 
 theme = "argilla/argilla-theme"
 

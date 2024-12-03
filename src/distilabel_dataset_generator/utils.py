@@ -15,7 +15,7 @@ from gradio.oauth import (
 from huggingface_hub import whoami
 from jinja2 import Environment, meta
 
-from src.distilabel_dataset_generator import argilla_client
+from distilabel_dataset_generator.constants import argilla_client
 
 _LOGGED_OUT_CSS = ".main_ui_logged_out{opacity: 0.3; pointer-events: none}"
 

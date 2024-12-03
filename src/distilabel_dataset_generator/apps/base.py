@@ -10,7 +10,7 @@ from distilabel.distiset import Distiset
 from gradio import OAuthToken
 from huggingface_hub import HfApi, upload_file
 
-from src.distilabel_dataset_generator.utils import (
+from distilabel_dataset_generator.utils import (
     _LOGGED_OUT_CSS,
     get_argilla_client,
     get_login_button,

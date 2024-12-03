@@ -9,14 +9,12 @@ from datasets import ClassLabel, Dataset, Features, Sequence, Value
 from distilabel.distiset import Distiset
 from huggingface_hub import HfApi
 
+from distilabel_dataset_generator.constants import DEFAULT_BATCH_SIZE
 from src.distilabel_dataset_generator.apps.base import (
     hide_success_message,
     show_success_message,
     validate_argilla_user_workspace_dataset,
     validate_push_to_hub,
-)
-from src.distilabel_dataset_generator.pipelines.base import (
-    DEFAULT_BATCH_SIZE,
 )
 from src.distilabel_dataset_generator.pipelines.embeddings import (
     get_embeddings,

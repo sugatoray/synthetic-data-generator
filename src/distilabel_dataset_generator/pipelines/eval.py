@@ -5,18 +5,16 @@ from distilabel.steps.tasks import (
     UltraFeedback,
 )
 
-from src.distilabel_dataset_generator.pipelines.base import (
-    MODEL,
-    _get_next_api_key,
-)
-from src.distilabel_dataset_generator.utils import extract_column_names
+from distilabel_dataset_generator.constants import BASE_URL, MODEL
+from distilabel_dataset_generator.pipelines.base import _get_next_api_key
+from distilabel_dataset_generator.utils import extract_column_names
 
 
 def get_ultrafeedback_evaluator(aspect, is_sample):
     ultrafeedback_evaluator = UltraFeedback(
         llm=InferenceEndpointsLLM(
             model_id=MODEL,
-            tokenizer_id=MODEL,
+            base_url=BASE_URL,
             api_key=_get_next_api_key(),
             generation_kwargs={
                 "temperature": 0,
@@ -33,7 +31,7 @@ def get_custom_evaluator(prompt_template, structured_output, columns, is_sample)
     custom_evaluator = TextGeneration(
         llm=InferenceEndpointsLLM(
             model_id=MODEL,
-            tokenizer_id=MODEL,
+            base_url=BASE_URL,
             api_key=_get_next_api_key(),
             structured_output={"format": "json", "schema": structured_output},
             generation_kwargs={
@@ -62,7 +60,8 @@ from distilabel.steps.tasks import UltraFeedback
 from distilabel.llms import InferenceEndpointsLLM
 
 MODEL = "{MODEL}"
-os.environ["HF_TOKEN"] = "hf_xxx" # https://huggingface.co/settings/tokens/new?ownUserPermissions=repo.content.read&ownUserPermissions=repo.write&globalPermissions=inference.serverless.write&canReadGatedRepos=true&tokenType=fineGrained
+BASE_URL = "{BASE_URL}"
+os.environ["API_KEY"] = "hf_xxx" # https://huggingface.co/settings/tokens/new?ownUserPermissions=repo.content.read&ownUserPermissions=repo.write&globalPermissions=inference.serverless.write&canReadGatedRepos=true&tokenType=fineGrained
 
 hf_ds = load_dataset("{repo_id}", "{subset}", split="{split}[:{num_rows}]")
 data = preprocess_data(hf_ds, "{instruction_column}", "{response_columns}") # to get a list of dictionaries
@@ -76,8 +75,8 @@ with Pipeline(name="ultrafeedback") as pipeline:
     ultrafeedback_evaluator = UltraFeedback(
         llm=InferenceEndpointsLLM(
             model_id=MODEL,
-            tokenizer_id=MODEL,
-            api_key=os.environ["HF_TOKEN"],
+            base_url=BASE_URL,
+            api_key=os.environ["API_KEY"],
             generation_kwargs={{
                 "temperature": 0,
                 "max_new_tokens": 2048,
@@ -101,7 +100,8 @@ from distilabel.steps.tasks import UltraFeedback
 from distilabel.llms import InferenceEndpointsLLM
 
 MODEL = "{MODEL}"
-os.environ["HF_TOKEN"] = "hf_xxx" # https://huggingface.co/settings/tokens/new?ownUserPermissions=repo.content.read&ownUserPermissions=repo.write&globalPermissions=inference.serverless.write&canReadGatedRepos=true&tokenType=fineGrained
+BASE_URL = "{BASE_URL}"
+os.environ["BASE_URL"] = "hf_xxx" # https://huggingface.co/settings/tokens/new?ownUserPermissions=repo.content.read&ownUserPermissions=repo.write&globalPermissions=inference.serverless.write&canReadGatedRepos=true&tokenType=fineGrained
 
 hf_ds = load_dataset("{repo_id}", "{subset}", split="{split}")
 data = preprocess_data(hf_ds, "{instruction_column}", "{response_columns}") # to get a list of dictionaries
@@ -119,8 +119,8 @@ with Pipeline(name="ultrafeedback") as pipeline:
             aspect=aspect,
             llm=InferenceEndpointsLLM(
                 model_id=MODEL,
-                tokenizer_id=MODEL,
-                api_key=os.environ["HF_TOKEN"],
+                base_url=BASE_URL,
+                api_key=os.environ["BASE_URL"],
                 generation_kwargs={{
                     "temperature": 0,
                     "max_new_tokens": 2048,
@@ -157,6 +157,7 @@ from distilabel.steps.tasks import TextGeneration
 from distilabel.llms import InferenceEndpointsLLM
 
 MODEL = "{MODEL}"
+BASE_URL = "{BASE_URL}"
 CUSTOM_TEMPLATE = "{prompt_template}"
 os.environ["HF_TOKEN"] = "hf_xxx" # https://huggingface.co/settings/tokens/new?ownUserPermissions=repo.content.read&ownUserPermissions=repo.write&globalPermissions=inference.serverless.write&canReadGatedRepos=true&tokenType=fineGrained
 
@@ -171,7 +172,7 @@ with Pipeline(name="custom-evaluation") as pipeline:
     custom_evaluator = TextGeneration(
         llm=InferenceEndpointsLLM(
             model_id=MODEL,
-            tokenizer_id=MODEL,
+            base_url=BASE_URL,
             api_key=os.environ["HF_TOKEN"],
             structured_output={{"format": "json", "schema": {structured_output}}},
             generation_kwargs={{

@@ -16,25 +16,23 @@ from distilabel.distiset import Distiset
 from gradio_huggingfacehub_search import HuggingfaceHubSearch
 from huggingface_hub import HfApi
 
-from src.distilabel_dataset_generator.apps.base import (
+from distilabel_dataset_generator.apps.base import (
     hide_success_message,
     show_success_message,
     validate_argilla_user_workspace_dataset,
     validate_push_to_hub,
 )
-from src.distilabel_dataset_generator.pipelines.base import (
-    DEFAULT_BATCH_SIZE,
-)
-from src.distilabel_dataset_generator.pipelines.embeddings import (
+from distilabel_dataset_generator.constants import DEFAULT_BATCH_SIZE
+from distilabel_dataset_generator.pipelines.embeddings import (
     get_embeddings,
     get_sentence_embedding_dimensions,
 )
-from src.distilabel_dataset_generator.pipelines.eval import (
+from distilabel_dataset_generator.pipelines.eval import (
     generate_pipeline_code,
     get_custom_evaluator,
     get_ultrafeedback_evaluator,
 )
-from src.distilabel_dataset_generator.utils import (
+from distilabel_dataset_generator.utils import (
     column_to_list,
     extract_column_names,
     get_argilla_client,
