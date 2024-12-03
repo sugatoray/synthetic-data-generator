@@ -8,7 +8,6 @@ from collections.abc import Sequence
 
 import gradio as gr
 from gradio.blocks import Blocks
-from gradio.components import HTML
 from gradio.layouts import Tab, Tabs
 from gradio.themes import ThemeClass as Theme
 from gradio_client.documentation import document
@@ -61,16 +60,11 @@ class TabbedInterface(Blocks):
             tab_names = [f"Tab {i}" for i in range(len(interface_list))]
         with self:
             if title:
-                HTML(value=title)
-                with gr.Row():
-                    with gr.Column(scale=2):
-                        gr.Markdown("### Build datasets using natural language")
-                    with gr.Column(scale=3):
-                        pass
-                    with gr.Column(scale=2):
-                        gr.LoginButton(
-                            value="Sign in", variant="primary", scale=2
-                        )
+                gr.HTML(value=title)
+            gr.HTML(
+                "<div style='text-align: center;'><h3>Build datasets using natural language</h3></div>"
+            )
+            gr.LoginButton(value="Sign in", variant="primary", scale=2)
             with Tabs():
                 for interface, tab_name in zip(interface_list, tab_names, strict=False):
                     with Tab(label=tab_name):

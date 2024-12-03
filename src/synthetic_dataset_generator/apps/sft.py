@@ -78,6 +78,15 @@ def generate_sample_dataset(system_prompt, num_turns, progress=gr.Progress()):
     return dataframe
 
 
+def _get_dataframe():
+    return gr.Dataframe(
+        headers=["prompt", "completion"],
+        wrap=True,
+        height=500,
+        interactive=False,
+    )
+
+
 def generate_dataset(
     system_prompt: str,
     num_turns: int = 1,
@@ -368,7 +377,7 @@ with gr.Blocks() as app:
                             "Create",
                             variant="primary",
                         )
-                        clear_btn = gr.Button(
+                        clear_btn_part = gr.Button(
                             "Clear",
                             variant="secondary",
                         )
@@ -401,17 +410,12 @@ with gr.Blocks() as app:
                         btn_apply_to_sample_dataset = gr.Button(
                             "Save", variant="primary"
                         )
-                        clear_btn = gr.Button(
+                        clear_btn_full = gr.Button(
                             "Clear",
                             variant="secondary",
                         )
                 with gr.Column(scale=3):
-                    dataframe = gr.Dataframe(
-                        headers=["prompt", "completion"],
-                        wrap=True,
-                        height=500,
-                        interactive=False,
-                    )
+                    dataframe = _get_dataframe()
 
             gr.HTML(value="<hr>")
             gr.Markdown(value="## 3. Generate your dataset")
@@ -526,6 +530,12 @@ with gr.Blocks() as app:
             fn=show_pipeline_code_visibility,
             inputs=[],
             outputs=[pipeline_code_ui],
+        )
+        gr.on(
+            triggers=[clear_btn_part.click, clear_btn_full.click],
+            fn=lambda _: ("", "", 1, _get_dataframe()),
+            inputs=[dataframe],
+            outputs=[dataset_description, system_prompt, num_turns, dataframe],
         )
 
         app.load(fn=swap_visibility, outputs=main_ui)

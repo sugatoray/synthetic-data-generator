@@ -35,6 +35,12 @@ from src.synthetic_dataset_generator.utils import (
 from synthetic_dataset_generator.constants import DEFAULT_BATCH_SIZE
 
 
+def _get_dataframe():
+    return gr.Dataframe(
+        headers=["labels", "text"], wrap=True, height=500, interactive=False
+    )
+
+
 def generate_system_prompt(dataset_description, temperature, progress=gr.Progress()):
     progress(0.0, desc="Generating text classification task")
     progress(0.3, desc="Initializing text generation")
@@ -345,7 +351,7 @@ with gr.Blocks() as app:
                         "Create",
                         variant="primary",
                     )
-                    clear_btn = gr.Button(
+                    clear_btn_part = gr.Button(
                         "Clear",
                         variant="secondary",
                     )
@@ -411,11 +417,9 @@ with gr.Blocks() as app:
                 )
                 with gr.Row():
                     btn_apply_to_sample_dataset = gr.Button("Save", variant="primary")
-                    clear_btn = gr.Button("Clear", variant="secondary")
+                    clear_btn_full = gr.Button("Clear", variant="secondary")
             with gr.Column(scale=3):
-                dataframe = gr.Dataframe(
-                    headers=["labels", "text"], wrap=True, height=500, interactive=False
-                )
+                dataframe = _get_dataframe()
 
         gr.HTML("<hr>")
         gr.Markdown("## 3. Generate your dataset")
@@ -551,6 +555,18 @@ with gr.Blocks() as app:
         fn=show_pipeline_code_visibility,
         inputs=[],
         outputs=[pipeline_code_ui],
+    )
+
+    gr.on(
+        triggers=[clear_btn_part.click, clear_btn_full.click],
+        fn=lambda _: (
+            "",
+            "",
+            [],
+            _get_dataframe(),
+        ),
+        inputs=[dataframe],
+        outputs=[dataset_description, system_prompt, labels, dataframe],
     )
 
     app.load(fn=swap_visibility, outputs=main_ui)

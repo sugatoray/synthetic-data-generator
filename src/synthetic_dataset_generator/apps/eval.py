@@ -13,8 +13,9 @@ from datasets import (
     load_dataset,
 )
 from distilabel.distiset import Distiset
+from gradio.oauth import OAuthToken  #
 from gradio_huggingfacehub_search import HuggingfaceHubSearch
-from huggingface_hub import HfApi
+from huggingface_hub import HfApi, repo_exists
 
 from synthetic_dataset_generator.apps.base import (
     hide_success_message,
@@ -45,7 +46,10 @@ from synthetic_dataset_generator.utils import (
 
 def get_iframe(hub_repo_id: str) -> str:
     if not hub_repo_id:
-        raise gr.Error("Hub repository ID is required.")
+        return ""
+
+    if not repo_exists(repo_id=hub_repo_id, repo_type="dataset"):
+        return ""
 
     url = f"https://huggingface.co/datasets/{hub_repo_id}/embed/viewer"
     iframe = f"""
@@ -79,12 +83,14 @@ def get_valid_columns(dataframe: pd.DataFrame):
     return instruction_valid_columns, response_valid_columns
 
 
-def load_dataset_from_hub(repo_id: str, num_rows: int = 10):
+def load_dataset_from_hub(
+    repo_id: str, num_rows: int = 10, token: Union[OAuthToken, None] = None
+):
     if not repo_id:
         raise gr.Error("Hub repo id is required")
-    subsets = get_dataset_config_names(repo_id)
-    ds_dict = load_dataset(repo_id, subsets[0])
-    splits = get_dataset_split_names(repo_id, subsets[0])
+    subsets = get_dataset_config_names(repo_id, token=token)
+    ds_dict = load_dataset(repo_id, subsets[0], token=token)
+    splits = get_dataset_split_names(repo_id, subsets[0], token=token)
     ds = ds_dict[splits[0]]
     if num_rows:
         ds = ds.select(range(num_rows))
@@ -601,7 +607,10 @@ with gr.Blocks() as app:
                     search_type="dataset",
                     sumbit_on_select=True,
                 )
-                load_btn = gr.Button("Load dataset", variant="primary")
+                with gr.Row():
+                    load_btn = gr.Button("Load", variant="primary")
+                    clear_btn_part = gr.Button("Clear", variant="secondary")
+
             with gr.Column(scale=3):
                 search_out = gr.HTML(label="Dataset preview")
 
@@ -666,9 +675,9 @@ with gr.Blocks() as app:
                         inputs=[],
                         outputs=[eval_type],
                     )
-                btn_apply_to_sample_dataset = gr.Button(
-                    "Refresh dataset", variant="primary"
-                )
+                with gr.Row():
+                    btn_apply_to_sample_dataset = gr.Button("Save", variant="primary")
+                    clear_btn_full = gr.Button("Clear", variant="secondary")
             with gr.Column(scale=3):
                 dataframe = gr.Dataframe(
                     headers=["prompt", "completion", "evaluation"],
@@ -724,7 +733,11 @@ with gr.Blocks() as app:
                         label="Distilabel Pipeline Code",
                     )
 
-    search_in.submit(fn=get_iframe, inputs=search_in, outputs=search_out)
+    search_in.submit(fn=get_iframe, inputs=search_in, outputs=search_out).then(
+        fn=lambda df: pd.DataFrame(columns=df.columns),
+        inputs=[dataframe],
+        outputs=[dataframe],
+    )
 
     load_btn.click(
         fn=load_dataset_from_hub,
@@ -793,12 +806,8 @@ with gr.Blocks() as app:
         fn=generate_pipeline_code,
         inputs=[
             search_in,
-            aspects_instruction_response,
-            instruction_instruction_response,
-            response_instruction_response,
             prompt_template,
             structured_output,
-            num_rows,
             eval_type,
         ],
         outputs=[pipeline_code],
@@ -806,6 +815,17 @@ with gr.Blocks() as app:
         fn=show_pipeline_code_visibility,
         inputs=[],
         outputs=[pipeline_code_ui],
+    )
+
+    clear_btn_part.click(fn=lambda x: "", inputs=[], outputs=[search_in])
+    clear_btn_full.click(
+        fn=lambda df: ("", "", pd.DataFrame(columns=df.columns)),
+        inputs=[dataframe],
+        outputs=[
+            search_in,
+            instruction_instruction_response,
+            response_instruction_response,
+        ],
     )
 
     app.load(fn=swap_visibility, outputs=main_ui)
