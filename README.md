@@ -105,9 +105,12 @@ Check out the [distilabel library](https://github.com/argilla-io/distilabel) for
 Install the dependencies:
 
 ```bash
+# Create a virtual environment
 python -m venv .venv
 source .venv/bin/activate
-pip install -e .
+
+# Install the dependencies
+pip install -e . # pdm install
 ```
 
 Run the app:
