@@ -69,7 +69,7 @@ class TabbedInterface(Blocks):
                         pass
                     with gr.Column(scale=2):
                         gr.LoginButton(
-                            value="Sign in", variant="hf-login", size="sm", scale=2
+                            value="Sign in", variant="primary", scale=2
                         )
             with Tabs():
                 for interface, tab_name in zip(interface_list, tab_names, strict=False):
