@@ -1,1 +1,1 @@
--e git+https://github.com/argilla-io/synthetic-data-generator.git#egg=synthetic-dataset-generator
+-e git+https://github.com/argilla-io/synthetic-data-generator.git#egg=synthetic-dataset-generator --no-cache-dir
