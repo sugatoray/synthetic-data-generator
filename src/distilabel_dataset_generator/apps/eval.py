@@ -593,7 +593,7 @@ with gr.Blocks() as app:
     with gr.Column() as main_ui:
         gr.Markdown("## 1. Select your input dataset")
         with gr.Row(equal_height=False):
-            with gr.Column(scale=1):
+            with gr.Column(scale=2):
                 search_in = HuggingfaceHubSearch(
                     label="Search",
                     placeholder="Search for a dataset",
