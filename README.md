@@ -32,7 +32,7 @@ hf_oauth_scopes:
 <img alt="CI" src="https://img.shields.io/pypi/v/synthetic-dataset-generator.svg?style=flat-round&logo=pypi&logoColor=white">
 </a>
 <a href="https://pepy.tech/project/synthetic-dataset-generator">
-<img alt="CI" src="https://static.pepy.tech/personalized-badge/argilla?period=month&units=international_system&left_color=grey&right_color=blue&left_text=pypi%20downloads/month">
+<img alt="CI" src="https://static.pepy.tech/personalized-badge/synthetic-dataset-generator?period=month&units=international_system&left_color=grey&right_color=blue&left_text=pypi%20downloads/month">
 </a>
 <a href="https://huggingface.co/spaces/argilla/synthetic-data-generator?duplicate=true">
 <img src="https://huggingface.co/datasets/huggingface/badges/raw/main/duplicate-this-space-sm.svg"/>
@@ -84,7 +84,7 @@ pip install synthetic-dataset-generator
 - `ARGILLA_API_KEY`: Your Argilla API key to push your datasets to Argilla.
 - `ARGILLA_API_URL`: Your Argilla API URL to push your datasets to Argilla.
 
-## Quick Start
+## Quickstart
 
 ```bash
 python app.py
