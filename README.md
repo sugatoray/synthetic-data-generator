@@ -19,11 +19,10 @@ hf_oauth_scopes:
 ---
 <br>
 
-<div align="center">
-<img src="https://raw.githubusercontent.com/argilla-io/synthetic-data-generator/main/assets/logo.svg" alt="Synthetic Data Generator Logo" style="width: 80%;"/>
-<h3>Build datasets using natural language</h3>
-</div>
-<hr>
+<h2 align="center">
+  <a href=""><img src="https://raw.githubusercontent.com/argilla-io/synthetic-data-generator/main/assets/logo.svg" alt="Synthetic Data Generator Logo" width="80%"></a>
+</h2>
+<h3 align="center">Build high quality datasets for your AI models</h3>
 
 ![Synthetic Data Generator](https://huggingface.co/spaces/argilla/synthetic-data-generator/resolve/main/assets/ui-full.png)
 
