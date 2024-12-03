@@ -17,12 +17,11 @@ hf_oauth_scopes:
 - manage-repos
 - inference-api
 ---
-<p align="center">
+<br>
+<center>
 <img src="https://raw.githubusercontent.com/argilla-io/synthetic-data-generator/main/assets/logo.svg" alt="Synthetic Data Generator Logo" style="width: 80%;"/>
-</p>
-<p align="center">
-  <h3>Build datasets using natural language</h3>
-</p>
+<h3>Build datasets using natural language</h3>
+</center>
 
 ![Synthetic Data Generator](https://huggingface.co/spaces/argilla/synthetic-data-generator/resolve/main/assets/ui-full.png)
 
