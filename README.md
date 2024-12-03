@@ -20,12 +20,12 @@ hf_oauth_scopes:
 
 <h1 align="center">
   <br>
-  🧬 Synthetic Data Generator
+  Synthetic Data Generator
   <br>
 </h1>
 <h3 align="center">Build datasets using natural language</h2>
 
-![Synthetic Data Generator](https://huggingface.co/spaces/argilla/synthetic-data-generator/resolve/main/assets/ui.png)
+![Synthetic Data Generator](https://huggingface.co/spaces/argilla/synthetic-data-generator/resolve/main/assets/ui-full.png)
 
 <p align="center">
 <a  href="https://pypi.org/project/synthetic-dataset-generator/">
