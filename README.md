@@ -92,9 +92,9 @@ demo.launch()
 
 Optionally, you can set the following environment variables to customize the generation process.
 
-- `BASE_URL`: The base URL for any OpenAI compatible API, e.g. `https://api-inference.huggingface.co/v1/`.
-- `MODEL`: The model to use for generating the dataset, e.g. `meta-llama/Meta-Llama-3.1-8B-Instruct`.
-- `API_KEY`: The API key to use for the corresponding API, e.g. `hf_...`.
+- `BASE_URL`: The base URL for any OpenAI compatible API, e.g. `https://api-inference.huggingface.co/v1/`, `https://api.openai.com/v1/`.
+- `MODEL`: The model to use for generating the dataset, e.g. `meta-llama/Meta-Llama-3.1-8B-Instruct`, `gpt-4o`.
+- `API_KEY`: The API key to use for the corresponding API, e.g. `hf_...`, `sk-...`.
 
 Optionally, you can also push your datasets to Argilla for further curation by setting the following environment variables:
 
