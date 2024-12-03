@@ -6,7 +6,7 @@ authors = [
     {name = "davidberenstein1957", email = "david.m.berenstein@gmail.com"},
 ]
 dependencies = [
-    "distilabel[hf-inference-endpoints,argilla,outlines]>=1.4.1",
+    "distilabel[hf-inference-endpoints,argilla,outlines,instructor]>=1.4.1",
     "gradio[oauth]<5.0.0",
     "transformers>=4.44.2",
     "sentence-transformers>=3.2.0",

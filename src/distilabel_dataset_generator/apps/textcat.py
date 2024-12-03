@@ -1,4 +1,4 @@
-import re
+import json
 import uuid
 from typing import List, Union
 
@@ -10,10 +10,8 @@ from distilabel.distiset import Distiset
 from huggingface_hub import HfApi
 
 from src.distilabel_dataset_generator.apps.base import (
-    get_argilla_client,
-    get_pipeline_code_ui,
     hide_success_message,
-    show_success_message_hub,
+    show_success_message,
     validate_argilla_user_workspace_dataset,
     validate_push_to_hub,
 )
@@ -26,7 +24,6 @@ from src.distilabel_dataset_generator.pipelines.embeddings import (
 )
 from src.distilabel_dataset_generator.pipelines.textcat import (
     DEFAULT_DATASET_DESCRIPTIONS,
-    PROMPT_CREATION_PROMPT,
     generate_pipeline_code,
     get_labeller_generator,
     get_prompt_generator,
@@ -37,45 +34,42 @@ from src.distilabel_dataset_generator.utils import (
     get_argilla_client,
     get_org_dropdown,
     get_preprocess_labels,
-    swap_visibilty,
+    swap_visibility,
 )
 
 
-def generate_system_prompt(dataset_description, progress=gr.Progress()):
+def generate_system_prompt(dataset_description, temperature, progress=gr.Progress()):
     progress(0.0, desc="Generating text classification task")
     progress(0.3, desc="Initializing text generation")
-    generate_description = get_prompt_generator()
+    generate_description = get_prompt_generator(temperature)
     progress(0.7, desc="Generating text classification task")
-    system_prompt = next(
+    result = next(
         generate_description.process(
             [
                 {
-                    "system_prompt": PROMPT_CREATION_PROMPT,
                     "instruction": dataset_description,
                 }
             ]
         )
     )[0]["generation"]
     progress(1.0, desc="Text classification task generated")
-    return system_prompt, pd.DataFrame()
+    data = json.loads(result)
+    system_prompt = data["classification_task"]
+    labels = data["labels"]
+    return system_prompt, labels
 
-
-def generate_sample_dataset(system_prompt, progress=gr.Progress()):
-    df = generate_dataset(
+def generate_sample_dataset(system_prompt, difficulty, clarity, labels, num_labels, progress=gr.Progress()):
+    dataframe = generate_dataset(
         system_prompt=system_prompt,
-        difficulty="mixed",
-        clarity="mixed",
-        labels=[],
-        num_labels=1,
+        difficulty=difficulty,
+        clarity=clarity,
+        labels=labels,
+        num_labels=num_labels,
         num_rows=10,
         progress=progress,
         is_sample=True,
     )
-    if "label" in df.columns:
-        df = df[["label", "text"]]
-    elif "labels" in df.columns:
-        df = df[["labels", "text"]]
-    return df
+    return dataframe
 
 
 def generate_dataset(
@@ -88,17 +82,13 @@ def generate_dataset(
     is_sample: bool = False,
     progress=gr.Progress(),
 ) -> pd.DataFrame:
-    if is_sample:
-        multiplier = 1
-    else:
-        multiplier = 2
     progress(0.0, desc="(1/2) Generating text classification data")
     labels = get_preprocess_labels(labels)
     textcat_generator = get_textcat_generator(
         difficulty=difficulty, clarity=clarity, is_sample=is_sample
     )
     labeller_generator = get_labeller_generator(
-        system_prompt=system_prompt,
+        system_prompt=f"{system_prompt} {', '.join(labels)}",
         labels=labels,
         num_labels=num_labels,
     )
@@ -110,13 +100,15 @@ def generate_dataset(
     textcat_results = []
     while n_processed < num_rows:
         progress(
-            multiplier * 0.5 * n_processed / num_rows,
+            2 * 0.5 * n_processed / num_rows,
             total=total_steps,
             desc="(1/2) Generating text classification data",
         )
         remaining_rows = num_rows - n_processed
         batch_size = min(batch_size, remaining_rows)
-        inputs = [{"task": system_prompt} for _ in range(batch_size)]
+        inputs = [
+            {"task": f"{system_prompt} {', '.join(labels)}"} for _ in range(batch_size)
+        ]
         batch = list(textcat_generator.process(inputs=inputs))
         textcat_results.extend(batch[0])
         n_processed += batch_size
@@ -124,58 +116,41 @@ def generate_dataset(
         result["text"] = result["input_text"]
 
     # label text classification data
-    progress(multiplier * 0.5, desc="(1/2) Generating text classification data")
-    if not is_sample:
-        n_processed = 0
-        labeller_results = []
-        while n_processed < num_rows:
-            progress(
-                0.5 + 0.5 * n_processed / num_rows,
-                total=total_steps,
-                desc="(1/2) Labeling text classification data",
-            )
-            batch = textcat_results[n_processed : n_processed + batch_size]
-            labels_batch = list(labeller_generator.process(inputs=batch))
-            labeller_results.extend(labels_batch[0])
-            n_processed += batch_size
+    progress(2 * 0.5, desc="(1/2) Generating text classification data")
+    n_processed = 0
+    labeller_results = []
+    while n_processed < num_rows:
         progress(
-            1,
+            0.5 + 0.5 * n_processed / num_rows,
             total=total_steps,
-            desc="(2/2) Creating dataset",
+            desc="(1/2) Labeling text classification data",
         )
+        batch = textcat_results[n_processed : n_processed + batch_size]
+        labels_batch = list(labeller_generator.process(inputs=batch))
+        labeller_results.extend(labels_batch[0])
+        n_processed += batch_size
+    progress(
+        1,
+        total=total_steps,
+        desc="(2/2) Creating dataset",
+    )
 
     # create final dataset
     distiset_results = []
-    source_results = textcat_results if is_sample else labeller_results
-    for result in source_results:
+    for result in labeller_results:
         record = {
             key: result[key]
-            for key in ["text", "label" if is_sample else "labels"]
+            for key in ["labels", "text"]
             if key in result
         }
         distiset_results.append(record)
 
     dataframe = pd.DataFrame(distiset_results)
-    if not is_sample:
-        if num_labels == 1:
-            dataframe = dataframe.rename(columns={"labels": "label"})
-            dataframe["label"] = dataframe["label"].apply(
-                lambda x: x.lower().strip() if x.lower().strip() in labels else None
-            )
-        else:
-            dataframe["labels"] = dataframe["labels"].apply(
-                lambda x: (
-                    list(
-                        set(
-                            label.lower().strip()
-                            for label in x
-                            if label.lower().strip() in labels
-                        )
-                    )
-                    if isinstance(x, list)
-                    else None
-                )
-            )
+    if num_labels == 1:
+        dataframe = dataframe.rename(columns={"labels": "label"})
+        dataframe["label"] = dataframe["label"].apply(
+            lambda x: x.lower().strip() if x.lower().strip() in labels else None
+        )
     progress(1.0, desc="Dataset generation completed")
     return dataframe
 
@@ -213,14 +188,14 @@ def push_dataset_to_hub(
     )
 
 
-def push_dataset_to_argilla(
+def push_dataset(
     org_name: str,
     repo_name: str,
     system_prompt: str,
     difficulty: str,
     clarity: str,
     num_labels: int = 1,
-    n_rows: int = 10,
+    num_rows: int = 10,
     labels: List[str] = None,
     private: bool = False,
     oauth_token: Union[gr.OAuthToken, None] = None,
@@ -232,7 +207,7 @@ def push_dataset_to_argilla(
         clarity=clarity,
         num_labels=num_labels,
         labels=labels,
-        num_rows=n_rows,
+        num_rows=num_rows,
     )
     push_dataset_to_hub(
         dataframe, org_name, repo_name, num_labels, labels, oauth_token, private
@@ -283,7 +258,7 @@ def push_dataset_to_argilla(
         )
 
         dataframe["text_length"] = dataframe["text"].apply(len)
-        dataframe["text_embeddings"] = get_embeddings(dataframe["text"])
+        dataframe["text_embeddings"] = get_embeddings(dataframe["text"].to_list())
 
         progress(0.5, desc="Creating dataset")
         rg_dataset = client.datasets(name=repo_name, workspace=hf_user)
@@ -332,15 +307,6 @@ def push_dataset_to_argilla(
     return ""
 
 
-def update_suggested_labels(system_prompt):
-    new_labels = re.findall(r"'(\b[\w-]+\b)'", system_prompt)
-    if not new_labels:
-        return gr.Warning(
-            "No labels found in the system prompt. Please add labels manually."
-        )
-    return gr.update(choices=new_labels, value=new_labels)
-
-
 def validate_input_labels(labels):
     if not labels or len(labels) < 2:
         raise gr.Error(
@@ -353,60 +319,59 @@ def update_max_num_labels(labels):
     return gr.update(maximum=len(labels) if labels else 1)
 
 
+def show_pipeline_code_visibility():
+    return {pipeline_code_ui: gr.Accordion(visible=True)}
+
+
+def hide_pipeline_code_visibility():
+    return {pipeline_code_ui: gr.Accordion(visible=False)}
+
+
+######################
+# Gradio UI
+######################
+
+
 with gr.Blocks(css=_LOGGED_OUT_CSS) as app:
     with gr.Column() as main_ui:
         gr.Markdown("## 1. Describe the dataset you want")
         with gr.Row():
-            with gr.Column(scale=1):
+            with gr.Column(scale=2):
                 dataset_description = gr.Textbox(
                     label="Dataset description",
                     placeholder="Give a precise description of your desired dataset.",
                 )
+                with gr.Accordion("Temperature", open=False):
+                    temperature = gr.Slider(
+                        minimum=0.1,
+                        maximum=1,
+                        value=0.8,
+                        step=0.1,
+                        interactive=True,
+                        show_label=False,
+                    )
+                load_btn = gr.Button(
+                    "Create dataset",
+                    variant="primary",
+                )
+            with gr.Column(scale=2):
                 examples = gr.Examples(
                     examples=DEFAULT_DATASET_DESCRIPTIONS,
                     inputs=[dataset_description],
                     cache_examples=False,
-                    label="Example descriptions",
+                    label="Examples",
                 )
-                load_btn = gr.Button("Load dataset", variant="primary")
-            with gr.Column(scale=3):
+            with gr.Column(scale=1):
                 pass
 
         gr.HTML("<hr>")
-        gr.Markdown("## 2. Configure your task")
-        with gr.Row():
+        gr.Markdown("## 2. Configure your dataset")
+        with gr.Row(equal_height=False):
             with gr.Column(scale=1):
                 system_prompt = gr.Textbox(
                     label="System prompt",
                     placeholder="You are a helpful assistant.",
                     visible=True,
-                )
-                difficulty = gr.Dropdown(
-                    choices=[
-                        ("High School", "high school"),
-                        ("College", "college"),
-                        ("PhD", "PhD"),
-                        ("Mixed", "mixed"),
-                    ],
-                    value="mixed",
-                    label="Difficulty",
-                    info="Select the comprehension level for the text. Ensure it matches the task context.",
-                    interactive=True,
-                )
-                clarity = gr.Dropdown(
-                    choices=[
-                        ("Clear", "clear"),
-                        (
-                            "Understandable",
-                            "understandable with some effort",
-                        ),
-                        ("Ambiguous", "ambiguous"),
-                        ("Mixed", "mixed"),
-                    ],
-                    value="mixed",
-                    label="Clarity",
-                    info="Set how easily the correct label or labels can be identified.",
-                    interactive=True,
                 )
                 labels = gr.Dropdown(
                     choices=[],
@@ -424,14 +389,45 @@ with gr.Blocks(css=_LOGGED_OUT_CSS) as app:
                     info="Select 1 for single-label and >1 for multi-label.",
                     interactive=True,
                 )
-                btn_apply_to_sample_dataset = gr.Button("Refresh dataset")
+                clarity = gr.Dropdown(
+                    choices=[
+                        ("Clear", "clear"),
+                        (
+                            "Understandable",
+                            "understandable with some effort",
+                        ),
+                        ("Ambiguous", "ambiguous"),
+                        ("Mixed", "mixed"),
+                    ],
+                    value="mixed",
+                    label="Clarity",
+                    info="Set how easily the correct label or labels can be identified.",
+                    interactive=True,
+                )
+                difficulty = gr.Dropdown(
+                    choices=[
+                        ("High School", "high school"),
+                        ("College", "college"),
+                        ("PhD", "PhD"),
+                        ("Mixed", "mixed"),
+                    ],
+                    value="mixed",
+                    label="Difficulty",
+                    info="Select the comprehension level for the text. Ensure it matches the task context.",
+                    interactive=True,
+                )
+                btn_apply_to_sample_dataset = gr.Button(
+                    "Refresh dataset", variant="secondary", size="sm"
+                )
             with gr.Column(scale=3):
-                dataframe = gr.Dataframe()
+                dataframe = gr.Dataframe(
+                    headers=["labels", "text"], wrap=True, height=500, interactive=False
+                )
 
         gr.HTML("<hr>")
         gr.Markdown("## 3. Generate your dataset")
-        with gr.Row():
-            with gr.Column(scale=1):
+        with gr.Row(equal_height=False):
+            with gr.Column(scale=2):
                 org_name = get_org_dropdown()
                 repo_name = gr.Textbox(
                     label="Repo name",
@@ -439,7 +435,7 @@ with gr.Blocks(css=_LOGGED_OUT_CSS) as app:
                     value=f"my-distiset-{str(uuid.uuid4())[:8]}",
                     interactive=True,
                 )
-                n_rows = gr.Number(
+                num_rows = gr.Number(
                     label="Number of rows",
                     value=10,
                     interactive=True,
@@ -454,37 +450,52 @@ with gr.Blocks(css=_LOGGED_OUT_CSS) as app:
                 btn_push_to_hub = gr.Button("Push to Hub", variant="primary", scale=2)
             with gr.Column(scale=3):
                 success_message = gr.Markdown(visible=True)
+                with gr.Accordion(
+                    "Do you want to go further? Customize and run with Distilabel",
+                    open=False,
+                    visible=False,
+                ) as pipeline_code_ui:
+                    code = generate_pipeline_code(
+                        system_prompt.value,
+                        difficulty=difficulty.value,
+                        clarity=clarity.value,
+                        labels=labels.value,
+                        num_labels=num_labels.value,
+                        num_rows=num_rows.value,
+                    )
+                    pipeline_code = gr.Code(
+                        value=code,
+                        language="python",
+                        label="Distilabel Pipeline Code",
+                    )
 
-        pipeline_code = get_pipeline_code_ui(
-            generate_pipeline_code(
-                system_prompt.value,
-                difficulty=difficulty.value,
-                clarity=clarity.value,
-                labels=labels.value,
-                num_labels=num_labels.value,
-                num_rows=n_rows.value,
-            )
-        )
-
-    gr.on(
-        triggers=[load_btn.click, btn_apply_to_sample_dataset.click],
+    load_btn.click(
         fn=generate_system_prompt,
-        inputs=[dataset_description],
-        outputs=[system_prompt, dataframe],
+        inputs=[dataset_description, temperature],
+        outputs=[system_prompt, labels],
         show_progress=True,
     ).then(
         fn=generate_sample_dataset,
-        inputs=[system_prompt],
+        inputs=[system_prompt, difficulty, clarity, labels, num_labels],
         outputs=[dataframe],
         show_progress=True,
-    ).then(
-        fn=update_suggested_labels,
-        inputs=[system_prompt],
-        outputs=labels,
     ).then(
         fn=update_max_num_labels,
         inputs=[labels],
         outputs=[num_labels],
+    )
+
+    labels.input(
+        fn=update_max_num_labels,
+        inputs=[labels],
+        outputs=[num_labels],
+    )
+
+    btn_apply_to_sample_dataset.click(
+        fn=generate_sample_dataset,
+        inputs=[system_prompt, difficulty, clarity, labels, num_labels],
+        outputs=[dataframe],
+        show_progress=True,
     )
 
     btn_push_to_hub.click(
@@ -502,7 +513,11 @@ with gr.Blocks(css=_LOGGED_OUT_CSS) as app:
         outputs=[success_message],
         show_progress=True,
     ).success(
-        fn=push_dataset_to_argilla,
+        fn=hide_pipeline_code_visibility,
+        inputs=[],
+        outputs=[pipeline_code_ui],
+    ).success(
+        fn=push_dataset,
         inputs=[
             org_name,
             repo_name,
@@ -510,16 +525,32 @@ with gr.Blocks(css=_LOGGED_OUT_CSS) as app:
             difficulty,
             clarity,
             num_labels,
-            n_rows,
+            num_rows,
             labels,
             private,
         ],
         outputs=[success_message],
         show_progress=True,
     ).success(
-        fn=show_success_message_hub,
+        fn=show_success_message,
         inputs=[org_name, repo_name],
         outputs=[success_message],
+    ).success(
+        fn=generate_pipeline_code,
+        inputs=[
+            system_prompt,
+            difficulty,
+            clarity,
+            labels,
+            num_labels,
+            num_rows,
+        ],
+        outputs=[pipeline_code],
+    ).success(
+        fn=show_pipeline_code_visibility,
+        inputs=[],
+        outputs=[pipeline_code_ui],
     )
-    app.load(fn=swap_visibilty, outputs=main_ui)
+
+    app.load(fn=swap_visibility, outputs=main_ui)
     app.load(fn=get_org_dropdown, outputs=[org_name])

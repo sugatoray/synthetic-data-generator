@@ -15,7 +15,7 @@ from src.distilabel_dataset_generator.utils import (
     get_argilla_client,
     get_login_button,
     list_orgs,
-    swap_visibilty,
+    swap_visibility,
 )
 
 TEXTCAT_TASK = "text_classification"
@@ -137,7 +137,7 @@ def get_main_ui(
             show_progress=True,
         )
 
-        app.load(fn=swap_visibilty, outputs=main_ui)
+        app.load(fn=swap_visibility, outputs=main_ui)
         app.load(get_org_dropdown, outputs=[org_name])
 
     return (
@@ -298,25 +298,6 @@ def get_iterate_on_sample_dataset_ui(
         sample_dataset,
         btn_generate_sample_dataset,
     )
-
-
-def get_pipeline_code_ui(pipeline_code: str) -> gr.Code:
-    gr.Markdown("## Customize and run with distilabel")
-    gr.HTML("<hr>")
-
-    with gr.Accordion(
-        "Run this pipeline using distilabel",
-        open=False,
-    ):
-        gr.Markdown(
-            "You can run this pipeline locally with distilabel. For more information, please refer to the [distilabel documentation](https://distilabel.argilla.io/) or go to the FAQ tab at the top of the page for more information."
-        )
-        pipeline_code = gr.Code(
-            value=pipeline_code,
-            language="python",
-            label="Distilabel Pipeline Code",
-        )
-    return pipeline_code
 
 
 def get_argilla_tab() -> Tuple[Any]:
@@ -492,7 +473,7 @@ def get_success_message_row() -> gr.Markdown:
     return success_message
 
 
-def show_success_message_hub(org_name, repo_name) -> gr.Markdown:
+def show_success_message(org_name, repo_name) -> gr.Markdown:
     client = get_argilla_client()
     argilla_api_url = client.api_url
     return gr.Markdown(
@@ -500,25 +481,27 @@ def show_success_message_hub(org_name, repo_name) -> gr.Markdown:
         <div style="padding: 1em; background-color: #e6f3e6; border-radius: 5px; margin-top: 1em;">
             <h3 style="color: #2e7d32; margin: 0;">Dataset Published Successfully!</h3>
             <p style="margin-top: 0.5em;">
-                Your dataset is now available the Hugging Face Hub:
+                <strong>
+                    <a href="{argilla_api_url}" target="_blank" style="color: #1565c0; text-decoration: none;">
+                        Open your dataset in the Argilla space
+                    </a>
+                </strong>
+            </p>
+            <p style="margin-top: 0.5em;">
+                The generated dataset is in the right format for fine-tuning with TRL, AutoTrain, or other frameworks. Your dataset is now available at: 
                 <a href="https://huggingface.co/datasets/{org_name}/{repo_name}" target="_blank" style="color: #1565c0; text-decoration: none;">
                     https://huggingface.co/datasets/{org_name}/{repo_name}
                 </a>
             </p>
-            <p style="margin-top: 0.5em;">
-                Your dataset is now available within Argilla:
-                <a href="{argilla_api_url}" target="_blank" style="color: #1565c0; text-decoration: none;">
-                    {argilla_api_url}
-                </a>
-                <br>Unfamiliar with Argilla? Here are some docs to help you get started:
-                <br>• <a href="https://docs.argilla.io/latest/how_to_guides/annotate/" target="_blank">How to curate data in Argilla</a>
-                <br>• <a href="https://docs.argilla.io/latest/how_to_guides/import_export/" target="_blank">How to export data once you have reviewed the dataset</a>
-            </p>
         </div>
+        <p style="margin-top: 1em; font-size: 0.9em; color: #333;">
+            Unfamiliar with Argilla? Here are some docs to help you get started:
+            <br>• <a href="https://docs.argilla.io/latest/how_to_guides/annotate/" target="_blank">How to curate data in Argilla</a>
+            <br>• <a href="https://docs.argilla.io/latest/how_to_guides/import_export/" target="_blank">How to export data once you have reviewed the dataset</a>
+        </p>
         """,
         visible=True,
     )
-
 
 def hide_success_message() -> gr.Markdown:
     return gr.Markdown(value="")

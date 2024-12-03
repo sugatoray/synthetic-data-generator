@@ -138,52 +138,26 @@ def _get_output_mappings(num_turns):
         return {"conversation": "messages"}
 
 
-def generate_pipeline_code(system_prompt, num_turns, num_rows):
-    input_mappings = _get_output_mappings(num_turns)
-    code = f"""
-# Requirements: `pip install distilabel[hf-inference-endpoints]`
-import os
-from distilabel.pipeline import Pipeline
-from distilabel.steps import KeepColumns
-from distilabel.steps.tasks import MagpieGenerator
-from distilabel.llms import InferenceEndpointsLLM
-
-MODEL = "{MODEL}"
-SYSTEM_PROMPT = "{system_prompt}"
-os.environ["HF_TOKEN"] = "hf_xxx" # https://huggingface.co/settings/tokens/new?ownUserPermissions=repo.content.read&ownUserPermissions=repo.write&globalPermissions=inference.serverless.write&canReadGatedRepos=true&tokenType=fineGrained
-
-with Pipeline(name="sft") as pipeline:
-    magpie = MagpieGenerator(
+def get_prompt_generator(temperature):
+    prompt_generator = TextGeneration(
         llm=InferenceEndpointsLLM(
+            api_key=_get_next_api_key(),
             model_id=MODEL,
             tokenizer_id=MODEL,
-            magpie_pre_query_template="llama3",
-            generation_kwargs={{
-                "temperature": 0.9,
-                "do_sample": True,
+            generation_kwargs={
+                "temperature": temperature,
                 "max_new_tokens": 2048,
-                "stop_sequences": {_STOP_SEQUENCES}
-            }},
-            api_key=os.environ["HF_TOKEN"],
+                "do_sample": True,
+            },
         ),
-        n_turns={num_turns},
-        num_rows={num_rows},
-        batch_size=1,
-        system_prompt=SYSTEM_PROMPT,
-        output_mappings={input_mappings},
+        system_prompt=PROMPT_CREATION_PROMPT,
+        use_system_prompt=True,
     )
-    keep_columns = KeepColumns(
-        columns={list(input_mappings.values())} + ["model_name"],
-    )
-    magpie.connect(keep_columns)
-
-if __name__ == "__main__":
-    distiset = pipeline.run()
-"""
-    return code
+    prompt_generator.load()
+    return prompt_generator
 
 
-def get_magpie_generator(num_turns, num_rows, system_prompt, is_sample):
+def get_magpie_generator(system_prompt, num_turns, is_sample):
     input_mappings = _get_output_mappings(num_turns)
     output_mappings = input_mappings.copy()
     if num_turns == 1:
@@ -228,7 +202,7 @@ def get_magpie_generator(num_turns, num_rows, system_prompt, is_sample):
     return magpie_generator
 
 
-def get_response_generator(num_turns, system_prompt, is_sample):
+def get_response_generator(system_prompt, num_turns, is_sample):
     if num_turns == 1:
         response_generator = TextGeneration(
             llm=InferenceEndpointsLLM(
@@ -262,19 +236,46 @@ def get_response_generator(num_turns, system_prompt, is_sample):
     return response_generator
 
 
-def get_prompt_generator():
-    prompt_generator = TextGeneration(
+def generate_pipeline_code(system_prompt, num_turns, num_rows):
+    input_mappings = _get_output_mappings(num_turns)
+    code = f"""
+# Requirements: `pip install distilabel[hf-inference-endpoints]`
+import os
+from distilabel.pipeline import Pipeline
+from distilabel.steps import KeepColumns
+from distilabel.steps.tasks import MagpieGenerator
+from distilabel.llms import InferenceEndpointsLLM
+
+MODEL = "{MODEL}"
+SYSTEM_PROMPT = "{system_prompt}"
+os.environ["HF_TOKEN"] = "hf_xxx" # https://huggingface.co/settings/tokens/new?ownUserPermissions=repo.content.read&ownUserPermissions=repo.write&globalPermissions=inference.serverless.write&canReadGatedRepos=true&tokenType=fineGrained
+
+with Pipeline(name="sft") as pipeline:
+    magpie = MagpieGenerator(
         llm=InferenceEndpointsLLM(
-            api_key=_get_next_api_key(),
             model_id=MODEL,
             tokenizer_id=MODEL,
-            generation_kwargs={
-                "temperature": 0.8,
-                "max_new_tokens": 2048,
+            magpie_pre_query_template="llama3",
+            generation_kwargs={{
+                "temperature": 0.9,
                 "do_sample": True,
-            },
+                "max_new_tokens": 2048,
+                "stop_sequences": {_STOP_SEQUENCES}
+            }},
+            api_key=os.environ["HF_TOKEN"],
         ),
-        use_system_prompt=True,
+        n_turns={num_turns},
+        num_rows={num_rows},
+        batch_size=1,
+        system_prompt=SYSTEM_PROMPT,
+        output_mappings={input_mappings},
     )
-    prompt_generator.load()
-    return prompt_generator
+    keep_columns = KeepColumns(
+        columns={list(input_mappings.values())} + ["model_name"],
+    )
+    magpie.connect(keep_columns)
+
+if __name__ == "__main__":
+    distiset = pipeline.run()
+"""
+    return code

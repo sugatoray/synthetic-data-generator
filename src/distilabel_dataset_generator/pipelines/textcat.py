@@ -1,4 +1,5 @@
 import random
+from pydantic import BaseModel, Field
 from typing import List
 
 from distilabel.llms import InferenceEndpointsLLM
@@ -22,25 +23,27 @@ The prompt you write should follow the same style and structure as the following
 
 If a label is composed of multiple words, use a hyphen to separate them. For example, 'smartphone-review', 'customer-service', 'product-quality'.:
 
-Classify the following customer review of a cinema as either 'positive' or 'negative'.
+{"classification_task": "Classify the following customer review of a cinema as", "labels": ["positive", "negative"]}
 
-Classify the following news article into one or more of the following categories: 'politics', 'sports', 'technology', 'entertainment', 'health', 'business', 'environment', 'education', 'science', 'international'.
+{"classification_task": "Categorize the following news article into one or more of the following categories:", "labels": ["politics", "sports", "technology", "entertainment", "health", "business", "environment", "education", "science", "international"]}
 
-Determine the sentiment of the following social media post: 'ambiguous', 'sarcastic', 'informative', 'emotional'.
+{"classification_task": "Classify the following news article into one or more of the following categories:", "labels": ['politics', 'sports', 'technology', 'entertainment', 'health', 'business', 'environment', 'education', 'science', 'international']}
 
-Identify the issue category for the following technical support ticket: 'billing', 'technical', 'account', 'shipping', 'returns', 'installation', 'subscription'.
+{"classification_task": "Determine the sentiment of the following social media post:", "labels": ['ambiguous', 'sarcastic', 'informative', 'emotional']}
 
-Classify the following movie review into one of the following categories: 'critical', 'praise', 'disappointed', 'enthusiastic'.
+{"classification_task": "Identify the issue category for the following technical support ticket:", "labels": ['billing', 'technical', 'account', 'shipping', 'returns', 'installation', 'subscription']}
 
-Determine the level of customer satisfaction from the following customer service transcript: 'satisfied', 'dissatisfied', 'highly-satisfied', 'somewhat-dissatisfied', 'indifferent'.
+{"classification_task": "Classify the following movie review into one of the following categories:", "labels": ['critical', 'praise', 'disappointed', 'enthusiastic']}
 
-Categorize the following product description into one of the following product types: 'smartphone', 'laptop', 'tablet', 'smartwatch', 'e-reader', 'headphones'.
+{"classification_task": "Categorize the following customer service transcript into one of the following categories:", "labels": ['satisfied', 'dissatisfied', 'highly-satisfied', 'somewhat-dissatisfied', 'indifferent']}
 
-Classify the following tweet as expressing either 'support' or 'opposition' to the political event discussed.
+{"classification_task": "Classify the following product description into one of the following product types:", "labels": ['smartphone', 'laptop', 'tablet', 'smartwatch', 'e-reader', 'headphones']}
 
-Classify the following restaurant review into one of the following categories: 'food-quality', 'service', 'ambiance', or 'price'.
+{"classification_task": "Categorize the following tweet expressing the political event discussed as", "labels": ['support', 'opposition']}
 
-Classify the following blog post based on its primary fashion trend or style: 'casual', 'formal', 'streetwear', 'vintage' or 'sustainable-fashion'.
+{"classification_task": "Classify the following restaurant review into one of the following categories:", "labels": ['food-quality', 'service', 'ambiance', 'price']}
+
+{"classification_task": "Categorize the following blog post based on its primary fashion trend or style:", "labels": ['casual', 'formal', 'streetwear', 'vintage', 'sustainable-fashion']}
 
 User dataset description:
 """
@@ -49,6 +52,82 @@ DEFAULT_DATASET_DESCRIPTIONS = [
     "A dataset covering customer reviews for an e-commerce website.",
     "A dataset covering news articles about various topics.",
 ]
+
+
+class TextClassificationTask(BaseModel):
+    classification_task: str = Field(
+        ...,
+        title="classification_task",
+        description="The classification task to be performed.",
+    )
+
+    labels: list[str] = Field(
+        ...,
+        title="Labels",
+        description="The possible labels for the classification task.",
+    )
+
+
+def get_prompt_generator(temperature):
+    prompt_generator = TextGeneration(
+        llm=InferenceEndpointsLLM(
+            api_key=_get_next_api_key(),
+            model_id=MODEL,
+            tokenizer_id=MODEL,
+            structured_output={"format": "json", "schema": TextClassificationTask},
+            generation_kwargs={
+                "temperature": temperature,
+                "max_new_tokens": 2048,
+                "do_sample": True,
+            },
+        ),
+        system_prompt=PROMPT_CREATION_PROMPT,
+        use_system_prompt=True,
+    )
+    prompt_generator.load()
+    return prompt_generator
+
+
+def get_textcat_generator(difficulty, clarity, is_sample):
+    textcat_generator = GenerateTextClassificationData(
+        llm=InferenceEndpointsLLM(
+            model_id=MODEL,
+            tokenizer_id=MODEL,
+            api_key=_get_next_api_key(),
+            generation_kwargs={
+                "temperature": 0.9,
+                "max_new_tokens": 256 if is_sample else 2048,
+                "do_sample": True,
+                "top_k": 50,
+                "top_p": 0.95,
+            },
+        ),
+        difficulty=None if difficulty == "mixed" else difficulty,
+        clarity=None if clarity == "mixed" else clarity,
+        seed=random.randint(0, 2**32 - 1),
+    )
+    textcat_generator.load()
+    return textcat_generator
+
+
+def get_labeller_generator(system_prompt, labels, num_labels):
+    labeller_generator = TextClassification(
+        llm=InferenceEndpointsLLM(
+            model_id=MODEL,
+            tokenizer_id=MODEL,
+            api_key=_get_next_api_key(),
+            generation_kwargs={
+                "temperature": 0.7,
+                "max_new_tokens": 2048,
+            },
+        ),
+        context=system_prompt,
+        available_labels=labels,
+        n=num_labels,
+        default_label="unknown",
+    )
+    labeller_generator.load()
+    return labeller_generator
 
 
 def generate_pipeline_code(
@@ -146,63 +225,3 @@ with Pipeline(name="textcat") as pipeline:
         distiset = pipeline.run()
     """
     )
-
-
-def get_textcat_generator(difficulty, clarity, is_sample):
-    textcat_generator = GenerateTextClassificationData(
-        llm=InferenceEndpointsLLM(
-            model_id=MODEL,
-            tokenizer_id=MODEL,
-            api_key=_get_next_api_key(),
-            generation_kwargs={
-                "temperature": 0.9,
-                "max_new_tokens": 256 if is_sample else 2048,
-                "do_sample": True,
-                "top_k": 50,
-                "top_p": 0.95,
-            },
-        ),
-        difficulty=None if difficulty == "mixed" else difficulty,
-        clarity=None if clarity == "mixed" else clarity,
-        seed=random.randint(0, 2**32 - 1),
-    )
-    textcat_generator.load()
-    return textcat_generator
-
-
-def get_labeller_generator(system_prompt, labels, num_labels):
-    labeller_generator = TextClassification(
-        llm=InferenceEndpointsLLM(
-            model_id=MODEL,
-            tokenizer_id=MODEL,
-            api_key=_get_next_api_key(),
-            generation_kwargs={
-                "temperature": 0.7,
-                "max_new_tokens": 2048,
-            },
-        ),
-        context=system_prompt,
-        available_labels=labels,
-        n=num_labels,
-        default_label="unknown",
-    )
-    labeller_generator.load()
-    return labeller_generator
-
-
-def get_prompt_generator():
-    prompt_generator = TextGeneration(
-        llm=InferenceEndpointsLLM(
-            api_key=_get_next_api_key(),
-            model_id=MODEL,
-            tokenizer_id=MODEL,
-            generation_kwargs={
-                "temperature": 0.8,
-                "max_new_tokens": 2048,
-                "do_sample": True,
-            },
-        ),
-        use_system_prompt=True,
-    )
-    prompt_generator.load()
-    return prompt_generator

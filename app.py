@@ -3,6 +3,7 @@ import gradio as gr
 from src.distilabel_dataset_generator._tabbedinterface import TabbedInterface
 from src.distilabel_dataset_generator.apps.faq import app as faq_app
 from src.distilabel_dataset_generator.apps.sft import app as sft_app
+from src.distilabel_dataset_generator.apps.eval import app as eval_app
 from src.distilabel_dataset_generator.apps.textcat import app as textcat_app
 
 theme ='argilla/argilla-theme'
@@ -25,12 +26,11 @@ button.hf-login:hover {background: var(--neutral-700); color: white}
 """
 
 demo = TabbedInterface(
-    [textcat_app, sft_app, faq_app],
-    ["Text Classification", "Supervised Fine-Tuning", "FAQ"],
+    [textcat_app, sft_app, eval_app, faq_app],
+    ["Text Classification", "Supervised Fine-Tuning", "Evaluation", "FAQ"],
     css=css,
     title="""
     <h1>Synthetic Data Generator</h1>
-    <h3>Build datasets using natural language</h3>
     """,
     head="Synthetic Data Generator",
     theme=theme,
