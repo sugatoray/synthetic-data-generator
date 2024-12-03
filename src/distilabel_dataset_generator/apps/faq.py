@@ -6,9 +6,9 @@ with gr.Blocks() as app:
             gr.HTML(
                 """
                 <div style="text-align: justify;">
-                    <h4 style="text-align: left;">What is Distilabel Synthetic Data Generator?</h4>
+                    <h4 style="text-align: left;">What is it?</h4>
 
-                    <p>Distilabel Synthetic Data Generator is an experimental tool that allows you to easily create high-quality datasets for training and fine-tuning language models. It leverages the power of distilabel and advanced language models to generate synthetic data tailored to your specific needs.</p>
+                    <p>The Synthetic Data Generator is a tool that allows you to easily create high-quality datasets for training and fine-tuning language models. It leverages the power of distilabel and advanced language models to generate synthetic data tailored to your specific needs.</p>
 
                     <p>This tool simplifies the process of creating custom datasets, enabling you to:</p>
                     <ul>
@@ -19,7 +19,7 @@ with gr.Blocks() as app:
                         <li>Push your generated datasets directly to the Hugging Face Hub</li>
                     </ul>
 
-                    <p>By using Distilabel Synthetic Data Generator, you can rapidly prototype and create datasets for, accelerating your AI development process.</p>
+                    <p>By using the Synthetic Data Generator, you can rapidly prototype and create datasets for, accelerating your AI development process.</p>
 
                     <h4 style="text-align: center;">How is this free?</h4>
 
