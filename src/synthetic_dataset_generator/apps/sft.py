@@ -404,7 +404,7 @@ with gr.Blocks() as app:
                         info="Choose between 1 (single turn with 'instruction-response' columns) and 2-4 (multi-turn conversation with a 'messages' column).",
                     )
                     btn_apply_to_sample_dataset = gr.Button(
-                        "Refresh dataset", variant="secondary"
+                        "Refresh dataset", variant="primary"
                     )
                 with gr.Column(scale=3):
                     dataframe = gr.Dataframe(

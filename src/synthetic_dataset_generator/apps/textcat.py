@@ -416,7 +416,7 @@ with gr.Blocks() as app:
                     interactive=True,
                 )
                 btn_apply_to_sample_dataset = gr.Button(
-                    "Refresh dataset", variant="secondary"
+                    "Refresh dataset", variant="primary"
                 )
             with gr.Column(scale=3):
                 dataframe = gr.Dataframe(
