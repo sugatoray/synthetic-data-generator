@@ -220,8 +220,10 @@ def push_dataset(
     push_dataset_to_hub(dataframe, org_name, repo_name, oauth_token, private)
     try:
         progress(0.1, desc="Setting up user and workspace")
-        client = get_argilla_client()
         hf_user = HfApi().whoami(token=oauth_token.token)["name"]
+        client = get_argilla_client()
+        if client is None:
+            return ""
         if "messages" in dataframe.columns:
             settings = rg.Settings(
                 fields=[

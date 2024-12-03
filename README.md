@@ -80,7 +80,10 @@ pip install synthetic-dataset-generator
 
 ### Environment Variables
 
-- `HF_TOKEN`: Your Hugging Face token to push your datasets to the Hugging Face Hub and run Inference Endpoints Requests. You can get one [here](https://huggingface.co/settings/tokens/new?ownUserPermissions=repo.content.read&ownUserPermissions=repo.write&globalPermissions=inference.serverless.write&tokenType=fineGrained).
+- `HF_TOKEN`: Your Hugging Face token to push your datasets to the Hugging Face Hub and run *Free* Inference Endpoints Requests. You can get one [here](https://huggingface.co/settings/tokens/new?ownUserPermissions=repo.content.read&ownUserPermissions=repo.write&globalPermissions=inference.serverless.write&tokenType=fineGrained).
+
+Optionally, you can also push your datasets to Argilla for further curation by setting the following environment variables:
+
 - `ARGILLA_API_KEY`: Your Argilla API key to push your datasets to Argilla.
 - `ARGILLA_API_URL`: Your Argilla API URL to push your datasets to Argilla.
 
@@ -89,6 +92,12 @@ pip install synthetic-dataset-generator
 ```bash
 python app.py
 ```
+
+### Argilla integration
+
+Argilla is a open source tool for data curation. It allows you to annotate and review datasets, and push curated datasets to the Hugging Face Hub. You can easily get started with Argilla by following the [quickstart guide](https://docs.argilla.io/latest/getting_started/quickstart/).
+
+![Argilla integration](https://huggingface.co/spaces/argilla/synthetic-data-generator/resolve/main/assets/argilla.png)
 
 ## Custom synthetic data generation?
 
