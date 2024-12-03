@@ -20,7 +20,7 @@ hf_oauth_scopes:
 
 <h1 align="center">
   <br>
-  Synthetic Data Generator
+  🧬 Synthetic Data Generator
   <br>
 </h1>
 <h3 align="center">Build datasets using natural language</h2>
