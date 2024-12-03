@@ -10,7 +10,7 @@ css = """
 .main_ui_logged_out{opacity: 0.3; pointer-events: none}
 """
 
-image = """<img src="https://raw.githubusercontent.com/argilla-io/synthetic-data-generator/main/assets/logo-sdg.svg" alt="Synthetic Data Generator Logo" style="display: block; margin-left: auto; margin-right: auto; width: 75%; margin-bottom: -400px;"/>"""
+image = """<br><img src="https://raw.githubusercontent.com/argilla-io/synthetic-data-generator/main/assets/logo.svg" alt="Synthetic Data Generator Logo" style="display: block; margin-left: auto; margin-right: auto; width: 80%;"/>"""
 
 demo = TabbedInterface(
     [textcat_app, sft_app, eval_app, faq_app],

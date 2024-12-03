@@ -59,11 +59,9 @@ class TabbedInterface(Blocks):
         if tab_names is None:
             tab_names = [f"Tab {i}" for i in range(len(interface_list))]
         with self:
+            h3 = "<div style='text-align: center;'><h3>Build datasets using natural language</h3></div>"
             if title:
-                gr.HTML(value=title)
-            gr.HTML(
-                "<div style='text-align: center;'><h3>Build datasets using natural language</h3></div>"
-            )
+                gr.HTML(value=title + h3)
             gr.LoginButton(value="Sign in", variant="primary", scale=2)
             with Tabs():
                 for interface, tab_name in zip(interface_list, tab_names, strict=False):
