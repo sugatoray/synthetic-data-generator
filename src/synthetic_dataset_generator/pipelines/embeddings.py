@@ -3,7 +3,7 @@ from typing import List
 from sentence_transformers import SentenceTransformer
 from sentence_transformers.models import StaticEmbedding
 
-from distilabel_dataset_generator.constants import STATIC_EMBEDDING_MODEL
+from synthetic_dataset_generator.constants import STATIC_EMBEDDING_MODEL
 
 static_embedding = StaticEmbedding.from_model2vec(STATIC_EMBEDDING_MODEL)
 model = SentenceTransformer(modules=[static_embedding])

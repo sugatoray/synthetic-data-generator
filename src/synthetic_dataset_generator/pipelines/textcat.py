@@ -9,9 +9,9 @@ from distilabel.steps.tasks import (
 )
 from pydantic import BaseModel, Field
 
-from distilabel_dataset_generator.constants import BASE_URL, MODEL
-from distilabel_dataset_generator.pipelines.base import _get_next_api_key
-from distilabel_dataset_generator.utils import get_preprocess_labels
+from synthetic_dataset_generator.constants import BASE_URL, MODEL
+from synthetic_dataset_generator.pipelines.base import _get_next_api_key
+from synthetic_dataset_generator.utils import get_preprocess_labels
 
 PROMPT_CREATION_PROMPT = """You are an AI assistant specialized in generating very precise text classification tasks for dataset creation.
 

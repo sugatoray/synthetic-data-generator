@@ -9,30 +9,30 @@ from datasets import ClassLabel, Dataset, Features, Sequence, Value
 from distilabel.distiset import Distiset
 from huggingface_hub import HfApi
 
-from distilabel_dataset_generator.constants import DEFAULT_BATCH_SIZE
-from src.distilabel_dataset_generator.apps.base import (
+from src.synthetic_dataset_generator.apps.base import (
     hide_success_message,
     show_success_message,
     validate_argilla_user_workspace_dataset,
     validate_push_to_hub,
 )
-from src.distilabel_dataset_generator.pipelines.embeddings import (
+from src.synthetic_dataset_generator.pipelines.embeddings import (
     get_embeddings,
     get_sentence_embedding_dimensions,
 )
-from src.distilabel_dataset_generator.pipelines.textcat import (
+from src.synthetic_dataset_generator.pipelines.textcat import (
     DEFAULT_DATASET_DESCRIPTIONS,
     generate_pipeline_code,
     get_labeller_generator,
     get_prompt_generator,
     get_textcat_generator,
 )
-from src.distilabel_dataset_generator.utils import (
+from src.synthetic_dataset_generator.utils import (
     get_argilla_client,
     get_org_dropdown,
     get_preprocess_labels,
     swap_visibility,
 )
+from synthetic_dataset_generator.constants import DEFAULT_BATCH_SIZE
 
 
 def generate_system_prompt(dataset_description, temperature, progress=gr.Progress()):

@@ -1,12 +1,12 @@
 from distilabel.llms import InferenceEndpointsLLM
 from distilabel.steps.tasks import ChatGeneration, Magpie, TextGeneration
 
-from distilabel_dataset_generator.constants import (
+from synthetic_dataset_generator.constants import (
     BASE_URL,
     MAGPIE_PRE_QUERY_TEMPLATE,
     MODEL,
 )
-from distilabel_dataset_generator.pipelines.base import _get_next_api_key
+from synthetic_dataset_generator.pipelines.base import _get_next_api_key
 
 INFORMATION_SEEKING_PROMPT = (
     "You are an AI assistant designed to provide accurate and concise information on a wide"

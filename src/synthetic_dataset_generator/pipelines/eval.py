@@ -5,9 +5,9 @@ from distilabel.steps.tasks import (
     UltraFeedback,
 )
 
-from distilabel_dataset_generator.constants import BASE_URL, MODEL
-from distilabel_dataset_generator.pipelines.base import _get_next_api_key
-from distilabel_dataset_generator.utils import extract_column_names
+from synthetic_dataset_generator.constants import BASE_URL, MODEL
+from synthetic_dataset_generator.pipelines.base import _get_next_api_key
+from synthetic_dataset_generator.utils import extract_column_names
 
 
 def get_ultrafeedback_evaluator(aspect, is_sample):

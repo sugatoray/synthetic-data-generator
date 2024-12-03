@@ -10,8 +10,8 @@ from distilabel.distiset import Distiset
 from gradio import OAuthToken
 from huggingface_hub import HfApi, upload_file
 
-from distilabel_dataset_generator.constants import TEXTCAT_TASK
-from distilabel_dataset_generator.utils import (
+from synthetic_dataset_generator.constants import TEXTCAT_TASK
+from synthetic_dataset_generator.utils import (
     get_argilla_client,
 )
 

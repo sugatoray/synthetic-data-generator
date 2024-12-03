@@ -9,25 +9,25 @@ from datasets import Dataset
 from distilabel.distiset import Distiset
 from huggingface_hub import HfApi
 
-from distilabel_dataset_generator.apps.base import (
+from synthetic_dataset_generator.apps.base import (
     hide_success_message,
     show_success_message,
     validate_argilla_user_workspace_dataset,
     validate_push_to_hub,
 )
-from distilabel_dataset_generator.constants import DEFAULT_BATCH_SIZE, SFT_AVAILABLE
-from distilabel_dataset_generator.pipelines.embeddings import (
+from synthetic_dataset_generator.constants import DEFAULT_BATCH_SIZE, SFT_AVAILABLE
+from synthetic_dataset_generator.pipelines.embeddings import (
     get_embeddings,
     get_sentence_embedding_dimensions,
 )
-from distilabel_dataset_generator.pipelines.sft import (
+from synthetic_dataset_generator.pipelines.sft import (
     DEFAULT_DATASET_DESCRIPTIONS,
     generate_pipeline_code,
     get_magpie_generator,
     get_prompt_generator,
     get_response_generator,
 )
-from distilabel_dataset_generator.utils import (
+from synthetic_dataset_generator.utils import (
     get_argilla_client,
     get_org_dropdown,
     swap_visibility,

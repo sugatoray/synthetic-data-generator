@@ -1,4 +1,4 @@
-from distilabel_dataset_generator.constants import API_KEYS
+from synthetic_dataset_generator.constants import API_KEYS
 
 TOKEN_INDEX = 0
 
