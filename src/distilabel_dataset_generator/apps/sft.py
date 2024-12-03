@@ -9,28 +9,25 @@ from datasets import Dataset
 from distilabel.distiset import Distiset
 from huggingface_hub import HfApi
 
-from src.distilabel_dataset_generator.apps.base import (
+from distilabel_dataset_generator.apps.base import (
     hide_success_message,
     show_success_message,
     validate_argilla_user_workspace_dataset,
     validate_push_to_hub,
 )
-from src.distilabel_dataset_generator.pipelines.base import (
-    DEFAULT_BATCH_SIZE,
-)
-from src.distilabel_dataset_generator.pipelines.embeddings import (
+from distilabel_dataset_generator.constants import DEFAULT_BATCH_SIZE, SFT_AVAILABLE
+from distilabel_dataset_generator.pipelines.embeddings import (
     get_embeddings,
     get_sentence_embedding_dimensions,
 )
-from src.distilabel_dataset_generator.pipelines.sft import (
+from distilabel_dataset_generator.pipelines.sft import (
     DEFAULT_DATASET_DESCRIPTIONS,
     generate_pipeline_code,
     get_magpie_generator,
     get_prompt_generator,
     get_response_generator,
 )
-from src.distilabel_dataset_generator.utils import (
-    _LOGGED_OUT_CSS,
+from distilabel_dataset_generator.utils import (
     get_argilla_client,
     get_org_dropdown,
     swap_visibility,
@@ -352,170 +349,177 @@ def hide_pipeline_code_visibility():
 ######################
 
 
-with gr.Blocks(css=_LOGGED_OUT_CSS) as app:
+with gr.Blocks() as app:
     with gr.Column() as main_ui:
-        gr.Markdown(value="## 1. Describe the dataset you want")
-        with gr.Row():
-            with gr.Column(scale=2):
-                dataset_description = gr.Textbox(
-                    label="Dataset description",
-                    placeholder="Give a precise description of your desired dataset.",
-                )
-                with gr.Accordion("Temperature", open=False):
-                    temperature = gr.Slider(
-                        minimum=0.1,
-                        maximum=1,
-                        value=0.8,
-                        step=0.1,
+        if not SFT_AVAILABLE:
+            gr.Markdown(
+                value=f"## Supervised Fine-Tuning is not available for the {MODEL} model. Use Hugging Face Llama3 or Qwen2 models."
+            )
+        else:
+            gr.Markdown(value="## 1. Describe the dataset you want")
+            with gr.Row():
+                with gr.Column(scale=2):
+                    dataset_description = gr.Textbox(
+                        label="Dataset description",
+                        placeholder="Give a precise description of your desired dataset.",
+                    )
+                    with gr.Accordion("Temperature", open=False):
+                        temperature = gr.Slider(
+                            minimum=0.1,
+                            maximum=1,
+                            value=0.8,
+                            step=0.1,
+                            interactive=True,
+                            show_label=False,
+                        )
+                    load_btn = gr.Button(
+                        "Create dataset",
+                        variant="primary",
+                    )
+                with gr.Column(scale=2):
+                    examples = gr.Examples(
+                        examples=DEFAULT_DATASET_DESCRIPTIONS,
+                        inputs=[dataset_description],
+                        cache_examples=False,
+                        label="Examples",
+                    )
+                with gr.Column(scale=1):
+                    pass
+
+            gr.HTML(value="<hr>")
+            gr.Markdown(value="## 2. Configure your dataset")
+            with gr.Row(equal_height=False):
+                with gr.Column(scale=2):
+                    system_prompt = gr.Textbox(
+                        label="System prompt",
+                        placeholder="You are a helpful assistant.",
+                    )
+                    num_turns = gr.Number(
+                        value=1,
+                        label="Number of turns in the conversation",
+                        minimum=1,
+                        maximum=4,
+                        step=1,
                         interactive=True,
-                        show_label=False,
+                        info="Choose between 1 (single turn with 'instruction-response' columns) and 2-4 (multi-turn conversation with a 'messages' column).",
                     )
-                load_btn = gr.Button(
-                    "Create dataset",
-                    variant="primary",
-                )
-            with gr.Column(scale=2):
-                examples = gr.Examples(
-                    examples=DEFAULT_DATASET_DESCRIPTIONS,
-                    inputs=[dataset_description],
-                    cache_examples=False,
-                    label="Examples",
-                )
-            with gr.Column(scale=1):
-                pass
-
-        gr.HTML(value="<hr>")
-        gr.Markdown(value="## 2. Configure your dataset")
-        with gr.Row(equal_height=False):
-            with gr.Column(scale=2):
-                system_prompt = gr.Textbox(
-                    label="System prompt",
-                    placeholder="You are a helpful assistant.",
-                )
-                num_turns = gr.Number(
-                    value=1,
-                    label="Number of turns in the conversation",
-                    minimum=1,
-                    maximum=4,
-                    step=1,
-                    interactive=True,
-                    info="Choose between 1 (single turn with 'instruction-response' columns) and 2-4 (multi-turn conversation with a 'messages' column).",
-                )
-                btn_apply_to_sample_dataset = gr.Button(
-                    "Refresh dataset", variant="secondary"
-                )
-            with gr.Column(scale=3):
-                dataframe = gr.Dataframe(
-                    headers=["prompt", "completion"],
-                    wrap=True,
-                    height=500,
-                    interactive=False,
-                )
-
-        gr.HTML(value="<hr>")
-        gr.Markdown(value="## 3. Generate your dataset")
-        with gr.Row(equal_height=False):
-            with gr.Column(scale=2):
-                org_name = get_org_dropdown()
-                repo_name = gr.Textbox(
-                    label="Repo name",
-                    placeholder="dataset_name",
-                    value=f"my-distiset-{str(uuid.uuid4())[:8]}",
-                    interactive=True,
-                )
-                num_rows = gr.Number(
-                    label="Number of rows",
-                    value=10,
-                    interactive=True,
-                    scale=1,
-                )
-                private = gr.Checkbox(
-                    label="Private dataset",
-                    value=False,
-                    interactive=True,
-                    scale=1,
-                )
-                btn_push_to_hub = gr.Button("Push to Hub", variant="primary", scale=2)
-            with gr.Column(scale=3):
-                success_message = gr.Markdown(visible=True)
-                with gr.Accordion(
-                    "Do you want to go further? Customize and run with Distilabel",
-                    open=False,
-                    visible=False,
-                ) as pipeline_code_ui:
-                    code = generate_pipeline_code(
-                        system_prompt=system_prompt.value,
-                        num_turns=num_turns.value,
-                        num_rows=num_rows.value,
+                    btn_apply_to_sample_dataset = gr.Button(
+                        "Refresh dataset", variant="secondary"
                     )
-                    pipeline_code = gr.Code(
-                        value=code,
-                        language="python",
-                        label="Distilabel Pipeline Code",
+                with gr.Column(scale=3):
+                    dataframe = gr.Dataframe(
+                        headers=["prompt", "completion"],
+                        wrap=True,
+                        height=500,
+                        interactive=False,
                     )
 
-    load_btn.click(
-        fn=generate_system_prompt,
-        inputs=[dataset_description, temperature],
-        outputs=[system_prompt],
-        show_progress=True,
-    ).then(
-        fn=generate_sample_dataset,
-        inputs=[system_prompt, num_turns],
-        outputs=[dataframe],
-        show_progress=True,
-    )
+            gr.HTML(value="<hr>")
+            gr.Markdown(value="## 3. Generate your dataset")
+            with gr.Row(equal_height=False):
+                with gr.Column(scale=2):
+                    org_name = get_org_dropdown()
+                    repo_name = gr.Textbox(
+                        label="Repo name",
+                        placeholder="dataset_name",
+                        value=f"my-distiset-{str(uuid.uuid4())[:8]}",
+                        interactive=True,
+                    )
+                    num_rows = gr.Number(
+                        label="Number of rows",
+                        value=10,
+                        interactive=True,
+                        scale=1,
+                    )
+                    private = gr.Checkbox(
+                        label="Private dataset",
+                        value=False,
+                        interactive=True,
+                        scale=1,
+                    )
+                    btn_push_to_hub = gr.Button(
+                        "Push to Hub", variant="primary", scale=2
+                    )
+                with gr.Column(scale=3):
+                    success_message = gr.Markdown(visible=True)
+                    with gr.Accordion(
+                        "Do you want to go further? Customize and run with Distilabel",
+                        open=False,
+                        visible=False,
+                    ) as pipeline_code_ui:
+                        code = generate_pipeline_code(
+                            system_prompt=system_prompt.value,
+                            num_turns=num_turns.value,
+                            num_rows=num_rows.value,
+                        )
+                        pipeline_code = gr.Code(
+                            value=code,
+                            language="python",
+                            label="Distilabel Pipeline Code",
+                        )
 
-    btn_apply_to_sample_dataset.click(
-        fn=generate_sample_dataset,
-        inputs=[system_prompt, num_turns],
-        outputs=[dataframe],
-        show_progress=True,
-    )
+        load_btn.click(
+            fn=generate_system_prompt,
+            inputs=[dataset_description, temperature],
+            outputs=[system_prompt],
+            show_progress=True,
+        ).then(
+            fn=generate_sample_dataset,
+            inputs=[system_prompt, num_turns],
+            outputs=[dataframe],
+            show_progress=True,
+        )
 
-    btn_push_to_hub.click(
-        fn=validate_argilla_user_workspace_dataset,
-        inputs=[repo_name],
-        outputs=[success_message],
-        show_progress=True,
-    ).then(
-        fn=validate_push_to_hub,
-        inputs=[org_name, repo_name],
-        outputs=[success_message],
-        show_progress=True,
-    ).success(
-        fn=hide_success_message,
-        outputs=[success_message],
-        show_progress=True,
-    ).success(
-        fn=hide_pipeline_code_visibility,
-        inputs=[],
-        outputs=[pipeline_code_ui],
-    ).success(
-        fn=push_dataset,
-        inputs=[
-            org_name,
-            repo_name,
-            system_prompt,
-            num_turns,
-            num_rows,
-            private,
-        ],
-        outputs=[success_message],
-        show_progress=True,
-    ).success(
-        fn=show_success_message,
-        inputs=[org_name, repo_name],
-        outputs=[success_message],
-    ).success(
-        fn=generate_pipeline_code,
-        inputs=[system_prompt, num_turns, num_rows],
-        outputs=[pipeline_code],
-    ).success(
-        fn=show_pipeline_code_visibility,
-        inputs=[],
-        outputs=[pipeline_code_ui],
-    )
+        btn_apply_to_sample_dataset.click(
+            fn=generate_sample_dataset,
+            inputs=[system_prompt, num_turns],
+            outputs=[dataframe],
+            show_progress=True,
+        )
 
-    app.load(fn=swap_visibility, outputs=main_ui)
-    app.load(fn=get_org_dropdown, outputs=[org_name])
+        btn_push_to_hub.click(
+            fn=validate_argilla_user_workspace_dataset,
+            inputs=[repo_name],
+            outputs=[success_message],
+            show_progress=True,
+        ).then(
+            fn=validate_push_to_hub,
+            inputs=[org_name, repo_name],
+            outputs=[success_message],
+            show_progress=True,
+        ).success(
+            fn=hide_success_message,
+            outputs=[success_message],
+            show_progress=True,
+        ).success(
+            fn=hide_pipeline_code_visibility,
+            inputs=[],
+            outputs=[pipeline_code_ui],
+        ).success(
+            fn=push_dataset,
+            inputs=[
+                org_name,
+                repo_name,
+                system_prompt,
+                num_turns,
+                num_rows,
+                private,
+            ],
+            outputs=[success_message],
+            show_progress=True,
+        ).success(
+            fn=show_success_message,
+            inputs=[org_name, repo_name],
+            outputs=[success_message],
+        ).success(
+            fn=generate_pipeline_code,
+            inputs=[system_prompt, num_turns, num_rows],
+            outputs=[pipeline_code],
+        ).success(
+            fn=show_pipeline_code_visibility,
+            inputs=[],
+            outputs=[pipeline_code_ui],
+        )
+
+        app.load(fn=swap_visibility, outputs=main_ui)
+        app.load(fn=get_org_dropdown, outputs=[org_name])

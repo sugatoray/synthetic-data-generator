@@ -1,5 +1,4 @@
 import random
-from pydantic import BaseModel, Field
 from typing import List
 
 from distilabel.llms import InferenceEndpointsLLM
@@ -8,12 +7,11 @@ from distilabel.steps.tasks import (
     TextClassification,
     TextGeneration,
 )
+from pydantic import BaseModel, Field
 
-from src.distilabel_dataset_generator.pipelines.base import (
-    MODEL,
-    _get_next_api_key,
-)
-from src.distilabel_dataset_generator.utils import get_preprocess_labels
+from distilabel_dataset_generator.constants import BASE_URL, MODEL
+from distilabel_dataset_generator.pipelines.base import _get_next_api_key
+from distilabel_dataset_generator.utils import get_preprocess_labels
 
 PROMPT_CREATION_PROMPT = """You are an AI assistant specialized in generating very precise text classification tasks for dataset creation.
 
@@ -73,7 +71,7 @@ def get_prompt_generator(temperature):
         llm=InferenceEndpointsLLM(
             api_key=_get_next_api_key(),
             model_id=MODEL,
-            tokenizer_id=MODEL,
+            base_url=BASE_URL,
             structured_output={"format": "json", "schema": TextClassificationTask},
             generation_kwargs={
                 "temperature": temperature,
@@ -92,7 +90,7 @@ def get_textcat_generator(difficulty, clarity, is_sample):
     textcat_generator = GenerateTextClassificationData(
         llm=InferenceEndpointsLLM(
             model_id=MODEL,
-            tokenizer_id=MODEL,
+            base_url=BASE_URL,
             api_key=_get_next_api_key(),
             generation_kwargs={
                 "temperature": 0.9,
@@ -114,7 +112,7 @@ def get_labeller_generator(system_prompt, labels, num_labels):
     labeller_generator = TextClassification(
         llm=InferenceEndpointsLLM(
             model_id=MODEL,
-            tokenizer_id=MODEL,
+            base_url=BASE_URL,
             api_key=_get_next_api_key(),
             generation_kwargs={
                 "temperature": 0.7,
@@ -149,8 +147,9 @@ from distilabel.steps import LoadDataFromDicts, KeepColumns
 from distilabel.steps.tasks import {"GenerateTextClassificationData" if num_labels == 1 else "GenerateTextClassificationData, TextClassification"}
 
 MODEL = "{MODEL}"
+BASE_URL = "{BASE_URL}"
 TEXT_CLASSIFICATION_TASK = "{system_prompt}"
-os.environ["HF_TOKEN"] = (
+os.environ["API_KEY"] = (
     "hf_xxx"  # https://huggingface.co/settings/tokens/new?ownUserPermissions=repo.content.read&ownUserPermissions=repo.write&globalPermissions=inference.serverless.write&canReadGatedRepos=true&tokenType=fineGrained
 )
 
@@ -161,8 +160,8 @@ with Pipeline(name="textcat") as pipeline:
     textcat_generation = GenerateTextClassificationData(
         llm=InferenceEndpointsLLM(
             model_id=MODEL,
-            tokenizer_id=MODEL,
-            api_key=os.environ["HF_TOKEN"],
+            base_url=BASE_URL,
+            api_key=os.environ["API_KEY"],
             generation_kwargs={{
                 "temperature": 0.8,
                 "max_new_tokens": 2048,
@@ -205,8 +204,8 @@ with Pipeline(name="textcat") as pipeline:
     textcat_labeller = TextClassification(
         llm=InferenceEndpointsLLM(
             model_id=MODEL,
-            tokenizer_id=MODEL,
-            api_key=os.environ["HF_TOKEN"],
+            base_url=BASE_URL,
+            api_key=os.environ["API_KEY"],
             generation_kwargs={{
                 "temperature": 0.8,
                 "max_new_tokens": 2048,

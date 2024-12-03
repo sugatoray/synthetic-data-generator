@@ -9,14 +9,12 @@ from datasets import ClassLabel, Dataset, Features, Sequence, Value
 from distilabel.distiset import Distiset
 from huggingface_hub import HfApi
 
+from distilabel_dataset_generator.constants import DEFAULT_BATCH_SIZE
 from src.distilabel_dataset_generator.apps.base import (
     hide_success_message,
     show_success_message,
     validate_argilla_user_workspace_dataset,
     validate_push_to_hub,
-)
-from src.distilabel_dataset_generator.pipelines.base import (
-    DEFAULT_BATCH_SIZE,
 )
 from src.distilabel_dataset_generator.pipelines.embeddings import (
     get_embeddings,
@@ -30,7 +28,6 @@ from src.distilabel_dataset_generator.pipelines.textcat import (
     get_textcat_generator,
 )
 from src.distilabel_dataset_generator.utils import (
-    _LOGGED_OUT_CSS,
     get_argilla_client,
     get_org_dropdown,
     get_preprocess_labels,
@@ -334,7 +331,7 @@ def hide_pipeline_code_visibility():
 ######################
 
 
-with gr.Blocks(css=_LOGGED_OUT_CSS) as app:
+with gr.Blocks() as app:
     with gr.Column() as main_ui:
         gr.Markdown("## 1. Describe the dataset you want")
         with gr.Row():

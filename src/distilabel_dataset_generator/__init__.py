@@ -1,39 +1,64 @@
-import os
 import warnings
-from pathlib import Path
-from typing import Optional, Union
+from typing import Optional
 
-import argilla as rg
 import distilabel
 import distilabel.distiset
+from distilabel.llms import InferenceEndpointsLLM
 from distilabel.utils.card.dataset_card import (
     DistilabelDatasetCard,
     size_categories_parser,
 )
-from huggingface_hub import DatasetCardData, HfApi, upload_file
+from huggingface_hub import DatasetCardData, HfApi
+from pydantic import (
+    ValidationError,
+    model_validator,
+)
 
-HF_TOKENS = [os.getenv("HF_TOKEN")] + [os.getenv(f"HF_TOKEN_{i}") for i in range(1, 10)]
-HF_TOKENS = [token for token in HF_TOKENS if token]
 
-if len(HF_TOKENS) == 0:
-    raise ValueError(
-        "HF_TOKEN is not set. Ensure you have set the HF_TOKEN environment variable that has access to the Hugging Face Hub repositories and Inference Endpoints."
-    )
+class CustomInferenceEndpointsLLM(InferenceEndpointsLLM):
+    @model_validator(mode="after")  # type: ignore
+    def only_one_of_model_id_endpoint_name_or_base_url_provided(
+        self,
+    ) -> "InferenceEndpointsLLM":
+        """Validates that only one of `model_id` or `endpoint_name` is provided; and if `base_url` is also
+        provided, a warning will be shown informing the user that the provided `base_url` will be ignored in
+        favour of the dynamically calculated one.."""
 
-ARGILLA_API_URL = os.getenv("ARGILLA_API_URL")
-ARGILLA_API_KEY = os.getenv("ARGILLA_API_KEY")
-if ARGILLA_API_URL is None or ARGILLA_API_KEY is None:
-    ARGILLA_API_URL = os.getenv("ARGILLA_API_URL_SDG_REVIEWER")
-    ARGILLA_API_KEY = os.getenv("ARGILLA_API_KEY_SDG_REVIEWER")
+        if self.base_url and (self.model_id or self.endpoint_name):
+            warnings.warn(  # type: ignore
+                f"Since the `base_url={self.base_url}` is available and either one of `model_id`"
+                " or `endpoint_name` is also provided, the `base_url` will either be ignored"
+                " or overwritten with the one generated from either of those args, for serverless"
+                " or dedicated inference endpoints, respectively."
+            )
 
-if ARGILLA_API_URL is None or ARGILLA_API_KEY is None:
-    warnings.warn("ARGILLA_API_URL or ARGILLA_API_KEY is not set")
-    argilla_client = None
-else:
-    argilla_client = rg.Argilla(
-        api_url=ARGILLA_API_URL,
-        api_key=ARGILLA_API_KEY,
-    )
+        if self.use_magpie_template and self.tokenizer_id is None:
+            raise ValueError(
+                "`use_magpie_template` cannot be `True` if `tokenizer_id` is `None`. Please,"
+                " set a `tokenizer_id` and try again."
+            )
+
+        if (
+            self.model_id
+            and self.tokenizer_id is None
+            and self.structured_output is not None
+        ):
+            self.tokenizer_id = self.model_id
+
+        if self.base_url and not (self.model_id or self.endpoint_name):
+            return self
+
+        if self.model_id and not self.endpoint_name:
+            return self
+
+        if self.endpoint_name and not self.model_id:
+            return self
+
+        raise ValidationError(
+            f"Only one of `model_id` or `endpoint_name` must be provided. If `base_url` is"
+            f" provided too, it will be overwritten instead. Found `model_id`={self.model_id},"
+            f" `endpoint_name`={self.endpoint_name}, and `base_url`={self.base_url}."
+        )
 
 
 class CustomDistisetWithAdditionalTag(distilabel.distiset.Distiset):
@@ -138,3 +163,4 @@ class CustomDistisetWithAdditionalTag(distilabel.distiset.Distiset):
 
 
 distilabel.distiset.Distiset = CustomDistisetWithAdditionalTag
+distilabel.llms.InferenceEndpointsLLM = CustomInferenceEndpointsLLM

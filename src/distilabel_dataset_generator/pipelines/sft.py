@@ -1,10 +1,12 @@
 from distilabel.llms import InferenceEndpointsLLM
 from distilabel.steps.tasks import ChatGeneration, Magpie, TextGeneration
 
-from src.distilabel_dataset_generator.pipelines.base import (
+from distilabel_dataset_generator.constants import (
+    BASE_URL,
+    MAGPIE_PRE_QUERY_TEMPLATE,
     MODEL,
-    _get_next_api_key,
 )
+from distilabel_dataset_generator.pipelines.base import _get_next_api_key
 
 INFORMATION_SEEKING_PROMPT = (
     "You are an AI assistant designed to provide accurate and concise information on a wide"
@@ -144,6 +146,7 @@ def get_prompt_generator(temperature):
             api_key=_get_next_api_key(),
             model_id=MODEL,
             tokenizer_id=MODEL,
+            base_url=BASE_URL,
             generation_kwargs={
                 "temperature": temperature,
                 "max_new_tokens": 2048,
@@ -165,8 +168,9 @@ def get_magpie_generator(system_prompt, num_turns, is_sample):
             llm=InferenceEndpointsLLM(
                 model_id=MODEL,
                 tokenizer_id=MODEL,
+                base_url=BASE_URL,
                 api_key=_get_next_api_key(),
-                magpie_pre_query_template="llama3",
+                magpie_pre_query_template=MAGPIE_PRE_QUERY_TEMPLATE,
                 generation_kwargs={
                     "temperature": 0.9,
                     "do_sample": True,
@@ -184,8 +188,9 @@ def get_magpie_generator(system_prompt, num_turns, is_sample):
             llm=InferenceEndpointsLLM(
                 model_id=MODEL,
                 tokenizer_id=MODEL,
+                base_url=BASE_URL,
                 api_key=_get_next_api_key(),
-                magpie_pre_query_template="llama3",
+                magpie_pre_query_template=MAGPIE_PRE_QUERY_TEMPLATE,
                 generation_kwargs={
                     "temperature": 0.9,
                     "do_sample": True,
@@ -208,6 +213,7 @@ def get_response_generator(system_prompt, num_turns, is_sample):
             llm=InferenceEndpointsLLM(
                 model_id=MODEL,
                 tokenizer_id=MODEL,
+                base_url=BASE_URL,
                 api_key=_get_next_api_key(),
                 generation_kwargs={
                     "temperature": 0.8,
@@ -223,6 +229,7 @@ def get_response_generator(system_prompt, num_turns, is_sample):
             llm=InferenceEndpointsLLM(
                 model_id=MODEL,
                 tokenizer_id=MODEL,
+                base_url=BASE_URL,
                 api_key=_get_next_api_key(),
                 generation_kwargs={
                     "temperature": 0.8,
@@ -247,14 +254,16 @@ from distilabel.steps.tasks import MagpieGenerator
 from distilabel.llms import InferenceEndpointsLLM
 
 MODEL = "{MODEL}"
+BASE_URL = "{BASE_URL}"
 SYSTEM_PROMPT = "{system_prompt}"
-os.environ["HF_TOKEN"] = "hf_xxx" # https://huggingface.co/settings/tokens/new?ownUserPermissions=repo.content.read&ownUserPermissions=repo.write&globalPermissions=inference.serverless.write&canReadGatedRepos=true&tokenType=fineGrained
+os.environ["API_KEY"] = "hf_xxx" # https://huggingface.co/settings/tokens/new?ownUserPermissions=repo.content.read&ownUserPermissions=repo.write&globalPermissions=inference.serverless.write&canReadGatedRepos=true&tokenType=fineGrained
 
 with Pipeline(name="sft") as pipeline:
     magpie = MagpieGenerator(
         llm=InferenceEndpointsLLM(
             model_id=MODEL,
             tokenizer_id=MODEL,
+            base_url=BASE_URL,
             magpie_pre_query_template="llama3",
             generation_kwargs={{
                 "temperature": 0.9,
@@ -262,7 +271,7 @@ with Pipeline(name="sft") as pipeline:
                 "max_new_tokens": 2048,
                 "stop_sequences": {_STOP_SEQUENCES}
             }},
-            api_key=os.environ["HF_TOKEN"],
+            api_key=os.environ["BASE_URL"],
         ),
         n_turns={num_turns},
         num_rows={num_rows},
