@@ -8,45 +8,19 @@ from src.distilabel_dataset_generator.apps.textcat import app as textcat_app
 theme ='argilla/argilla-theme'
 
 css = """
+button[role="tab"][aria-selected="true"] { border: 0; background: var(--neutral-800); color: white; border-top-right-radius: var(--radius-md); border-top-left-radius: var(--radius-md)}
+button[role="tab"][aria-selected="true"]:hover {border-color: var(--button-primary-background-fill)}
+button.hf-login {background: var(--neutral-800); color: white}
+button.hf-login:hover {background: var(--neutral-700); color: white}
+.tabitem { border: 0; padding-inline: 0}
 .main_ui_logged_out{opacity: 0.3; pointer-events: none}
-.tabitem{border: 0px}
 .group_padding{padding: .55em}
+.gallery-item {background: var(--background-fill-secondary); text-align: left}
+.gallery {white-space: wrap}
 #space_model .wrap > label:last-child{opacity: 0.3; pointer-events:none}
 #system_prompt_examples {
-    color: black;
-}
-@media (prefers-color-scheme: dark) {
-    #system_prompt_examples {
-        color: white;
-        background-color: black;
-    }
-}
-button[role="tab"].selected,
-button[role="tab"][aria-selected="true"],
-button[role="tab"][data-tab-id][aria-selected="true"] {
-    background-color: #000000;
-    color: white;
-    border: none;
-    font-size: 16px;
-    font-weight: bold;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    transition: background-color 0.3s ease, color 0.3s ease;
-}
-.gallery {
-    color: black !important;
-}
-@media (prefers-color-scheme: dark) {
-    .gallery {
-        color: white !important;
-    }
-}
-.flex-shrink-0.truncate.px-1 {
-    color: black !important;
-}
-@media (prefers-color-scheme: dark) {
-    .flex-shrink-0.truncate.px-1 {
-        color: white !important;
-    }
+    color: var(--body-text-color) !important;
+    background-color: var(--block-background-fill) !important;
 }
 """
 
