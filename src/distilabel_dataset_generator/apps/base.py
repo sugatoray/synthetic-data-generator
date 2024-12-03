@@ -10,13 +10,10 @@ from distilabel.distiset import Distiset
 from gradio import OAuthToken
 from huggingface_hub import HfApi, upload_file
 
+from distilabel_dataset_generator.constants import TEXTCAT_TASK
 from distilabel_dataset_generator.utils import (
     get_argilla_client,
-    list_orgs,
 )
-
-TEXTCAT_TASK = "text_classification"
-SFT_TASK = "supervised_fine_tuning"
 
 
 def validate_argilla_user_workspace_dataset(
@@ -46,16 +43,6 @@ def validate_argilla_user_workspace_dataset(
     if dataset and not add_to_existing_dataset:
         raise gr.Error(f"Dataset {dataset_name} already exists")
     return ""
-
-
-def get_org_dropdown(oauth_token: Union[OAuthToken, None]):
-    orgs = list_orgs(oauth_token)
-    return gr.Dropdown(
-        label="Organization",
-        choices=orgs,
-        value=orgs[0] if orgs else None,
-        allow_custom_value=True,
-    )
 
 
 def push_pipeline_code_to_hub(

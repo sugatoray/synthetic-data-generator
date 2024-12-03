@@ -3,6 +3,10 @@ import warnings
 
 import argilla as rg
 
+# Tasks
+TEXTCAT_TASK = "text_classification"
+SFT_TASK = "supervised_fine_tuning"
+
 # Hugging Face
 HF_TOKEN = os.getenv("HF_TOKEN")
 if HF_TOKEN is None:
@@ -37,6 +41,9 @@ else:
         MAGPIE_PRE_QUERY_TEMPLATE = "qwen2"
     else:
         MAGPIE_PRE_QUERY_TEMPLATE = "llama3"
+
+# Embeddings
+STATIC_EMBEDDING_MODEL = "minishlab/potion-base-8M"
 
 # Argilla
 ARGILLA_API_URL = os.getenv("ARGILLA_API_URL")
