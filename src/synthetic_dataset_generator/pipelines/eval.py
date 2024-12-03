@@ -17,7 +17,7 @@ def get_ultrafeedback_evaluator(aspect, is_sample):
             base_url=BASE_URL,
             api_key=_get_next_api_key(),
             generation_kwargs={
-                "temperature": 0,
+                "temperature": 0.01,
                 "max_new_tokens": 256 if is_sample else 2048,
             },
         ),
@@ -35,7 +35,7 @@ def get_custom_evaluator(prompt_template, structured_output, columns, is_sample)
             api_key=_get_next_api_key(),
             structured_output={"format": "json", "schema": structured_output},
             generation_kwargs={
-                "temperature": 0,
+                "temperature": 0.01,
                 "max_new_tokens": 256 if is_sample else 2048,
             },
         ),
@@ -78,7 +78,7 @@ with Pipeline(name="ultrafeedback") as pipeline:
             base_url=BASE_URL,
             api_key=os.environ["API_KEY"],
             generation_kwargs={{
-                "temperature": 0,
+                "temperature": 0.01,
                 "max_new_tokens": 2048,
             }},
         ),
@@ -122,7 +122,7 @@ with Pipeline(name="ultrafeedback") as pipeline:
                 base_url=BASE_URL,
                 api_key=os.environ["BASE_URL"],
                 generation_kwargs={{
-                    "temperature": 0,
+                    "temperature": 0.01,
                     "max_new_tokens": 2048,
                 }},
             output_mappings={{
@@ -176,7 +176,7 @@ with Pipeline(name="custom-evaluation") as pipeline:
             api_key=os.environ["HF_TOKEN"],
             structured_output={{"format": "json", "schema": {structured_output}}},
             generation_kwargs={{
-                "temperature": 0,
+                "temperature": 0.01,
                 "max_new_tokens": 2048,
             }},
         ),

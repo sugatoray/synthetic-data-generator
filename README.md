@@ -49,7 +49,7 @@ This tool simplifies the process of creating custom datasets, enabling you to:
 - Describe the characteristics of your desired application
 - Iterate on sample datasets
 - Produce full-scale datasets
-- Push your datasets to the [Hugging Face Hub](https://huggingface.co/datasets?other=datacraft) and/or Argilla
+- Push your datasets to the [Hugging Face Hub](https://huggingface.co/datasets?other=datacraft) and/or [Argilla](https://docs.argilla.io/)
 
 By using the Synthetic Data Generator, you can rapidly prototype and create datasets for, accelerating your AI development process.
 

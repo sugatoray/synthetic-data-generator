@@ -129,16 +129,18 @@ def show_success_message(org_name, repo_name) -> gr.Markdown:
     client = get_argilla_client()
     if client is None:
         return gr.Markdown(
-            value="""
-            <div style="padding: 1em; background-color: #e6f3e6; border-radius: 5px; margin-top: 1em;">
+            value=f"""
+            <div style="padding: 1em; background-color: rgba(211, 211, 211, 0.5); border-radius: 5px; margin-top: 1em; color: inherit;">
                 <h3 style="color: #2e7d32; margin: 0;">Dataset Published Successfully!</h3>
                 <p style="margin-top: 0.5em;">
-                The generated dataset is in the right format for fine-tuning with TRL, AutoTrain, or other frameworks. Your dataset is now available at:
-                <a href="https://huggingface.co/datasets/{org_name}/{repo_name}" target="_blank" style="color: #1565c0; text-decoration: none;">
-                    https://huggingface.co/datasets/{org_name}/{repo_name}
-                    </a>
+                The generated dataset is in the right format for fine-tuning with TRL, AutoTrain, or other frameworks.
+                <div style="display: flex; gap: 10px;">
+                    <button class="lg primary svelte-cmf5ev" onclick="window.open('https://huggingface.co/datasets/{org_name}/{repo_name}', '_blank')" id="component-96">
+                        Open in Hub
+                    </button>
+                </div>
                 </p>
-                <p style="margin-top: 1em; font-size: 0.9em; color: #333;">
+                <p style="margin-top: 1em; color: #333;">
                     By configuring an `ARGILLA_API_URL` and `ARGILLA_API_KEY` you can curate the dataset in Argilla.
                     Unfamiliar with Argilla? Here are some docs to help you get started:
                     <br>• <a href="https://docs.argilla.io/latest/getting_started/quickstart/" target="_blank">How to get started with Argilla</a>
@@ -151,7 +153,7 @@ def show_success_message(org_name, repo_name) -> gr.Markdown:
     argilla_api_url = client.api_url
     return gr.Markdown(
         value=f"""
-        <div style="padding: 1em; background-color: #e6f3e6; border-radius: 5px; margin-top: 1em;">
+        <div style="padding: 1em; background-color: rgba(211, 211, 211, 0.5); border-radius: 5px; margin-top: 1em; color: inherit;">
             <h3 style="color: #2e7d32; margin: 0;">Dataset Published Successfully!</h3>
             <p style="margin-top: 0.5em;">
                 <strong>
@@ -161,13 +163,18 @@ def show_success_message(org_name, repo_name) -> gr.Markdown:
                 </strong>
             </p>
             <p style="margin-top: 0.5em;">
-                The generated dataset is in the right format for fine-tuning with TRL, AutoTrain, or other frameworks. Your dataset is now available at:
-                <a href="https://huggingface.co/datasets/{org_name}/{repo_name}" target="_blank" style="color: #1565c0; text-decoration: none;">
-                    https://huggingface.co/datasets/{org_name}/{repo_name}
-                </a>
+                The generated dataset is in the right format for fine-tuning with TRL, AutoTrain, or other frameworks.
+                <div style="display: flex; gap: 10px;">
+                    <button class="lg primary svelte-cmf5ev" onclick="window.open('https://huggingface.co/datasets/{org_name}/{repo_name}', '_blank')" id="component-95">
+                        Open in Argilla
+                    </button>
+                    <button class="lg secondary svelte-cmf5ev" onclick="window.open('https://huggingface.co/datasets/{org_name}/{repo_name}', '_blank')" id="component-96">
+                        Open in Hub
+                    </button>
+                </div>
             </p>
         </div>
-        <p style="margin-top: 1em; font-size: 0.9em; color: #333;">
+        <p style="margin-top: 1em; color: #333;">
             Unfamiliar with Argilla? Here are some docs to help you get started:
             <br>• <a href="https://docs.argilla.io/latest/how_to_guides/annotate/" target="_blank">How to curate data in Argilla</a>
             <br>• <a href="https://docs.argilla.io/latest/how_to_guides/import_export/" target="_blank">How to export data once you have reviewed the dataset</a>

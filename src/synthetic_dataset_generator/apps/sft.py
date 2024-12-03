@@ -363,28 +363,22 @@ with gr.Blocks() as app:
                         label="Dataset description",
                         placeholder="Give a precise description of your desired dataset.",
                     )
-                    with gr.Accordion("Temperature", open=False):
-                        temperature = gr.Slider(
-                            minimum=0.1,
-                            maximum=1,
-                            value=0.8,
-                            step=0.1,
-                            interactive=True,
-                            show_label=False,
+                    with gr.Row():
+                        load_btn = gr.Button(
+                            "Create",
+                            variant="primary",
                         )
-                    load_btn = gr.Button(
-                        "Create dataset",
-                        variant="primary",
-                    )
-                with gr.Column(scale=2):
+                        clear_btn = gr.Button(
+                            "Clear",
+                            variant="secondary",
+                        )
+                with gr.Column(scale=3):
                     examples = gr.Examples(
                         examples=DEFAULT_DATASET_DESCRIPTIONS,
                         inputs=[dataset_description],
                         cache_examples=False,
                         label="Examples",
                     )
-                with gr.Column(scale=1):
-                    pass
 
             gr.HTML(value="<hr>")
             gr.Markdown(value="## 2. Configure your dataset")
@@ -403,9 +397,14 @@ with gr.Blocks() as app:
                         interactive=True,
                         info="Choose between 1 (single turn with 'instruction-response' columns) and 2-4 (multi-turn conversation with a 'messages' column).",
                     )
-                    btn_apply_to_sample_dataset = gr.Button(
-                        "Refresh dataset", variant="secondary"
-                    )
+                    with gr.Row():
+                        btn_apply_to_sample_dataset = gr.Button(
+                            "Save", variant="primary"
+                        )
+                        clear_btn = gr.Button(
+                            "Clear",
+                            variant="secondary",
+                        )
                 with gr.Column(scale=3):
                     dataframe = gr.Dataframe(
                         headers=["prompt", "completion"],
@@ -430,6 +429,14 @@ with gr.Blocks() as app:
                         value=10,
                         interactive=True,
                         scale=1,
+                    )
+                    temperature = gr.Slider(
+                        minimum=0.1,
+                        maximum=1,
+                        value=0.8,
+                        step=0.1,
+                        interactive=True,
+                        show_label=False,
                     )
                     private = gr.Checkbox(
                         label="Private dataset",
