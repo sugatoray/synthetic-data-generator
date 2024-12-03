@@ -28,18 +28,6 @@ hf_oauth_scopes:
 ![Synthetic Data Generator](https://huggingface.co/spaces/argilla/synthetic-data-generator/resolve/main/assets/ui-full.png)
 
 <p align="center">
-<a  href="https://pypi.org/project/synthetic-dataset-generator/">
-<img alt="CI" src="https://img.shields.io/pypi/v/synthetic-dataset-generator.svg?style=flat-round&logo=pypi&logoColor=white">
-</a>
-<a href="https://pepy.tech/project/synthetic-dataset-generator">
-<img alt="CI" src="https://static.pepy.tech/personalized-badge/synthetic-dataset-generator?period=month&units=international_system&left_color=grey&right_color=blue&left_text=pypi%20downloads/month">
-</a>
-<a href="https://huggingface.co/spaces/argilla/synthetic-data-generator?duplicate=true">
-<img src="https://huggingface.co/datasets/huggingface/badges/raw/main/duplicate-this-space-sm.svg"/>
-</a>
-</p>
-
-<p align="center">
 <a href="https://twitter.com/argilla_io">
 <img src="https://img.shields.io/badge/twitter-black?logo=x"/>
 </a>
