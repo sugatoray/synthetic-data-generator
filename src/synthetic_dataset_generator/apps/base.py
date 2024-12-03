@@ -155,13 +155,9 @@ def show_success_message(org_name, repo_name) -> gr.Markdown:
         value=f"""
         <div style="padding: 1em; background-color: rgba(211, 211, 211, 0.5); border-radius: 5px; margin-top: 1em; color: inherit;">
             <h3 style="color: #2e7d32; margin: 0;">Dataset Published Successfully!</h3>
-            <p style="margin-top: 0.5em;">
-                <strong>
-                    <a href="{argilla_api_url}" target="_blank" style="color: #1565c0; text-decoration: none;">
-                        Open your dataset in the Argilla space
-                    </a>
-                </strong>
-            </p>
+            <a href="{argilla_api_url}" target="_blank" class="lg primary svelte-cmf5ev" style="margin-top: 0.5em; text-decoration: none;">
+                Open your dataset in the Argilla space
+            </a>
             <p style="margin-top: 0.5em;">
                 The generated dataset is in the right format for fine-tuning with TRL, AutoTrain, or other frameworks.
                 <div style="display: flex; gap: 10px;">
