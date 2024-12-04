@@ -67,50 +67,6 @@ def push_pipeline_code_to_hub(
     progress(1.0, desc="Pipeline code uploaded")
 
 
-def push_dataset_to_hub(
-    dataframe: pd.DataFrame,
-    private: bool = True,
-    org_name: str = None,
-    repo_name: str = None,
-    oauth_token: Union[OAuthToken, None] = None,
-    progress=gr.Progress(),
-    labels: List[str] = None,
-    num_labels: int = None,
-    task: str = TEXTCAT_TASK,
-) -> pd.DataFrame:
-    progress(0.1, desc="Setting up dataset")
-    repo_id = validate_push_to_hub(org_name, repo_name)
-
-    if task == TEXTCAT_TASK:
-        if num_labels == 1:
-            dataframe["label"] = dataframe["label"].replace("", None)
-            features = Features(
-                {"text": Value("string"), "label": ClassLabel(names=labels)}
-            )
-        else:
-            features = Features(
-                {
-                    "text": Value("string"),
-                    "labels": Sequence(feature=ClassLabel(names=labels)),
-                }
-            )
-        distiset = Distiset(
-            {"default": Dataset.from_pandas(dataframe, features=features)}
-        )
-    else:
-        distiset = Distiset({"default": Dataset.from_pandas(dataframe)})
-    progress(0.2, desc="Pushing dataset to hub")
-    distiset.push_to_hub(
-        repo_id=repo_id,
-        private=private,
-        include_script=False,
-        token=oauth_token.token,
-        create_pr=False,
-    )
-    progress(1.0, desc="Dataset pushed to hub")
-    return dataframe
-
-
 def validate_push_to_hub(org_name, repo_name):
     repo_id = (
         f"{org_name}/{repo_name}"

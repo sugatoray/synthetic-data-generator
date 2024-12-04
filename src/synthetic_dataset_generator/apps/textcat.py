@@ -45,10 +45,10 @@ def _get_dataframe():
     )
 
 
-def generate_system_prompt(dataset_description, temperature, progress=gr.Progress()):
+def generate_system_prompt(dataset_description, progress=gr.Progress()):
     progress(0.0, desc="Generating text classification task")
     progress(0.3, desc="Initializing text generation")
-    generate_description = get_prompt_generator(temperature)
+    generate_description = get_prompt_generator()
     progress(0.7, desc="Generating text classification task")
     result = next(
         generate_description.process(
@@ -89,13 +89,14 @@ def generate_dataset(
     labels: List[str] = None,
     num_labels: int = 1,
     num_rows: int = 10,
+    temperature: float = 0.9,
     is_sample: bool = False,
     progress=gr.Progress(),
 ) -> pd.DataFrame:
     progress(0.0, desc="(1/2) Generating text classification data")
     labels = get_preprocess_labels(labels)
     textcat_generator = get_textcat_generator(
-        difficulty=difficulty, clarity=clarity, is_sample=is_sample
+        difficulty=difficulty, clarity=clarity, temperature=temperature, is_sample=is_sample
     )
     labeller_generator = get_labeller_generator(
         system_prompt=f"{system_prompt} {', '.join(labels)}",
@@ -204,6 +205,7 @@ def push_dataset(
     num_rows: int = 10,
     labels: List[str] = None,
     private: bool = False,
+    temperature: float = 0.8,
     oauth_token: Union[gr.OAuthToken, None] = None,
     progress=gr.Progress(),
 ) -> pd.DataFrame:
@@ -214,6 +216,7 @@ def push_dataset(
         num_labels=num_labels,
         labels=labels,
         num_rows=num_rows,
+        temperature=temperature,
     )
     push_dataset_to_hub(
         dataframe, org_name, repo_name, num_labels, labels, oauth_token, private
@@ -471,6 +474,7 @@ with gr.Blocks() as app:
                         labels=labels.value,
                         num_labels=num_labels.value,
                         num_rows=num_rows.value,
+                        temperature=temperature.value,
                     )
                     pipeline_code = gr.Code(
                         value=code,
@@ -480,7 +484,7 @@ with gr.Blocks() as app:
 
     load_btn.click(
         fn=generate_system_prompt,
-        inputs=[dataset_description, temperature],
+        inputs=[dataset_description],
         outputs=[system_prompt, labels],
         show_progress=True,
     ).then(
@@ -537,6 +541,7 @@ with gr.Blocks() as app:
             num_rows,
             labels,
             private,
+            temperature
         ],
         outputs=[success_message],
         show_progress=True,
@@ -553,6 +558,7 @@ with gr.Blocks() as app:
             labels,
             num_labels,
             num_rows,
+            temperature
         ],
         outputs=[pipeline_code],
     ).success(
