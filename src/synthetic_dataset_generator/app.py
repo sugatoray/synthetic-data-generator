@@ -14,7 +14,7 @@ button[role="tab"][aria-selected="true"]:hover {border-color: var(--button-prima
 .gallery-item {background: var(--background-fill-secondary); text-align: left}
 #system_prompt_examples { color: var(--body-text-color) !important; background-color: var(--block-background-fill) !important;}
 .container {padding-inline: 0 !important}
-#sign_in_button { flex-grow: 0; width: 50% !important; display: flex; align-items: center; justify-content: center; margin: 0 auto; }
+#sign_in_button { flex-grow: 0; width: auto !important; display: flex; align-items: center; justify-content: center; margin: 0 auto; }
 .table-view .table-wrap {
     max-height: 450px;
 }
