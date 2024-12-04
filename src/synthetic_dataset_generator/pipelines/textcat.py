@@ -66,7 +66,7 @@ class TextClassificationTask(BaseModel):
     )
 
 
-def get_prompt_generator(temperature):
+def get_prompt_generator():
     prompt_generator = TextGeneration(
         llm=InferenceEndpointsLLM(
             api_key=_get_next_api_key(),
@@ -74,7 +74,7 @@ def get_prompt_generator(temperature):
             base_url=BASE_URL,
             structured_output={"format": "json", "schema": TextClassificationTask},
             generation_kwargs={
-                "temperature": temperature,
+                "temperature": 0.8,
                 "max_new_tokens": 2048,
                 "do_sample": True,
             },
@@ -86,14 +86,14 @@ def get_prompt_generator(temperature):
     return prompt_generator
 
 
-def get_textcat_generator(difficulty, clarity, is_sample):
+def get_textcat_generator(difficulty, clarity, temperature, is_sample):
     textcat_generator = GenerateTextClassificationData(
         llm=InferenceEndpointsLLM(
             model_id=MODEL,
             base_url=BASE_URL,
             api_key=_get_next_api_key(),
             generation_kwargs={
-                "temperature": 0.9,
+                "temperature": temperature,
                 "max_new_tokens": 256 if is_sample else 2048,
                 "do_sample": True,
                 "top_k": 50,
@@ -135,6 +135,7 @@ def generate_pipeline_code(
     labels: List[str] = None,
     num_labels: int = 1,
     num_rows: int = 10,
+    temperature: float = 0.9,
 ) -> str:
     labels = get_preprocess_labels(labels)
     base_code = f"""
@@ -163,7 +164,7 @@ with Pipeline(name="textcat") as pipeline:
             base_url=BASE_URL,
             api_key=os.environ["API_KEY"],
             generation_kwargs={{
-                "temperature": 0.8,
+                "temperature": {temperature},
                 "max_new_tokens": 2048,
                 "do_sample": True,
                 "top_k": 50,

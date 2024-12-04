@@ -15,7 +15,7 @@ from synthetic_dataset_generator.apps.base import (
     validate_argilla_user_workspace_dataset,
     validate_push_to_hub,
 )
-from synthetic_dataset_generator.constants import DEFAULT_BATCH_SIZE, SFT_AVAILABLE
+from synthetic_dataset_generator.constants import DEFAULT_BATCH_SIZE, SFT_AVAILABLE, MODEL
 from synthetic_dataset_generator.pipelines.embeddings import (
     get_embeddings,
     get_sentence_embedding_dimensions,
@@ -49,10 +49,10 @@ def convert_dataframe_messages(dataframe: pd.DataFrame) -> pd.DataFrame:
     return dataframe
 
 
-def generate_system_prompt(dataset_description, temperature, progress=gr.Progress()):
+def generate_system_prompt(dataset_description, progress=gr.Progress()):
     progress(0.0, desc="Generating system prompt")
     progress(0.3, desc="Initializing text generation")
-    generate_description = get_prompt_generator(temperature)
+    generate_description = get_prompt_generator()
     progress(0.7, desc="Generating system prompt")
     result = next(
         generate_description.process(
@@ -92,12 +92,13 @@ def generate_dataset(
     system_prompt: str,
     num_turns: int = 1,
     num_rows: int = 10,
+    temperature: float = 0.9,
     is_sample: bool = False,
     progress=gr.Progress(),
 ) -> pd.DataFrame:
     progress(0.0, desc="(1/2) Generating instructions")
-    magpie_generator = get_magpie_generator(system_prompt, num_turns, is_sample)
-    response_generator = get_response_generator(system_prompt, num_turns, is_sample)
+    magpie_generator = get_magpie_generator(system_prompt, num_turns, temperature, is_sample)
+    response_generator = get_response_generator(system_prompt, num_turns, temperature, is_sample)
     total_steps: int = num_rows * 2
     batch_size = DEFAULT_BATCH_SIZE
 
@@ -216,6 +217,7 @@ def push_dataset(
     num_turns: int = 1,
     num_rows: int = 10,
     private: bool = False,
+    temperature: float = 0.9,
     oauth_token: Union[gr.OAuthToken, None] = None,
     progress=gr.Progress(),
 ) -> pd.DataFrame:
@@ -223,6 +225,7 @@ def push_dataset(
         system_prompt=system_prompt,
         num_turns=num_turns,
         num_rows=num_rows,
+        temperature=temperature,
     )
     push_dataset_to_hub(dataframe, org_name, repo_name, oauth_token, private)
     try:
@@ -439,7 +442,7 @@ with gr.Blocks() as app:
                         label="Temperature",
                         minimum=0.1,
                         maximum=1,
-                        value=0.8,
+                        value=0.9,
                         step=0.1,
                         interactive=True,
                     )
@@ -463,6 +466,7 @@ with gr.Blocks() as app:
                             system_prompt=system_prompt.value,
                             num_turns=num_turns.value,
                             num_rows=num_rows.value,
+                            temperature=temperature.value,
                         )
                         pipeline_code = gr.Code(
                             value=code,
@@ -472,7 +476,7 @@ with gr.Blocks() as app:
 
         load_btn.click(
             fn=generate_system_prompt,
-            inputs=[dataset_description, temperature],
+            inputs=[dataset_description],
             outputs=[system_prompt],
             show_progress=True,
         ).then(
@@ -516,6 +520,7 @@ with gr.Blocks() as app:
                 num_turns,
                 num_rows,
                 private,
+                temperature
             ],
             outputs=[success_message],
             show_progress=True,
@@ -525,7 +530,7 @@ with gr.Blocks() as app:
             outputs=[success_message],
         ).success(
             fn=generate_pipeline_code,
-            inputs=[system_prompt, num_turns, num_rows],
+            inputs=[system_prompt, num_turns, num_rows, temperature],
             outputs=[pipeline_code],
         ).success(
             fn=show_pipeline_code_visibility,

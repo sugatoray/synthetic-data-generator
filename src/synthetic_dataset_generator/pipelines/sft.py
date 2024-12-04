@@ -140,7 +140,7 @@ def _get_output_mappings(num_turns):
         return {"conversation": "messages"}
 
 
-def get_prompt_generator(temperature):
+def get_prompt_generator():
     prompt_generator = TextGeneration(
         llm=InferenceEndpointsLLM(
             api_key=_get_next_api_key(),
@@ -148,7 +148,7 @@ def get_prompt_generator(temperature):
             tokenizer_id=MODEL,
             base_url=BASE_URL,
             generation_kwargs={
-                "temperature": temperature,
+                "temperature": 0.8,
                 "max_new_tokens": 2048,
                 "do_sample": True,
             },
@@ -160,7 +160,7 @@ def get_prompt_generator(temperature):
     return prompt_generator
 
 
-def get_magpie_generator(system_prompt, num_turns, is_sample):
+def get_magpie_generator(system_prompt, num_turns, temperature, is_sample):
     input_mappings = _get_output_mappings(num_turns)
     output_mappings = input_mappings.copy()
     if num_turns == 1:
@@ -172,7 +172,7 @@ def get_magpie_generator(system_prompt, num_turns, is_sample):
                 api_key=_get_next_api_key(),
                 magpie_pre_query_template=MAGPIE_PRE_QUERY_TEMPLATE,
                 generation_kwargs={
-                    "temperature": 0.9,
+                    "temperature": temperature,
                     "do_sample": True,
                     "max_new_tokens": 256 if is_sample else 512,
                     "stop_sequences": _STOP_SEQUENCES,
@@ -192,7 +192,7 @@ def get_magpie_generator(system_prompt, num_turns, is_sample):
                 api_key=_get_next_api_key(),
                 magpie_pre_query_template=MAGPIE_PRE_QUERY_TEMPLATE,
                 generation_kwargs={
-                    "temperature": 0.9,
+                    "temperature": temperature,
                     "do_sample": True,
                     "max_new_tokens": 256 if is_sample else 1024,
                     "stop_sequences": _STOP_SEQUENCES,
@@ -243,7 +243,7 @@ def get_response_generator(system_prompt, num_turns, is_sample):
     return response_generator
 
 
-def generate_pipeline_code(system_prompt, num_turns, num_rows):
+def generate_pipeline_code(system_prompt, num_turns, num_rows, temperature):
     input_mappings = _get_output_mappings(num_turns)
     code = f"""
 # Requirements: `pip install distilabel[hf-inference-endpoints]`
@@ -266,7 +266,7 @@ with Pipeline(name="sft") as pipeline:
             base_url=BASE_URL,
             magpie_pre_query_template="llama3",
             generation_kwargs={{
-                "temperature": 0.9,
+                "temperature": {temperature},
                 "do_sample": True,
                 "max_new_tokens": 2048,
                 "stop_sequences": {_STOP_SEQUENCES}
