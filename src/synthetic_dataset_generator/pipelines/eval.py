@@ -18,7 +18,7 @@ def get_ultrafeedback_evaluator(aspect, is_sample):
             api_key=_get_next_api_key(),
             generation_kwargs={
                 "temperature": 0.01,
-                "max_new_tokens": 256 if is_sample else 2048,
+                "max_new_tokens": 2048 if not is_sample else 512,
             },
         ),
         aspect=aspect,
@@ -36,7 +36,7 @@ def get_custom_evaluator(prompt_template, structured_output, columns, is_sample)
             structured_output={"format": "json", "schema": structured_output},
             generation_kwargs={
                 "temperature": 0.01,
-                "max_new_tokens": 256 if is_sample else 2048,
+                "max_new_tokens": 2048 if not is_sample else 512,
             },
         ),
         template=prompt_template,

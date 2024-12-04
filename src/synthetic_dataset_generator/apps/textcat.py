@@ -37,7 +37,11 @@ from synthetic_dataset_generator.constants import DEFAULT_BATCH_SIZE
 
 def _get_dataframe():
     return gr.Dataframe(
-        headers=["labels", "text"], wrap=True, height=500, interactive=False
+        headers=["labels", "text"],
+        wrap=True,
+        height=500,
+        interactive=False,
+        elem_classes="table-view",
     )
 
 

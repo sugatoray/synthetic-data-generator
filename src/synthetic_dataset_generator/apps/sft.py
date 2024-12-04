@@ -84,6 +84,7 @@ def _get_dataframe():
         wrap=True,
         height=500,
         interactive=False,
+        elem_classes="table-view",
     )
 
 

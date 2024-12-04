@@ -89,22 +89,72 @@ def load_dataset_from_hub(
     if not repo_id:
         raise gr.Error("Hub repo id is required")
     subsets = get_dataset_config_names(repo_id, token=token)
-    ds_dict = load_dataset(repo_id, subsets[0], token=token)
     splits = get_dataset_split_names(repo_id, subsets[0], token=token)
-    ds = ds_dict[splits[0]]
-    if num_rows:
-        ds = ds.select(range(num_rows))
+    ds = load_dataset(repo_id, subsets[0], split=splits[0], token=token, streaming=True)
+    rows = []
+    for idx, row in enumerate(ds):
+        rows.append(row)
+        if idx == num_rows:
+            break
+    ds = Dataset.from_list(rows)
     dataframe = ds.to_pandas()
     instruction_valid_columns, response_valid_columns = get_valid_columns(dataframe)
+    col_instruction = instruction_valid_columns[0] if instruction_valid_columns else ""
+    col_response = "No valid response columns found."
+    for col in response_valid_columns:
+        if col != col_instruction:
+            col_response = col
+            break
+
+    prompt_template = gr.Code(
+        label="Prompt template",
+        value="\n".join(
+            [
+                "Evaluate the following text based on criteria.",
+                "Criteria: quality.",
+                "Score: between 1 and 10.",
+                "Text: {{" + col_response + "}}",
+            ]
+        ),
+        language="markdown",
+        interactive=True,
+    )
+    structured_output = gr.Code(
+        label="Structured output",
+        value=json.dumps(
+            {
+                "type": "object",
+                "properties": {"quality": {"type": "integer"}},
+                "required": ["quality"],
+            },
+            indent=4,
+        ),
+        language="json",
+        interactive=True,
+    )
     return (
         dataframe,
-        gr.Dropdown(choices=instruction_valid_columns, label="Instruction column"),
-        gr.Dropdown(choices=response_valid_columns, label="Response column"),
+        gr.Dropdown(
+            choices=instruction_valid_columns,
+            label="Instruction column",
+            value=col_instruction,
+            interactive=True,
+        ),
+        gr.Dropdown(
+            choices=response_valid_columns,
+            label="Response column",
+            value=col_response,
+            interactive=False
+            if col_response == "No valid response columns found."
+            else True,
+        ),
+        prompt_template,
+        structured_output,
     )
 
 
 def define_evaluation_aspects(task_type: str):
-    if task_type == "ultrafeedback":
+    if task_type == "chat-eval":
         return gr.Dropdown(
             value=["overall-rating"],
             choices=["helpfulness", "truthfulness", "overall-rating", "honesty"],
@@ -251,7 +301,7 @@ def _evaluate_dataset(
     num_rows: int = 10,
     is_sample: bool = False,
 ):
-    if eval_type == "ultrafeedback":
+    if eval_type == "chat-eval":
         dataframe = evaluate_instruction_response(
             dataframe=dataframe,
             aspects=aspects_instruction_response,
@@ -280,7 +330,7 @@ def evaluate_sample_dataset(
     prompt_template: str,
     structured_output: dict,
 ):
-    dataframe, _, _ = load_dataset_from_hub(repo_id, num_rows=10)
+    dataframe, _, _, _, _ = load_dataset_from_hub(repo_id, num_rows=10)
     dataframe = _evaluate_dataset(
         dataframe=dataframe,
         eval_type=eval_type,
@@ -324,7 +374,7 @@ def push_dataset(
     oauth_token: Union[gr.OAuthToken, None] = None,
     progress=gr.Progress(),
 ) -> pd.DataFrame:
-    dataframe, _, _ = load_dataset_from_hub(original_repo_id, num_rows=num_rows)
+    dataframe, _, _, _, _ = load_dataset_from_hub(original_repo_id, num_rows=num_rows)
     dataframe = _evaluate_dataset(
         dataframe=dataframe,
         eval_type=eval_type,
@@ -342,7 +392,7 @@ def push_dataset(
         client = get_argilla_client()
         if client is None:
             return ""
-        if eval_type == "ultrafeedback":
+        if eval_type == "chat-eval":
             num_generations = len((dataframe["generations"][0]))
             fields = [
                 rg.ChatField(
@@ -612,7 +662,18 @@ with gr.Blocks() as app:
                     load_btn = gr.Button("Load", variant="primary")
 
             with gr.Column(scale=3):
-                search_out = gr.HTML(label="Dataset preview")
+                examples = gr.Examples(
+                    examples=[
+                        "argilla/distilabel-sft-easy",
+                        "HuggingFaceFW/fineweb-edu",
+                        "argilla/distilabel-intel-orca-dpo-pairs",
+                    ],
+                    label="Example datasets",
+                    fn=lambda x: x,
+                    inputs=[search_in],
+                    run_on_click=True,
+                )
+                search_out = gr.HTML(label="Dataset preview", visible=False)
 
         gr.HTML(value="<hr>")
         gr.Markdown(value="## 2. Configure your task")
@@ -620,58 +681,54 @@ with gr.Blocks() as app:
             with gr.Column(scale=2):
                 eval_type = gr.Dropdown(
                     label="Evaluation type",
-                    choices=["ultrafeedback", "custom"],
-                    value="ultrafeedback",
+                    choices=["chat-eval", "custom-eval"],
+                    value="chat-eval",
                     multiselect=False,
                     visible=False,
                 )
-                with gr.Tab("ultrafeedback") as tab_instruction_response:
+                with gr.Tab("Response Evaluation") as tab_instruction_response:
                     aspects_instruction_response = define_evaluation_aspects(
-                        "ultrafeedback"
+                        "chat-eval"
                     )
                     instruction_instruction_response = gr.Dropdown(
                         label="Instruction Column",
-                        interactive=True,
+                        info="Select the instruction column to evaluate",
+                        choices=["Load your data first in step 1."],
+                        value="Load your data first in step 1.",
+                        interactive=False,
                         multiselect=False,
                         allow_custom_value=False,
                     )
                     response_instruction_response = gr.Dropdown(
                         label="Response Column",
-                        interactive=True,
-                        multiselect=True,
+                        info="Select the response column(s) to evaluate",
+                        choices=["Load your data first in step 1."],
+                        value="Load your data first in step 1.",
+                        interactive=False,
+                        multiselect=False,
                         allow_custom_value=False,
                     )
                     tab_instruction_response.select(
-                        fn=lambda: "ultrafeedback",
+                        fn=lambda: "chat-eval",
                         inputs=[],
                         outputs=[eval_type],
                     )
-                with gr.Tab("custom") as tab_custom:
-                    aspects_custom = define_evaluation_aspects("custom")
+                with gr.Tab("Custom Evaluation Prompt") as tab_custom:
+                    aspects_custom = define_evaluation_aspects("custom-eval")
                     prompt_template = gr.Code(
                         label="Prompt template",
-                        value="Evaluate {{column_1}} based on {{column_2}}.",
+                        value="Load your data first in step 1.",
                         language="markdown",
-                        interactive=True,
+                        interactive=False,
                     )
                     structured_output = gr.Code(
                         label="Structured output",
-                        value=json.dumps(
-                            {
-                                "type": "object",
-                                "properties": {
-                                    "quality": {"type": "integer"},
-                                    "clarity": {"type": "integer"},
-                                    "relevance": {"type": "integer"},
-                                },
-                            },
-                            indent=4,
-                        ),
+                        value="Load your data first in step 1.",
                         language="json",
-                        interactive=True,
+                        interactive=False,
                     )
                     tab_custom.select(
-                        fn=lambda: "custom",
+                        fn=lambda: "custom-eval",
                         inputs=[],
                         outputs=[eval_type],
                     )
@@ -681,9 +738,10 @@ with gr.Blocks() as app:
             with gr.Column(scale=3):
                 dataframe = gr.Dataframe(
                     headers=["prompt", "completion", "evaluation"],
-                    wrap=False,
+                    wrap=True,
                     height=500,
                     interactive=False,
+                    elem_classes="table-view",
                 )
 
         gr.HTML(value="<hr>")
@@ -746,6 +804,8 @@ with gr.Blocks() as app:
             dataframe,
             instruction_instruction_response,
             response_instruction_response,
+            prompt_template,
+            structured_output,
         ],
     )
 
