@@ -8,9 +8,15 @@ theme = "argilla/argilla-theme"
 
 css = """
 .main_ui_logged_out{opacity: 0.3; pointer-events: none}
+button[role="tab"][aria-selected="true"] { border: 0; background: var(--button-primary-background-fill); color: white; border-top-right-radius: var(--radius-md); border-top-left-radius: var(--radius-md)}
+button[role="tab"][aria-selected="true"]:hover {border-color: var(--button-primary-background-fill); background: var(var(--button-primary-background-fill-hover))}
+.tabitem { border: 0; padding-inline: 0}
+.gallery-item {background: var(--background-fill-secondary); text-align: left}
+#system_prompt_examples { color: var(--body-text-color) !important; background-color: var(--block-background-fill) !important;}
+.container {padding-inline: 0 !important}
 """
 
-image = """<br><img src="https://raw.githubusercontent.com/argilla-io/synthetic-data-generator/main/assets/logo.svg" alt="Synthetic Data Generator Logo" style="display: block; margin-left: auto; margin-right: auto; width: 50%;"/>"""
+image = """<br><img src="https://raw.githubusercontent.com/argilla-io/synthetic-data-generator/main/assets/logo.svg" alt="Synthetic Data Generator Logo" style="display: block; margin-left: auto; margin-right: auto; width: clamp(50%, 400px, 100%)"/>"""
 
 demo = TabbedInterface(
     [textcat_app, sft_app, eval_app, readme_app],
