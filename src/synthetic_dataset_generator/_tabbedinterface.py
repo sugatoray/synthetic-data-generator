@@ -62,7 +62,7 @@ class TabbedInterface(Blocks):
             h3 = "<div style='text-align: center;'><h2>Build datasets using natural language</h2></div>"
             if title:
                 gr.HTML(value=title + h3)
-            gr.LoginButton(value="Sign in", variant="primary", scale=2)
+            gr.LoginButton(value="Sign in", variant="primary", elem_id="sign_in_button")
             with Tabs():
                 for interface, tab_name in zip(interface_list, tab_names, strict=False):
                     with Tab(label=tab_name):
