@@ -138,7 +138,7 @@ def show_success_message(org_name, repo_name) -> gr.Markdown:
                             Open in Hub
                         </a>
                     </p>
-                    <p style="margin-top: 1em; color: #333;">
+                    <p style="margin-top: 1em; color: var(--block-title-text-color)">
                         By configuring an `ARGILLA_API_URL` and `ARGILLA_API_KEY` you can curate the dataset in Argilla.
                         Unfamiliar with Argilla? Here are some docs to help you get started:
                         <br>• <a href="https://docs.argilla.io/latest/getting_started/quickstart/" target="_blank">How to get started with Argilla</a>
@@ -160,12 +160,12 @@ def show_success_message(org_name, repo_name) -> gr.Markdown:
                             <a href="{argilla_api_url}" target="_blank" class="lg primary svelte-cmf5ev" style="color: white !important; margin-top: 0.5em; text-decoration: none;">
                                 Open in Argilla
                             </a>
-                            <a href="https://huggingface.co/datasets/{org_name}/{repo_name}" target="_blank" class="lg secondary svelte-cmf5ev" style="color: black !important; margin-top: 0.5em; text-decoration: none;">
+                            <a href="https://huggingface.co/datasets/{org_name}/{repo_name}" target="_blank" class="lg secondary svelte-cmf5ev" style="color: var(--button-secondary-text-color) !important; margin-top: 0.5em; text-decoration: none;">
                                 Open in Hub
                             </a>
                         </div>
                     </p>
-                    <p style="margin-top: 1em; color: #333;">
+                    <p style="margin-top: 1em; color: var(--block-title-text-color)">
                         Unfamiliar with Argilla? Here are some docs to help you get started:
                         <br>• <a href="https://docs.argilla.io/latest/how_to_guides/annotate/" target="_blank">How to curate data in Argilla</a>
                         <br>• <a href="https://docs.argilla.io/latest/how_to_guides/import_export/" target="_blank">How to export data once you have reviewed the dataset</a>
