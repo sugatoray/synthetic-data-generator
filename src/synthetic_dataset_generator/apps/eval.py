@@ -713,7 +713,7 @@ with gr.Blocks() as app:
             with gr.Column(scale=3):
                 success_message = gr.Markdown(visible=True)
                 with gr.Accordion(
-                    "Do you want to go further? Customize and run with Distilabel",
+                    "Customize your pipeline with distilabel",
                     open=False,
                     visible=False,
                 ) as pipeline_code_ui:

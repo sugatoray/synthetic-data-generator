@@ -28,7 +28,7 @@ def list_orgs(oauth_token: Union[OAuthToken, None] = None):
         if data["auth"]["type"] == "oauth":
             organizations = [data["name"]] + [org["name"] for org in data["orgs"]]
         elif data["auth"]["type"] == "access_token":
-            organizations = [org["name"] for org in data["orgs"]]
+            organizations = [data["name"]] + [org["name"] for org in data["orgs"]]
         else:
             organizations = [
                 entry["entity"]["name"]

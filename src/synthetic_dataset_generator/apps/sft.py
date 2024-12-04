@@ -381,15 +381,13 @@ with gr.Blocks() as app:
                             "Create",
                             variant="primary",
                         )
-                with gr.Column(scale=2):
+                with gr.Column(scale=3):
                     examples = gr.Examples(
                         examples=DEFAULT_DATASET_DESCRIPTIONS,
                         inputs=[dataset_description],
                         cache_examples=False,
                         label="Examples",
                     )
-                with gr.Column(scale=1):
-                    pass
 
             gr.HTML(value="<hr>")
             gr.Markdown(value="## 2. Configure your dataset")
@@ -437,12 +435,12 @@ with gr.Blocks() as app:
                         scale=1,
                     )
                     temperature = gr.Slider(
+                        label="Temperature",
                         minimum=0.1,
                         maximum=1,
                         value=0.8,
                         step=0.1,
                         interactive=True,
-                        show_label=False,
                     )
                     private = gr.Checkbox(
                         label="Private dataset",
@@ -456,7 +454,7 @@ with gr.Blocks() as app:
                 with gr.Column(scale=3):
                     success_message = gr.Markdown(visible=True)
                     with gr.Accordion(
-                        "Do you want to go further? Customize and run with Distilabel",
+                        "Customize your pipeline with distilabel",
                         open=False,
                         visible=False,
                     ) as pipeline_code_ui:
