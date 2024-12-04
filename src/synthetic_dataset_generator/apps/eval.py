@@ -608,8 +608,8 @@ with gr.Blocks() as app:
                     sumbit_on_select=True,
                 )
                 with gr.Row():
-                    load_btn = gr.Button("Load", variant="primary")
                     clear_btn_part = gr.Button("Clear", variant="secondary")
+                    load_btn = gr.Button("Load", variant="primary")
 
             with gr.Column(scale=3):
                 search_out = gr.HTML(label="Dataset preview")
@@ -676,8 +676,8 @@ with gr.Blocks() as app:
                         outputs=[eval_type],
                     )
                 with gr.Row():
-                    btn_apply_to_sample_dataset = gr.Button("Save", variant="primary")
                     clear_btn_full = gr.Button("Clear", variant="secondary")
+                    btn_apply_to_sample_dataset = gr.Button("Save", variant="primary")
             with gr.Column(scale=3):
                 dataframe = gr.Dataframe(
                     headers=["prompt", "completion", "evaluation"],

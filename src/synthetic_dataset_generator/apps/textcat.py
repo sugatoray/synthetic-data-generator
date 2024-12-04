@@ -347,13 +347,13 @@ with gr.Blocks() as app:
                     placeholder="Give a precise description of your desired dataset.",
                 )
                 with gr.Row():
-                    load_btn = gr.Button(
-                        "Create",
-                        variant="primary",
-                    )
                     clear_btn_part = gr.Button(
                         "Clear",
                         variant="secondary",
+                    )
+                    load_btn = gr.Button(
+                        "Create",
+                        variant="primary",
                     )
             with gr.Column(scale=3):
                 examples = gr.Examples(
@@ -416,8 +416,8 @@ with gr.Blocks() as app:
                     interactive=True,
                 )
                 with gr.Row():
-                    btn_apply_to_sample_dataset = gr.Button("Save", variant="primary")
                     clear_btn_full = gr.Button("Clear", variant="secondary")
+                    btn_apply_to_sample_dataset = gr.Button("Save", variant="primary")
             with gr.Column(scale=3):
                 dataframe = _get_dataframe()
 
