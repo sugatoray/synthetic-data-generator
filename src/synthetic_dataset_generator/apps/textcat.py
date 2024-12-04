@@ -355,13 +355,15 @@ with gr.Blocks() as app:
                         "Create",
                         variant="primary",
                     )
-            with gr.Column(scale=3):
+            with gr.Column(scale=2):
                 examples = gr.Examples(
                     examples=DEFAULT_DATASET_DESCRIPTIONS,
                     inputs=[dataset_description],
                     cache_examples=False,
                     label="Examples",
                 )
+            with gr.Column(scale=1):
+                pass
 
         gr.HTML("<hr>")
         gr.Markdown("## 2. Configure your dataset")
