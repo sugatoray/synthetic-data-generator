@@ -19,11 +19,11 @@ license = {text = "Apache 2"}
 
 dependencies = [
     "distilabel[hf-inference-endpoints,argilla,outlines,instructor]>=1.4.1",
-    "gradio[oauth]<5.0.0",
+    "gradio[oauth]>=5.4.0",
     "transformers>=4.44.2",
     "sentence-transformers>=3.2.0",
     "model2vec>=0.2.4",
-    "gradio-huggingfacehub-search>=0.0.7",
+    "gradio-huggingfacehub-search>=0.0.12",
     "argilla>=2.4.0",
 ]
 

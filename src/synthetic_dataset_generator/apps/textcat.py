@@ -39,7 +39,6 @@ def _get_dataframe():
     return gr.Dataframe(
         headers=["labels", "text"],
         wrap=True,
-        height=500,
         interactive=False,
         elem_classes="table-view",
     )
@@ -96,7 +95,10 @@ def generate_dataset(
     progress(0.0, desc="(1/2) Generating text classification data")
     labels = get_preprocess_labels(labels)
     textcat_generator = get_textcat_generator(
-        difficulty=difficulty, clarity=clarity, temperature=temperature, is_sample=is_sample
+        difficulty=difficulty,
+        clarity=clarity,
+        temperature=temperature,
+        is_sample=is_sample,
     )
     labeller_generator = get_labeller_generator(
         system_prompt=f"{system_prompt} {', '.join(labels)}",
@@ -541,7 +543,7 @@ with gr.Blocks() as app:
             num_rows,
             labels,
             private,
-            temperature
+            temperature,
         ],
         outputs=[success_message],
         show_progress=True,
@@ -558,7 +560,7 @@ with gr.Blocks() as app:
             labels,
             num_labels,
             num_rows,
-            temperature
+            temperature,
         ],
         outputs=[pipeline_code],
     ).success(

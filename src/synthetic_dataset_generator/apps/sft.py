@@ -15,7 +15,11 @@ from synthetic_dataset_generator.apps.base import (
     validate_argilla_user_workspace_dataset,
     validate_push_to_hub,
 )
-from synthetic_dataset_generator.constants import DEFAULT_BATCH_SIZE, SFT_AVAILABLE, MODEL
+from synthetic_dataset_generator.constants import (
+    DEFAULT_BATCH_SIZE,
+    MODEL,
+    SFT_AVAILABLE,
+)
 from synthetic_dataset_generator.pipelines.embeddings import (
     get_embeddings,
     get_sentence_embedding_dimensions,
@@ -82,7 +86,6 @@ def _get_dataframe():
     return gr.Dataframe(
         headers=["prompt", "completion"],
         wrap=True,
-        height=500,
         interactive=False,
         elem_classes="table-view",
     )
@@ -97,8 +100,12 @@ def generate_dataset(
     progress=gr.Progress(),
 ) -> pd.DataFrame:
     progress(0.0, desc="(1/2) Generating instructions")
-    magpie_generator = get_magpie_generator(system_prompt, num_turns, temperature, is_sample)
-    response_generator = get_response_generator(system_prompt, num_turns, temperature, is_sample)
+    magpie_generator = get_magpie_generator(
+        system_prompt, num_turns, temperature, is_sample
+    )
+    response_generator = get_response_generator(
+        system_prompt, num_turns, temperature, is_sample
+    )
     total_steps: int = num_rows * 2
     batch_size = DEFAULT_BATCH_SIZE
 
@@ -520,7 +527,7 @@ with gr.Blocks() as app:
                 num_turns,
                 num_rows,
                 private,
-                temperature
+                temperature,
             ],
             outputs=[success_message],
             show_progress=True,

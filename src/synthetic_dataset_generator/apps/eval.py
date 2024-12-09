@@ -739,7 +739,6 @@ with gr.Blocks() as app:
                 dataframe = gr.Dataframe(
                     headers=["prompt", "completion", "evaluation"],
                     wrap=True,
-                    height=500,
                     interactive=False,
                     elem_classes="table-view",
                 )

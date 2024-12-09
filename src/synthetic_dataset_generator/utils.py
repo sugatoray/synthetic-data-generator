@@ -1,4 +1,5 @@
 import json
+import warnings
 from typing import List, Optional, Union
 
 import argilla as rg
@@ -38,9 +39,15 @@ def list_orgs(oauth_token: Union[OAuthToken, None] = None):
             organizations = [org for org in organizations if org != data["name"]]
             organizations = [data["name"]] + organizations
     except Exception as e:
-        raise gr.Error(
-            f"Failed to get organizations: {e}. See if you are logged and connected: https://huggingface.co/settings/connected-applications."
+        data = whoami(oauth_token.token)
+        warnings.warn(str(e))
+        gr.Info(
+            "Your user token does not have the necessary permissions to push to organizations."
+            "Please check your OAuth permissions in https://huggingface.co/settings/connected-applications."
+            "Update yout token permissions to include repo.write: https://huggingface.co/settings/tokens."
         )
+        return [data["name"]]
+
     return organizations
 
 
