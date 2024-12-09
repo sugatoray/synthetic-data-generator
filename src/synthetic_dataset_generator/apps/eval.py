@@ -116,7 +116,7 @@ def load_dataset_from_hub(
                 "Text: {{" + col_response + "}}",
             ]
         ),
-        language="markdown",
+        language="jinja2",
         interactive=True,
     )
     structured_output = gr.Code(
