@@ -207,7 +207,7 @@ def get_magpie_generator(system_prompt, num_turns, temperature, is_sample):
     return magpie_generator
 
 
-def get_response_generator(system_prompt, num_turns, is_sample):
+def get_response_generator(system_prompt, num_turns, temperature, is_sample):
     if num_turns == 1:
         response_generator = TextGeneration(
             llm=InferenceEndpointsLLM(
@@ -216,7 +216,7 @@ def get_response_generator(system_prompt, num_turns, is_sample):
                 base_url=BASE_URL,
                 api_key=_get_next_api_key(),
                 generation_kwargs={
-                    "temperature": 0.8,
+                    "temperature": temperature,
                     "max_new_tokens": 256 if is_sample else 1024,
                 },
             ),
@@ -232,7 +232,7 @@ def get_response_generator(system_prompt, num_turns, is_sample):
                 base_url=BASE_URL,
                 api_key=_get_next_api_key(),
                 generation_kwargs={
-                    "temperature": 0.8,
+                    "temperature": temperature,
                     "max_new_tokens": 2048,
                 },
             ),
