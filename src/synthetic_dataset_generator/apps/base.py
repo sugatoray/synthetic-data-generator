@@ -113,7 +113,7 @@ def show_success_message(org_name, repo_name) -> gr.Markdown:
                     <p style="margin-top: 0.5em;">
                         The generated dataset is <a href="https://huggingface.co/datasets/{org_name}/{repo_name}" target="_blank">available in the Hub</a>. It is in the right format for fine-tuning with TRL, AutoTrain, or other frameworks.
                         <div style="display: flex; gap: 10px;">
-                            <a href="{argilla_api_url}" target="_blank" class="lg primary svelte-cmf5ev" style="color: white !important; margin-top: 0.5em; text-decoration: none;">
+                            <a href="{argilla_api_url}" target="_blank" class="lg primary svelte-1137axg" style="color: white !important; margin-top: 0.5em; text-decoration: none;">
                                 Open in Argilla
                             </a>
                         </div>
