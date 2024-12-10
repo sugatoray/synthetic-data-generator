@@ -42,15 +42,14 @@ def _get_dataframe():
         headers=["labels", "text"],
         wrap=True,
         interactive=False,
-        elem_classes="table-view",
     )
 
 
 def generate_system_prompt(dataset_description, progress=gr.Progress()):
-    progress(0.0, desc="Generating text classification task")
-    progress(0.3, desc="Initializing text generation")
+    progress(0.0, desc="Starting")
+    progress(0.3, desc="Initializing")
     generate_description = get_prompt_generator()
-    progress(0.7, desc="Generating text classification task")
+    progress(0.7, desc="Generating")
     result = next(
         generate_description.process(
             [
@@ -60,7 +59,7 @@ def generate_system_prompt(dataset_description, progress=gr.Progress()):
             ]
         )
     )[0]["generation"]
-    progress(1.0, desc="Text classification task generated")
+    progress(1.0, desc="Prompt generated")
     data = json.loads(result)
     system_prompt = data["classification_task"]
     labels = data["labels"]
@@ -94,7 +93,7 @@ def generate_dataset(
     is_sample: bool = False,
     progress=gr.Progress(),
 ) -> pd.DataFrame:
-    progress(0.0, desc="(1/2) Generating text classification data")
+    progress(0.0, desc="(1/2) Generating dataset")
     labels = get_preprocess_labels(labels)
     textcat_generator = get_textcat_generator(
         difficulty=difficulty,
@@ -117,7 +116,7 @@ def generate_dataset(
         progress(
             2 * 0.5 * n_processed / num_rows,
             total=total_steps,
-            desc="(1/2) Generating text classification data",
+            desc="(1/2) Generating dataset",
         )
         remaining_rows = num_rows - n_processed
         batch_size = min(batch_size, remaining_rows)
@@ -139,14 +138,14 @@ def generate_dataset(
         result["text"] = result["input_text"]
 
     # label text classification data
-    progress(2 * 0.5, desc="(1/2) Generating text classification data")
+    progress(2 * 0.5, desc="(2/2) Labeling dataset")
     n_processed = 0
     labeller_results = []
     while n_processed < num_rows:
         progress(
             0.5 + 0.5 * n_processed / num_rows,
             total=total_steps,
-            desc="(1/2) Labeling text classification data",
+            desc="(2/2) Labeling dataset",
         )
         batch = textcat_results[n_processed : n_processed + batch_size]
         labels_batch = list(labeller_generator.process(inputs=batch))
@@ -182,7 +181,7 @@ def generate_dataset(
                 )
             )
         )
-    progress(1.0, desc="Dataset generation completed")
+    progress(1.0, desc="Dataset created")
     return dataframe
 
 
@@ -316,7 +315,7 @@ def push_dataset(
                 client=client,
             )
             rg_dataset = rg_dataset.create()
-        progress(0.7, desc="Pushing dataset to Argilla")
+        progress(0.7, desc="Pushing dataset")
         hf_dataset = Dataset.from_pandas(dataframe)
         records = [
             rg.Record(
@@ -347,7 +346,7 @@ def push_dataset(
             for sample in hf_dataset
         ]
         rg_dataset.records.log(records=records)
-        progress(1.0, desc="Dataset pushed to Argilla")
+        progress(1.0, desc="Dataset pushed")
     except Exception as e:
         raise gr.Error(f"Error pushing dataset to Argilla: {e}")
     return ""
@@ -406,61 +405,64 @@ with gr.Blocks() as app:
 
         gr.HTML("<hr>")
         gr.Markdown("## 2. Configure your dataset")
-        with gr.Row(equal_height=False):
-            with gr.Column(scale=2):
-                system_prompt = gr.Textbox(
-                    label="System prompt",
-                    placeholder="You are a helpful assistant.",
-                    visible=True,
-                )
-                labels = gr.Dropdown(
-                    choices=[],
-                    allow_custom_value=True,
-                    interactive=True,
-                    label="Labels",
-                    multiselect=True,
-                    info="Add the labels to classify the text.",
-                )
-                num_labels = gr.Number(
-                    label="Number of labels per text",
-                    value=1,
-                    minimum=1,
-                    maximum=10,
-                    info="Select 1 for single-label and >1 for multi-label.",
-                    interactive=True,
-                )
-                clarity = gr.Dropdown(
-                    choices=[
-                        ("Clear", "clear"),
-                        (
-                            "Understandable",
-                            "understandable with some effort",
-                        ),
-                        ("Ambiguous", "ambiguous"),
-                        ("Mixed", "mixed"),
-                    ],
-                    value="understandable with some effort",
-                    label="Clarity",
-                    info="Set how easily the correct label or labels can be identified.",
-                    interactive=True,
-                )
-                difficulty = gr.Dropdown(
-                    choices=[
-                        ("High School", "high school"),
-                        ("College", "college"),
-                        ("PhD", "PhD"),
-                        ("Mixed", "mixed"),
-                    ],
-                    value="high school",
-                    label="Difficulty",
-                    info="Select the comprehension level for the text. Ensure it matches the task context.",
-                    interactive=True,
-                )
-                with gr.Row():
-                    clear_btn_full = gr.Button("Clear", variant="secondary")
-                    btn_apply_to_sample_dataset = gr.Button("Save", variant="primary")
-            with gr.Column(scale=3):
-                dataframe = _get_dataframe()
+        with gr.Row(equal_height=True):
+            with gr.Row(equal_height=False):
+                with gr.Column(scale=2):
+                    system_prompt = gr.Textbox(
+                        label="System prompt",
+                        placeholder="You are a helpful assistant.",
+                        visible=True,
+                    )
+                    labels = gr.Dropdown(
+                        choices=[],
+                        allow_custom_value=True,
+                        interactive=True,
+                        label="Labels",
+                        multiselect=True,
+                        info="Add the labels to classify the text.",
+                    )
+                    num_labels = gr.Number(
+                        label="Number of labels per text",
+                        value=1,
+                        minimum=1,
+                        maximum=10,
+                        info="Select 1 for single-label and >1 for multi-label.",
+                        interactive=True,
+                    )
+                    clarity = gr.Dropdown(
+                        choices=[
+                            ("Clear", "clear"),
+                            (
+                                "Understandable",
+                                "understandable with some effort",
+                            ),
+                            ("Ambiguous", "ambiguous"),
+                            ("Mixed", "mixed"),
+                        ],
+                        value="understandable with some effort",
+                        label="Clarity",
+                        info="Set how easily the correct label or labels can be identified.",
+                        interactive=True,
+                    )
+                    difficulty = gr.Dropdown(
+                        choices=[
+                            ("High School", "high school"),
+                            ("College", "college"),
+                            ("PhD", "PhD"),
+                            ("Mixed", "mixed"),
+                        ],
+                        value="high school",
+                        label="Difficulty",
+                        info="Select the comprehension level for the text. Ensure it matches the task context.",
+                        interactive=True,
+                    )
+                    with gr.Row():
+                        clear_btn_full = gr.Button("Clear", variant="secondary")
+                        btn_apply_to_sample_dataset = gr.Button(
+                            "Save", variant="primary"
+                        )
+                with gr.Column(scale=3):
+                    dataframe = _get_dataframe()
 
         gr.HTML("<hr>")
         gr.Markdown("## 3. Generate your dataset")

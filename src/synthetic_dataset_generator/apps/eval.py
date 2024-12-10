@@ -750,7 +750,6 @@ with gr.Blocks() as app:
                     headers=["prompt", "completion", "evaluation"],
                     wrap=True,
                     interactive=False,
-                    elem_classes="table-view",
                 )
 
         gr.HTML(value="<hr>")
