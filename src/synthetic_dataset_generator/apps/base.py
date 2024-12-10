@@ -1,19 +1,13 @@
 import io
 import uuid
-from typing import List, Union
+from typing import Union
 
 import argilla as rg
 import gradio as gr
-import pandas as pd
-from datasets import ClassLabel, Dataset, Features, Sequence, Value
-from distilabel.distiset import Distiset
 from gradio import OAuthToken
 from huggingface_hub import HfApi, upload_file
 
-from synthetic_dataset_generator.constants import TEXTCAT_TASK
-from synthetic_dataset_generator.utils import (
-    get_argilla_client,
-)
+from synthetic_dataset_generator.utils import get_argilla_client
 
 
 def validate_argilla_user_workspace_dataset(
@@ -52,7 +46,7 @@ def push_pipeline_code_to_hub(
     oauth_token: Union[OAuthToken, None] = None,
     progress=gr.Progress(),
 ):
-    repo_id = validate_push_to_hub(org_name, repo_name)
+    repo_id: str | None = validate_push_to_hub(org_name, repo_name)
     progress(0.1, desc="Uploading pipeline code")
     with io.BytesIO(pipeline_code.encode("utf-8")) as f:
         upload_file(

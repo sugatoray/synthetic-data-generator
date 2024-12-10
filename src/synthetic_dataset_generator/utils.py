@@ -39,14 +39,13 @@ def list_orgs(oauth_token: Union[OAuthToken, None] = None):
             organizations = [org for org in organizations if org != data["name"]]
             organizations = [data["name"]] + organizations
     except Exception as e:
-        data = whoami(oauth_token.token)
         warnings.warn(str(e))
         gr.Info(
             "Your user token does not have the necessary permissions to push to organizations."
             "Please check your OAuth permissions in https://huggingface.co/settings/connected-applications."
             "Update yout token permissions to include repo.write: https://huggingface.co/settings/tokens."
         )
-        return [data["name"]]
+        return []
 
     return organizations
 
