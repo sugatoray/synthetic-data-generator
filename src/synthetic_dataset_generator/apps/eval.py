@@ -19,6 +19,7 @@ from huggingface_hub import HfApi, repo_exists
 
 from synthetic_dataset_generator.apps.base import (
     hide_success_message,
+    push_pipeline_code_to_hub,
     show_success_message,
     validate_argilla_user_workspace_dataset,
     validate_push_to_hub,
@@ -346,7 +347,12 @@ def evaluate_sample_dataset(
 
 
 def push_dataset_to_hub(
-    dataframe: pd.DataFrame, org_name: str, repo_name: str, oauth_token, private
+    dataframe: pd.DataFrame,
+    org_name: str,
+    repo_name: str,
+    oauth_token,
+    private: bool,
+    pipeline_code: str,
 ):
     repo_id = validate_push_to_hub(org_name, repo_name)
     distiset = Distiset({"default": Dataset.from_pandas(dataframe)})
@@ -357,6 +363,7 @@ def push_dataset_to_hub(
         token=oauth_token.token,
         create_pr=False,
     )
+    push_pipeline_code_to_hub(pipeline_code, org_name, repo_name, oauth_token.token)
 
 
 def push_dataset(
@@ -371,6 +378,7 @@ def push_dataset(
     response_instruction_response: str,
     prompt_template: str,
     structured_output: dict,
+    pipeline_code: str,
     oauth_token: Union[gr.OAuthToken, None] = None,
     progress=gr.Progress(),
 ) -> pd.DataFrame:
@@ -385,7 +393,9 @@ def push_dataset(
         structured_output=structured_output,
         num_rows=num_rows,
     )
-    push_dataset_to_hub(dataframe, org_name, repo_name, oauth_token, private)
+    push_dataset_to_hub(
+        dataframe, org_name, repo_name, oauth_token, private, pipeline_code
+    )
     try:
         progress(0.1, desc="Setting up user and workspace")
         hf_user = HfApi().whoami(token=oauth_token.token)["name"]
@@ -854,6 +864,7 @@ with gr.Blocks() as app:
             response_instruction_response,
             prompt_template,
             structured_output,
+            pipeline_code,
         ],
         outputs=[success_message],
         show_progress=True,
