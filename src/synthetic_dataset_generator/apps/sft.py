@@ -55,10 +55,10 @@ def convert_dataframe_messages(dataframe: pd.DataFrame) -> pd.DataFrame:
 
 
 def generate_system_prompt(dataset_description, progress=gr.Progress()):
-    progress(0.0, desc="Generating system prompt")
-    progress(0.3, desc="Initializing text generation")
+    progress(0.0, desc="Starting")
+    progress(0.3, desc="Initializing")
     generate_description = get_prompt_generator()
-    progress(0.7, desc="Generating system prompt")
+    progress(0.7, desc="Generating")
     result = next(
         generate_description.process(
             [
@@ -68,7 +68,7 @@ def generate_system_prompt(dataset_description, progress=gr.Progress()):
             ]
         )
     )[0]["generation"]
-    progress(1.0, desc="System prompt generated")
+    progress(1.0, desc="Prompt generated")
     return result
 
 
@@ -88,7 +88,6 @@ def _get_dataframe():
         headers=["prompt", "completion"],
         wrap=True,
         interactive=False,
-        elem_classes="table-view",
     )
 
 
