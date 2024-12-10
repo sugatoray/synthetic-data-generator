@@ -350,7 +350,7 @@ def push_dataset_to_hub(
     dataframe: pd.DataFrame,
     org_name: str,
     repo_name: str,
-    oauth_token,
+    oauth_token: Union[gr.OAuthToken, None],
     private: bool,
     pipeline_code: str,
 ):
@@ -363,7 +363,7 @@ def push_dataset_to_hub(
         token=oauth_token.token,
         create_pr=False,
     )
-    push_pipeline_code_to_hub(pipeline_code, org_name, repo_name, oauth_token.token)
+    push_pipeline_code_to_hub(pipeline_code, org_name, repo_name, oauth_token)
 
 
 def push_dataset(

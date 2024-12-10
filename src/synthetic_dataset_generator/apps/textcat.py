@@ -197,7 +197,7 @@ def push_dataset_to_hub(
         token=oauth_token.token,
         create_pr=False,
     )
-    push_pipeline_code_to_hub(pipeline_code, org_name, repo_name, oauth_token.token)
+    push_pipeline_code_to_hub(pipeline_code, org_name, repo_name, oauth_token)
 
 
 def push_dataset(
