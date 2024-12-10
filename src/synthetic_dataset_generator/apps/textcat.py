@@ -11,6 +11,7 @@ from distilabel.distiset import Distiset
 from huggingface_hub import HfApi
 
 from src.synthetic_dataset_generator.apps.base import (
+    combine_datasets,
     hide_success_message,
     push_pipeline_code_to_hub,
     show_success_message,
@@ -129,7 +130,9 @@ def generate_dataset(
             sampled_labels = random.sample(labels, num_labels)
             random.shuffle(sampled_labels)
             inputs.append(
-                {"task": f"{system_prompt}. Labels: {', '.join(sampled_labels)}"}
+                {
+                    "task": f"{system_prompt}. The text represents the following categories: {', '.join(sampled_labels)}"
+                }
             )
         batch = list(textcat_generator.process(inputs=inputs))
         textcat_results.extend(batch[0])
@@ -194,9 +197,13 @@ def push_dataset_to_hub(
     oauth_token: Union[gr.OAuthToken, None] = None,
     private: bool = False,
     pipeline_code: str = "",
+    progress=gr.Progress(),
 ):
+    progress(0.0, desc="Validating")
     repo_id = validate_push_to_hub(org_name, repo_name)
+    progress(0.3, desc="Preprocessing")
     labels = get_preprocess_labels(labels)
+    progress(0.7, desc="Creating dataset")
     if num_labels == 1:
         dataframe["label"] = dataframe["label"].replace("", None)
         features = Features(
@@ -209,7 +216,10 @@ def push_dataset_to_hub(
                 "labels": Sequence(feature=ClassLabel(names=labels)),
             }
         )
-    distiset = Distiset({"default": Dataset.from_pandas(dataframe, features=features)})
+    dataset = Dataset.from_pandas(dataframe, features=features)
+    dataset = combine_datasets(repo_id, dataset)
+    distiset = Distiset({"default": dataset})
+    progress(0.9, desc="Pushing dataset")
     distiset.push_to_hub(
         repo_id=repo_id,
         private=private,
@@ -218,6 +228,7 @@ def push_dataset_to_hub(
         create_pr=False,
     )
     push_pipeline_code_to_hub(pipeline_code, org_name, repo_name, oauth_token)
+    progress(1.0, desc="Dataset pushed")
 
 
 def push_dataset(
@@ -439,7 +450,7 @@ with gr.Blocks() as app:
                             ("Ambiguous", "ambiguous"),
                             ("Mixed", "mixed"),
                         ],
-                        value="understandable with some effort",
+                        value="mixed",
                         label="Clarity",
                         info="Set how easily the correct label or labels can be identified.",
                         interactive=True,

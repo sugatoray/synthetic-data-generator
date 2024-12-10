@@ -4,6 +4,7 @@ from typing import Union
 
 import argilla as rg
 import gradio as gr
+from datasets import Dataset, concatenate_datasets, load_dataset
 from gradio import OAuthToken
 from huggingface_hub import HfApi, upload_file
 
@@ -73,6 +74,14 @@ def validate_push_to_hub(org_name, repo_name):
                 "Please provide a `repo_name` and `org_name` to push the dataset to."
             )
     return repo_id
+
+
+def combine_datasets(repo_id: str, dataset: Dataset) -> Dataset:
+    try:
+        dataset = load_dataset(repo_id, split="train")
+        return concatenate_datasets([dataset, dataset])
+    except Exception:
+        return dataset
 
 
 def show_success_message(org_name, repo_name) -> gr.Markdown:

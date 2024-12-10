@@ -18,6 +18,7 @@ from gradio_huggingfacehub_search import HuggingfaceHubSearch
 from huggingface_hub import HfApi, repo_exists
 
 from synthetic_dataset_generator.apps.base import (
+    combine_datasets,
     hide_success_message,
     push_pipeline_code_to_hub,
     show_success_message,
@@ -355,7 +356,9 @@ def push_dataset_to_hub(
     pipeline_code: str,
 ):
     repo_id = validate_push_to_hub(org_name, repo_name)
-    distiset = Distiset({"default": Dataset.from_pandas(dataframe)})
+    dataset = Dataset.from_pandas(dataframe)
+    dataset = combine_datasets(repo_id, dataset)
+    distiset = Distiset({"default": dataset})
     distiset.push_to_hub(
         repo_id=repo_id,
         private=private,

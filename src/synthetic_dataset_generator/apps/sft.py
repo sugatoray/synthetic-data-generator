@@ -10,6 +10,7 @@ from distilabel.distiset import Distiset
 from huggingface_hub import HfApi
 
 from synthetic_dataset_generator.apps.base import (
+    combine_datasets,
     hide_success_message,
     push_pipeline_code_to_hub,
     show_success_message,
@@ -209,11 +210,18 @@ def push_dataset_to_hub(
     oauth_token: Union[gr.OAuthToken, None],
     private: bool,
     pipeline_code: str,
+    progress=gr.Progress(),
 ):
+    progress(0.0, desc="Validating")
     repo_id = validate_push_to_hub(org_name, repo_name)
+    progress(0.3, desc="Converting")
     original_dataframe = dataframe.copy(deep=True)
     dataframe = convert_dataframe_messages(dataframe)
-    distiset = Distiset({"default": Dataset.from_pandas(dataframe)})
+    progress(0.7, desc="Creating dataset")
+    dataset = Dataset.from_pandas(dataframe)
+    dataset = combine_datasets(repo_id, dataset)
+    progress(0.9, desc="Pushing dataset")
+    distiset = Distiset({"default": dataset})
     distiset.push_to_hub(
         repo_id=repo_id,
         private=private,
@@ -222,6 +230,7 @@ def push_dataset_to_hub(
         create_pr=False,
     )
     push_pipeline_code_to_hub(pipeline_code, org_name, repo_name, oauth_token)
+    progress(1.0, desc="Dataset pushed")
     return original_dataframe
 
 
