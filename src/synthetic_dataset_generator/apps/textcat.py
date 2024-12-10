@@ -11,6 +11,7 @@ from huggingface_hub import HfApi
 
 from src.synthetic_dataset_generator.apps.base import (
     hide_success_message,
+    push_pipeline_code_to_hub,
     show_success_message,
     validate_argilla_user_workspace_dataset,
     validate_push_to_hub,
@@ -172,6 +173,7 @@ def push_dataset_to_hub(
     labels: List[str] = None,
     oauth_token: Union[gr.OAuthToken, None] = None,
     private: bool = False,
+    pipeline_code: str = "",
 ):
     repo_id = validate_push_to_hub(org_name, repo_name)
     labels = get_preprocess_labels(labels)
@@ -195,6 +197,7 @@ def push_dataset_to_hub(
         token=oauth_token.token,
         create_pr=False,
     )
+    push_pipeline_code_to_hub(pipeline_code, org_name, repo_name, oauth_token)
 
 
 def push_dataset(
@@ -208,6 +211,7 @@ def push_dataset(
     labels: List[str] = None,
     private: bool = False,
     temperature: float = 0.8,
+    pipeline_code: str = "",
     oauth_token: Union[gr.OAuthToken, None] = None,
     progress=gr.Progress(),
 ) -> pd.DataFrame:
@@ -221,7 +225,14 @@ def push_dataset(
         temperature=temperature,
     )
     push_dataset_to_hub(
-        dataframe, org_name, repo_name, num_labels, labels, oauth_token, private
+        dataframe,
+        org_name,
+        repo_name,
+        num_labels,
+        labels,
+        oauth_token,
+        private,
+        pipeline_code,
     )
 
     dataframe = dataframe[
@@ -544,6 +555,7 @@ with gr.Blocks() as app:
             labels,
             private,
             temperature,
+            pipeline_code,
         ],
         outputs=[success_message],
         show_progress=True,
