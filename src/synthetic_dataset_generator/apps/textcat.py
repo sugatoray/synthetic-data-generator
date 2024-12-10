@@ -1,4 +1,5 @@
 import json
+import random
 import uuid
 from typing import List, Union
 
@@ -11,6 +12,7 @@ from huggingface_hub import HfApi
 
 from src.synthetic_dataset_generator.apps.base import (
     hide_success_message,
+    push_pipeline_code_to_hub,
     show_success_message,
     validate_argilla_user_workspace_dataset,
     validate_push_to_hub,
@@ -119,9 +121,17 @@ def generate_dataset(
         )
         remaining_rows = num_rows - n_processed
         batch_size = min(batch_size, remaining_rows)
-        inputs = [
-            {"task": f"{system_prompt} {', '.join(labels)}"} for _ in range(batch_size)
-        ]
+        inputs = []
+        for _ in range(batch_size):
+            if num_labels == 1:
+                num_labels = 1
+            else:
+                num_labels = int(random.gammavariate(2, 2) * num_labels)
+            sampled_labels = random.sample(labels, num_labels)
+            random.shuffle(sampled_labels)
+            inputs.append(
+                {"task": f"{system_prompt}. Labels: {', '.join(sampled_labels)}"}
+            )
         batch = list(textcat_generator.process(inputs=inputs))
         textcat_results.extend(batch[0])
         n_processed += batch_size
@@ -160,6 +170,18 @@ def generate_dataset(
         dataframe["label"] = dataframe["label"].apply(
             lambda x: x.lower().strip() if x.lower().strip() in labels else None
         )
+    else:
+        dataframe["labels"] = dataframe["labels"].apply(
+            lambda x: list(
+                set(
+                    [
+                        label.lower().strip()
+                        for label in x
+                        if label.lower().strip() in labels
+                    ]
+                )
+            )
+        )
     progress(1.0, desc="Dataset generation completed")
     return dataframe
 
@@ -172,6 +194,7 @@ def push_dataset_to_hub(
     labels: List[str] = None,
     oauth_token: Union[gr.OAuthToken, None] = None,
     private: bool = False,
+    pipeline_code: str = "",
 ):
     repo_id = validate_push_to_hub(org_name, repo_name)
     labels = get_preprocess_labels(labels)
@@ -195,6 +218,7 @@ def push_dataset_to_hub(
         token=oauth_token.token,
         create_pr=False,
     )
+    push_pipeline_code_to_hub(pipeline_code, org_name, repo_name, oauth_token)
 
 
 def push_dataset(
@@ -208,6 +232,7 @@ def push_dataset(
     labels: List[str] = None,
     private: bool = False,
     temperature: float = 0.8,
+    pipeline_code: str = "",
     oauth_token: Union[gr.OAuthToken, None] = None,
     progress=gr.Progress(),
 ) -> pd.DataFrame:
@@ -221,7 +246,14 @@ def push_dataset(
         temperature=temperature,
     )
     push_dataset_to_hub(
-        dataframe, org_name, repo_name, num_labels, labels, oauth_token, private
+        dataframe,
+        org_name,
+        repo_name,
+        num_labels,
+        labels,
+        oauth_token,
+        private,
+        pipeline_code,
     )
 
     dataframe = dataframe[
@@ -407,7 +439,7 @@ with gr.Blocks() as app:
                         ("Ambiguous", "ambiguous"),
                         ("Mixed", "mixed"),
                     ],
-                    value="mixed",
+                    value="understandable with some effort",
                     label="Clarity",
                     info="Set how easily the correct label or labels can be identified.",
                     interactive=True,
@@ -419,7 +451,7 @@ with gr.Blocks() as app:
                         ("PhD", "PhD"),
                         ("Mixed", "mixed"),
                     ],
-                    value="mixed",
+                    value="high school",
                     label="Difficulty",
                     info="Select the comprehension level for the text. Ensure it matches the task context.",
                     interactive=True,
@@ -544,6 +576,7 @@ with gr.Blocks() as app:
             labels,
             private,
             temperature,
+            pipeline_code,
         ],
         outputs=[success_message],
         show_progress=True,

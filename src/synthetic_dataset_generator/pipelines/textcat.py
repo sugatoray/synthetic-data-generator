@@ -15,35 +15,29 @@ from synthetic_dataset_generator.utils import get_preprocess_labels
 
 PROMPT_CREATION_PROMPT = """You are an AI assistant specialized in generating very precise text classification tasks for dataset creation.
 
-Your task is to write a prompt following the instruction of the user. Respond with the prompt and nothing else.
+Your should write a prompt following a the dataset description. Respond with the prompt and nothing else.
 
-The prompt you write should follow the same style and structure as the following example prompts, clearly specifying the possible classification labels.
+The prompt should follow the same style and structure as the following example prompts, clearly specifying the possible classification labels.
+
+Make sure to always include all of the detailed information from the description and the context of the company that is provided.
+
+Don't include the labels in the classification_task but only provide a high level description of the classification task.
 
 If a label is composed of multiple words, use a hyphen to separate them. For example, 'smartphone-review', 'customer-service', 'product-quality'.:
 
-{"classification_task": "Classify the following customer review of a cinema as", "labels": ["positive", "negative"]}
+Description: DavidMovieHouse is a cinema that has been in business for 10 years.
+Output: {"classification_task": "The company DavidMovieHouse is a cinema that has been in business for 10 years and has had customers reviews. Classify the customer reviews as", "labels": ["positive", "negative"]}
 
-{"classification_task": "Categorize the following news article into one or more of the following categories:", "labels": ["politics", "sports", "technology", "entertainment", "health", "business", "environment", "education", "science", "international"]}
+Description: A dataset that focuses on creating neo-ludite discussions about technologies within the AI space.
+Output: {"classification_task": "Neo-ludiite discussions about technologies within the AI space cover. Categorize the discussions into one of the following categories", "labels": ["tech-support", "tech-opposition"]}
 
-{"classification_task": "Classify the following news article into one or more of the following categories:", "labels": ['politics', 'sports', 'technology', 'entertainment', 'health', 'business', 'environment', 'education', 'science', 'international']}
+Description: A dataset that covers the articles of a niche sports website called TheSportBlogs that focuses on female sports within the ballsport domain for the US market.
+Output: {"classification_task": "TechSportBlogs is a niche sports website that focuses on female sports within the ballsport domain for the US market. Determine the category of based on the article using the following categories", "labels": ["basketball", "volleyball", "tennis", "hockey", "baseball", "soccer"]}
 
-{"classification_task": "Determine the sentiment of the following social media post:", "labels": ['ambiguous', 'sarcastic', 'informative', 'emotional']}
+Description: A dataset covering customer reviews for an e-commerce website called Argilla that sells technology datasets within the open source Natural Language Processing space and has review with labels "data-quality", "data-accuracy", "customer-service", "price", "product-availability", "shipping-speed"
+Output: {"classification_task": "A dataset covering customer reviews for an e-commerce website called Argilla that sells technology datasets within the open source Natural Language Processing space and has review with labels", "labels": ["data-quality", "data-accuracy", "customer-service", "price", "product-availability", "shipping-speed"]}
 
-{"classification_task": "Identify the issue category for the following technical support ticket:", "labels": ['billing', 'technical', 'account', 'shipping', 'returns', 'installation', 'subscription']}
-
-{"classification_task": "Classify the following movie review into one of the following categories:", "labels": ['critical', 'praise', 'disappointed', 'enthusiastic']}
-
-{"classification_task": "Categorize the following customer service transcript into one of the following categories:", "labels": ['satisfied', 'dissatisfied', 'highly-satisfied', 'somewhat-dissatisfied', 'indifferent']}
-
-{"classification_task": "Classify the following product description into one of the following product types:", "labels": ['smartphone', 'laptop', 'tablet', 'smartwatch', 'e-reader', 'headphones']}
-
-{"classification_task": "Categorize the following tweet expressing the political event discussed as", "labels": ['support', 'opposition']}
-
-{"classification_task": "Classify the following restaurant review into one of the following categories:", "labels": ['food-quality', 'service', 'ambiance', 'price']}
-
-{"classification_task": "Categorize the following blog post based on its primary fashion trend or style:", "labels": ['casual', 'formal', 'streetwear', 'vintage', 'sustainable-fashion']}
-
-User dataset description:
+Description:
 """
 
 DEFAULT_DATASET_DESCRIPTIONS = [
@@ -62,6 +56,19 @@ class TextClassificationTask(BaseModel):
     labels: list[str] = Field(
         ...,
         title="Labels",
+        description="The possible labels for the classification task.",
+    )
+
+
+class DatasetDescription(BaseModel):
+    description: str = Field(
+        ...,
+        title="description",
+        description="The description of the dataset.",
+    )
+    labels: list[str] = Field(
+        ...,
+        title="labels",
         description="The possible labels for the classification task.",
     )
 
