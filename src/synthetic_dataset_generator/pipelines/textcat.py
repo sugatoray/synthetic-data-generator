@@ -60,19 +60,6 @@ class TextClassificationTask(BaseModel):
     )
 
 
-class DatasetDescription(BaseModel):
-    description: str = Field(
-        ...,
-        title="description",
-        description="The description of the dataset.",
-    )
-    labels: list[str] = Field(
-        ...,
-        title="labels",
-        description="The possible labels for the classification task.",
-    )
-
-
 def get_prompt_generator():
     prompt_generator = TextGeneration(
         llm=InferenceEndpointsLLM(
