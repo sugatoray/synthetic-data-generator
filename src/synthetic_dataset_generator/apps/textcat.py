@@ -69,14 +69,14 @@ def generate_system_prompt(dataset_description, progress=gr.Progress()):
 
 
 def generate_sample_dataset(
-    system_prompt, difficulty, clarity, labels, num_labels, progress=gr.Progress()
+    system_prompt, difficulty, clarity, labels, multi_label, progress=gr.Progress()
 ):
     dataframe = generate_dataset(
         system_prompt=system_prompt,
         difficulty=difficulty,
         clarity=clarity,
         labels=labels,
-        num_labels=num_labels,
+        multi_label=multi_label,
         num_rows=10,
         progress=progress,
         is_sample=True,
@@ -89,7 +89,7 @@ def generate_dataset(
     difficulty: str,
     clarity: str,
     labels: List[str] = None,
-    num_labels: int = 1,
+    multi_label: bool = False,
     num_rows: int = 10,
     temperature: float = 0.9,
     is_sample: bool = False,
@@ -105,9 +105,9 @@ def generate_dataset(
         is_sample=is_sample,
     )
     labeller_generator = get_labeller_generator(
-        system_prompt=f"{system_prompt} {', '.join(labels)}",
+        system_prompt=f"{system_prompt}. Potential labels: {', '.join(labels)}",
         labels=labels,
-        num_labels=num_labels,
+        multi_label=multi_label,
     )
     total_steps: int = num_rows * 2
     batch_size = DEFAULT_BATCH_SIZE
@@ -125,11 +125,16 @@ def generate_dataset(
         batch_size = min(batch_size, remaining_rows)
         inputs = []
         for _ in range(batch_size):
-            if num_labels == 1:
-                num_labels = 1
+            if multi_label:
+                num_labels = len(labels)
+                k = int(
+                    random.betavariate(alpha=(num_labels - 1), beta=num_labels)
+                    * num_labels
+                )
             else:
-                num_labels = int(random.gammavariate(2, 2) * num_labels)
-            sampled_labels = random.sample(labels, num_labels)
+                k = 1
+
+            sampled_labels = random.sample(labels, min(k, len(labels)))
             random.shuffle(sampled_labels)
             inputs.append(
                 {
@@ -169,12 +174,7 @@ def generate_dataset(
         distiset_results.append(record)
 
     dataframe = pd.DataFrame(distiset_results)
-    if num_labels == 1:
-        dataframe = dataframe.rename(columns={"labels": "label"})
-        dataframe["label"] = dataframe["label"].apply(
-            lambda x: x.lower().strip() if x.lower().strip() in labels else None
-        )
-    else:
+    if multi_label:
         dataframe["labels"] = dataframe["labels"].apply(
             lambda x: list(
                 set(
@@ -186,6 +186,12 @@ def generate_dataset(
                 )
             )
         )
+    else:
+        dataframe = dataframe.rename(columns={"labels": "label"})
+        dataframe["label"] = dataframe["label"].apply(
+            lambda x: x.lower().strip() if x.lower().strip() in labels else None
+        )
+
     progress(1.0, desc="Dataset created")
     return dataframe
 
@@ -194,7 +200,7 @@ def push_dataset_to_hub(
     dataframe: pd.DataFrame,
     org_name: str,
     repo_name: str,
-    num_labels: int = 1,
+    multi_label: bool = False,
     labels: List[str] = None,
     oauth_token: Union[gr.OAuthToken, None] = None,
     private: bool = False,
@@ -206,17 +212,16 @@ def push_dataset_to_hub(
     progress(0.3, desc="Preprocessing")
     labels = get_preprocess_labels(labels)
     progress(0.7, desc="Creating dataset")
-    if num_labels == 1:
-        dataframe["label"] = dataframe["label"].replace("", None)
-        features = Features(
-            {"text": Value("string"), "label": ClassLabel(names=labels)}
-        )
-    else:
+    if multi_label:
         features = Features(
             {
                 "text": Value("string"),
                 "labels": Sequence(feature=ClassLabel(names=labels)),
             }
+        )
+    else:
+        features = Features(
+            {"text": Value("string"), "label": ClassLabel(names=labels)}
         )
     dataset = Dataset.from_pandas(dataframe, features=features)
     dataset = combine_datasets(repo_id, dataset)
@@ -239,7 +244,7 @@ def push_dataset(
     system_prompt: str,
     difficulty: str,
     clarity: str,
-    num_labels: int = 1,
+    multi_label: int = 1,
     num_rows: int = 10,
     labels: List[str] = None,
     private: bool = False,
@@ -252,7 +257,7 @@ def push_dataset(
         system_prompt=system_prompt,
         difficulty=difficulty,
         clarity=clarity,
-        num_labels=num_labels,
+        multi_label=multi_label,
         labels=labels,
         num_rows=num_rows,
         temperature=temperature,
@@ -261,7 +266,7 @@ def push_dataset(
         dataframe,
         org_name,
         repo_name,
-        num_labels,
+        multi_label,
         labels,
         oauth_token,
         private,
@@ -288,17 +293,17 @@ def push_dataset(
             ],
             questions=[
                 (
-                    rg.LabelQuestion(
-                        name="label",
-                        title="Label",
-                        description="The label of the text",
-                        labels=labels,
-                    )
-                    if num_labels == 1
-                    else rg.MultiLabelQuestion(
+                    rg.MultiLabelQuestion(
                         name="labels",
                         title="Labels",
                         description="The labels of the conversation",
+                        labels=labels,
+                    )
+                    if multi_label
+                    else rg.LabelQuestion(
+                        name="label",
+                        title="Label",
+                        description="The label of the text",
                         labels=labels,
                     )
                 ),
@@ -340,16 +345,16 @@ def push_dataset(
                 suggestions=(
                     [
                         rg.Suggestion(
-                            question_name="label" if num_labels == 1 else "labels",
+                            question_name="labels" if multi_label else "label",
                             value=(
-                                sample["label"] if num_labels == 1 else sample["labels"]
+                                sample["labels"] if multi_label else sample["label"]
                             ),
                         )
                     ]
                     if (
-                        (num_labels == 1 and sample["label"] in labels)
+                        (not multi_label and sample["label"] in labels)
                         or (
-                            num_labels > 1
+                            multi_label
                             and all(label in labels for label in sample["labels"])
                         )
                     )
@@ -371,10 +376,6 @@ def validate_input_labels(labels):
             f"Please select at least 2 labels to classify your text. You selected {len(labels) if labels else 0}."
         )
     return labels
-
-
-def update_max_num_labels(labels):
-    return gr.update(maximum=len(labels) if labels else 1)
 
 
 def show_pipeline_code_visibility():
@@ -434,13 +435,11 @@ with gr.Blocks() as app:
                         multiselect=True,
                         info="Add the labels to classify the text.",
                     )
-                    num_labels = gr.Number(
-                        label="Number of labels per text",
-                        value=1,
-                        minimum=1,
-                        maximum=10,
-                        info="Select 1 for single-label and >1 for multi-label.",
+                    multi_label = gr.Checkbox(
+                        label="Multi-label",
+                        value=False,
                         interactive=True,
+                        info="If checked, the text will be classified into multiple labels.",
                     )
                     clarity = gr.Dropdown(
                         choices=[
@@ -521,7 +520,7 @@ with gr.Blocks() as app:
                         difficulty=difficulty.value,
                         clarity=clarity.value,
                         labels=labels.value,
-                        num_labels=num_labels.value,
+                        num_labels=len(labels.value) if multi_label.value else 1,
                         num_rows=num_rows.value,
                         temperature=temperature.value,
                     )
@@ -538,24 +537,14 @@ with gr.Blocks() as app:
         show_progress=True,
     ).then(
         fn=generate_sample_dataset,
-        inputs=[system_prompt, difficulty, clarity, labels, num_labels],
+        inputs=[system_prompt, difficulty, clarity, labels, multi_label],
         outputs=[dataframe],
         show_progress=True,
-    ).then(
-        fn=update_max_num_labels,
-        inputs=[labels],
-        outputs=[num_labels],
-    )
-
-    labels.input(
-        fn=update_max_num_labels,
-        inputs=[labels],
-        outputs=[num_labels],
     )
 
     btn_apply_to_sample_dataset.click(
         fn=generate_sample_dataset,
-        inputs=[system_prompt, difficulty, clarity, labels, num_labels],
+        inputs=[system_prompt, difficulty, clarity, labels, multi_label],
         outputs=[dataframe],
         show_progress=True,
     )
@@ -586,7 +575,7 @@ with gr.Blocks() as app:
             system_prompt,
             difficulty,
             clarity,
-            num_labels,
+            multi_label,
             num_rows,
             labels,
             private,
@@ -606,7 +595,7 @@ with gr.Blocks() as app:
             difficulty,
             clarity,
             labels,
-            num_labels,
+            multi_label,
             num_rows,
             temperature,
         ],

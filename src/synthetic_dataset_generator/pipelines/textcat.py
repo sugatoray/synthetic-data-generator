@@ -29,7 +29,7 @@ Description: DavidMovieHouse is a cinema that has been in business for 10 years.
 Output: {"classification_task": "The company DavidMovieHouse is a cinema that has been in business for 10 years and has had customers reviews of varying customer groups. Classify the customer reviews as", "labels": ["positive", "negative"]}
 
 Description: A dataset that focuses on creating neo-ludite discussions about technologies within the AI space.
-Output: {"classification_task": "Neo-ludiite discussions about technologies within the AI space cover from different speaking people    . Categorize the discussions into one of the following categories", "labels": ["tech-support", "tech-opposition"]}
+Output: {"classification_task": "Neo-ludiite discussions about technologies within the AI space cover from different speaking people. Categorize the discussions into one of the following categories", "labels": ["tech-support", "tech-opposition"]}
 
 Description: A dataset that covers the articles of a niche sports website called TheSportBlogs that focuses on female sports within the ballsport domain for the US market.
 Output: {"classification_task": "TechSportBlogs is a niche sports website that focuses on female sports within the ballsport domain for the US market. Written by different journalists. Determine the category of based on the article using the following categories", "labels": ["basketball", "volleyball", "tennis", "hockey", "baseball", "soccer"]}
@@ -102,7 +102,7 @@ def get_textcat_generator(difficulty, clarity, temperature, is_sample):
     return textcat_generator
 
 
-def get_labeller_generator(system_prompt, labels, num_labels):
+def get_labeller_generator(system_prompt, labels, multi_label):
     labeller_generator = TextClassification(
         llm=InferenceEndpointsLLM(
             model_id=MODEL,
@@ -115,7 +115,7 @@ def get_labeller_generator(system_prompt, labels, num_labels):
         ),
         context=system_prompt,
         available_labels=labels,
-        n=num_labels,
+        n=len(labels) if multi_label else 1,
         default_label="unknown",
     )
     labeller_generator.load()
