@@ -105,7 +105,7 @@ def generate_dataset(
         is_sample=is_sample,
     )
     labeller_generator = get_labeller_generator(
-        system_prompt=f"{system_prompt} {', '.join(labels)}",
+        system_prompt=f"{system_prompt}. Potential labels: {', '.join(labels)}",
         labels=labels,
         multi_label=multi_label,
     )
@@ -134,7 +134,6 @@ def generate_dataset(
             else:
                 k = 1
 
-            print(k)
             sampled_labels = random.sample(labels, min(k, len(labels)))
             random.shuffle(sampled_labels)
             inputs.append(
