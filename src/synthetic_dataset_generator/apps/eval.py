@@ -782,7 +782,10 @@ with gr.Blocks() as app:
                 )
                 btn_push_to_hub = gr.Button("Push to Hub", variant="primary", scale=2)
             with gr.Column(scale=3):
-                success_message = gr.Markdown(visible=True)
+                success_message = gr.Markdown(
+                    visible=True,
+                    height=100,  # don't remove this otherwise progress is not visible
+                )
                 with gr.Accordion(
                     "Customize your pipeline with distilabel",
                     open=False,

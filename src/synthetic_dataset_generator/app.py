@@ -25,7 +25,6 @@ demo = TabbedInterface(
     ["Text Classification", "Supervised Fine-Tuning", "README"],
     css=css,
     title=image,
-    head="Synthetic Data Generator",
     theme=theme,
 )
 

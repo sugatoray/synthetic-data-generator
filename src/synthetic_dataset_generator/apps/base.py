@@ -91,7 +91,7 @@ def show_success_message(org_name, repo_name) -> gr.Markdown:
     client = get_argilla_client()
     if client is None:
         return gr.Markdown(
-            value="""
+            value=f"""
                 <div style="padding: 1em; background-color: var(--block-background-fill); border-color: var(--border-color-primary); border-width: 1px; border-radius: 5px;">
                     <h3 style="color: #2e7d32; margin: 0;">Dataset Published Successfully!</h3>
                     <p style="margin-top: 0.5em;">
@@ -138,7 +138,7 @@ def show_success_message(org_name, repo_name) -> gr.Markdown:
 
 
 def hide_success_message() -> gr.Markdown:
-    return gr.Markdown(value="")
+    return gr.Markdown(value="", visible=False, height=100)
 
 
 def test_max_num_rows(num_rows: int) -> int:
