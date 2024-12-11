@@ -434,7 +434,7 @@ with gr.Blocks() as app:
                         label="Multi-label",
                         value=False,
                         interactive=True,
-                        info="If checked, the text can be classified into multiple labels.",
+                        info="If checked, the text will be classified into multiple labels.",
                     )
                     clarity = gr.Dropdown(
                         choices=[
