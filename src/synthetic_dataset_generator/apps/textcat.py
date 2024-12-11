@@ -126,7 +126,11 @@ def generate_dataset(
         inputs = []
         for _ in range(batch_size):
             if multi_label:
-                k = int(random.betavariate(alpha=2, beta=3) * len(labels))
+                num_labels = len(labels)
+                k = int(
+                    random.betavariate(alpha=(num_labels - 1), beta=num_labels)
+                    * num_labels
+                )
             else:
                 k = 1
 
