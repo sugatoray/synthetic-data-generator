@@ -189,7 +189,7 @@ def generate_dataset(
     else:
         dataframe = dataframe.rename(columns={"labels": "label"})
         dataframe["label"] = dataframe["label"].apply(
-            lambda x: x.lower().strip() if x.lower().strip() in labels else None
+            lambda x: x.lower().strip() if x and x.lower().strip() in labels else None
         )
 
     progress(1.0, desc="Dataset created")
@@ -511,7 +511,7 @@ with gr.Blocks() as app:
             with gr.Column(scale=3):
                 success_message = gr.Markdown(
                     visible=True,
-                    height=100,  # don't remove this otherwise progress is not visible
+                    min_height=100,  # don't remove this otherwise progress is not visible
                 )
                 with gr.Accordion(
                     "Customize your pipeline with distilabel",

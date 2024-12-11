@@ -112,6 +112,9 @@ def show_success_message(org_name, repo_name) -> gr.Markdown:
                 </div>
                 """,
             visible=True,
+            height=None,
+            min_height=None,
+            max_height=None,
         )
     argilla_api_url = client.api_url
     return gr.Markdown(
@@ -134,11 +137,14 @@ def show_success_message(org_name, repo_name) -> gr.Markdown:
                 </div>
             """,
         visible=True,
+        height=None,
+        min_height=None,
+        max_height=None,
     )
 
 
 def hide_success_message() -> gr.Markdown:
-    return gr.Markdown(value="", visible=False, height=100)
+    return gr.Markdown(value="", visible=True, height=100)
 
 
 def test_max_num_rows(num_rows: int) -> int:
