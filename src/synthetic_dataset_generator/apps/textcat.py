@@ -105,7 +105,7 @@ def generate_dataset(
         is_sample=is_sample,
     )
     labeller_generator = get_labeller_generator(
-        system_prompt=f"{system_prompt}. Potential labels: {', '.join(labels)}",
+        system_prompt=f"{system_prompt}. Optional labels: {', '.join(labels)}. Only select actually relevant labels.",
         labels=labels,
         multi_label=multi_label,
     )
