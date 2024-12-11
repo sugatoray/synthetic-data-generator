@@ -1,4 +1,5 @@
 import ast
+import random
 import uuid
 from typing import Dict, List, Union
 
@@ -32,6 +33,7 @@ from synthetic_dataset_generator.pipelines.sft import (
     generate_pipeline_code,
     get_magpie_generator,
     get_prompt_generator,
+    get_prompt_rewriter,
     get_response_generator,
 )
 from synthetic_dataset_generator.utils import (
@@ -103,6 +105,7 @@ def generate_dataset(
 ) -> pd.DataFrame:
     num_rows = test_max_num_rows(num_rows)
     progress(0.0, desc="(1/2) Generating instructions")
+    prompt_rewriter = get_prompt_rewriter()
     magpie_generator = get_magpie_generator(
         system_prompt, num_turns, temperature, is_sample
     )
@@ -111,6 +114,16 @@ def generate_dataset(
     )
     total_steps: int = num_rows * 2
     batch_size = DEFAULT_BATCH_SIZE
+
+    # create prompt rewrites
+    inputs = [
+        {
+            "instruction": f"Rewrite this prompt keeping the same structure but highlighting different aspects of the original without adding anything new. Original prompt: {system_prompt} Rewritten prompt: "
+        }
+        for i in range(int(num_rows / 50))
+    ]
+    batch = list(prompt_rewriter.process(inputs=inputs))
+    prompt_rewrites = [entry["generation"] for entry in batch[0]] + [system_prompt]
 
     # create instructions
     n_processed = 0
@@ -123,7 +136,8 @@ def generate_dataset(
         )
         remaining_rows = num_rows - n_processed
         batch_size = min(batch_size, remaining_rows)
-        inputs = [{"system_prompt": system_prompt} for _ in range(batch_size)]
+        rewritten_system_prompt = random.choice(prompt_rewrites)
+        inputs = [{"system_prompt": rewritten_system_prompt} for _ in range(batch_size)]
         batch = list(magpie_generator.process(inputs=inputs))
         magpie_results.extend(batch[0])
         n_processed += batch_size
@@ -487,7 +501,7 @@ with gr.Blocks() as app:
                 with gr.Column(scale=3):
                     success_message = gr.Markdown(
                         visible=True,
-                        height=100,  # don't remove this otherwise progress is not visible
+                        min_height=100,  # don't remove this otherwise progress is not visible
                     )
                     with gr.Accordion(
                         "Customize your pipeline with distilabel",
@@ -543,6 +557,7 @@ with gr.Blocks() as app:
             fn=hide_pipeline_code_visibility,
             inputs=[],
             outputs=[pipeline_code_ui],
+            show_progress=True,
         ).success(
             fn=push_dataset,
             inputs=[

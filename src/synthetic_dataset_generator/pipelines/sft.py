@@ -175,12 +175,11 @@ def get_magpie_generator(system_prompt, num_turns, temperature, is_sample):
                 generation_kwargs={
                     "temperature": temperature,
                     "do_sample": True,
-                    "max_new_tokens": 256 if is_sample else MAX_NUM_TOKENS,
+                    "max_new_tokens": 256 if is_sample else int(MAX_NUM_TOKENS * 0.25),
                     "stop_sequences": _STOP_SEQUENCES,
                 },
             ),
             n_turns=num_turns,
-            system_prompt=system_prompt,
             output_mappings=output_mappings,
             only_instruction=True,
         )
@@ -195,17 +194,32 @@ def get_magpie_generator(system_prompt, num_turns, temperature, is_sample):
                 generation_kwargs={
                     "temperature": temperature,
                     "do_sample": True,
-                    "max_new_tokens": 256 if is_sample else MAX_NUM_TOKENS,
+                    "max_new_tokens": 256 if is_sample else int(MAX_NUM_TOKENS * 0.5),
                     "stop_sequences": _STOP_SEQUENCES,
                 },
             ),
             end_with_user=True,
             n_turns=num_turns,
-            system_prompt=system_prompt,
             output_mappings=output_mappings,
         )
     magpie_generator.load()
     return magpie_generator
+
+
+def get_prompt_rewriter():
+    prompt_rewriter = TextGeneration(
+        llm=InferenceEndpointsLLM(
+            model_id=MODEL,
+            tokenizer_id=MODEL,
+            base_url=BASE_URL,
+            api_key=_get_next_api_key(),
+            generation_kwargs={
+                "temperature": 1,
+            },
+        ),
+    )
+    prompt_rewriter.load()
+    return prompt_rewriter
 
 
 def get_response_generator(system_prompt, num_turns, temperature, is_sample):
@@ -218,7 +232,7 @@ def get_response_generator(system_prompt, num_turns, temperature, is_sample):
                 api_key=_get_next_api_key(),
                 generation_kwargs={
                     "temperature": temperature,
-                    "max_new_tokens": 256 if is_sample else MAX_NUM_TOKENS,
+                    "max_new_tokens": 256 if is_sample else int(MAX_NUM_TOKENS * 0.5),
                 },
             ),
             system_prompt=system_prompt,
