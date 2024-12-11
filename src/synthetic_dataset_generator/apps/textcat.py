@@ -126,10 +126,12 @@ def generate_dataset(
         inputs = []
         for _ in range(batch_size):
             if multi_label:
-                k = int(random.gammavariate(2, 2) * len(labels))
+                k = int(random.betavariate(alpha=2, beta=3) * len(labels))
             else:
                 k = 1
-            sampled_labels = random.sample(labels, k)
+
+            print(k)
+            sampled_labels = random.sample(labels, min(k, len(labels)))
             random.shuffle(sampled_labels)
             inputs.append(
                 {
