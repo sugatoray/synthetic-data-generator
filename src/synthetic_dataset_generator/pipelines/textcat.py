@@ -9,7 +9,7 @@ from distilabel.steps.tasks import (
 )
 from pydantic import BaseModel, Field
 
-from synthetic_dataset_generator.constants import BASE_URL, MODEL
+from synthetic_dataset_generator.constants import BASE_URL, MAX_NUM_TOKENS, MODEL
 from synthetic_dataset_generator.pipelines.base import _get_next_api_key
 from synthetic_dataset_generator.utils import get_preprocess_labels
 
@@ -69,7 +69,7 @@ def get_prompt_generator():
             structured_output={"format": "json", "schema": TextClassificationTask},
             generation_kwargs={
                 "temperature": 0.8,
-                "max_new_tokens": 2048,
+                "max_new_tokens": MAX_NUM_TOKENS,
                 "do_sample": True,
             },
         ),
@@ -88,7 +88,7 @@ def get_textcat_generator(difficulty, clarity, temperature, is_sample):
             api_key=_get_next_api_key(),
             generation_kwargs={
                 "temperature": temperature,
-                "max_new_tokens": 256 if is_sample else 2048,
+                "max_new_tokens": 256 if is_sample else MAX_NUM_TOKENS,
                 "do_sample": True,
                 "top_k": 50,
                 "top_p": 0.95,
@@ -110,7 +110,7 @@ def get_labeller_generator(system_prompt, labels, num_labels):
             api_key=_get_next_api_key(),
             generation_kwargs={
                 "temperature": 0.7,
-                "max_new_tokens": 2048,
+                "max_new_tokens": MAX_NUM_TOKENS,
             },
         ),
         context=system_prompt,
@@ -159,7 +159,7 @@ with Pipeline(name="textcat") as pipeline:
             api_key=os.environ["API_KEY"],
             generation_kwargs={{
                 "temperature": {temperature},
-                "max_new_tokens": 2048,
+                "max_new_tokens": {MAX_NUM_TOKENS},
                 "do_sample": True,
                 "top_k": 50,
                 "top_p": 0.95,
@@ -203,7 +203,7 @@ with Pipeline(name="textcat") as pipeline:
             api_key=os.environ["API_KEY"],
             generation_kwargs={{
                 "temperature": 0.8,
-                "max_new_tokens": 2048,
+                "max_new_tokens": {MAX_NUM_TOKENS},
             }},
         ),
         n={num_labels},

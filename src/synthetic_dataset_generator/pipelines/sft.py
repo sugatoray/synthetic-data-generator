@@ -4,6 +4,7 @@ from distilabel.steps.tasks import ChatGeneration, Magpie, TextGeneration
 from synthetic_dataset_generator.constants import (
     BASE_URL,
     MAGPIE_PRE_QUERY_TEMPLATE,
+    MAX_NUM_TOKENS,
     MODEL,
 )
 from synthetic_dataset_generator.pipelines.base import _get_next_api_key
@@ -149,7 +150,7 @@ def get_prompt_generator():
             base_url=BASE_URL,
             generation_kwargs={
                 "temperature": 0.8,
-                "max_new_tokens": 2048,
+                "max_new_tokens": MAX_NUM_TOKENS,
                 "do_sample": True,
             },
         ),
@@ -174,7 +175,7 @@ def get_magpie_generator(system_prompt, num_turns, temperature, is_sample):
                 generation_kwargs={
                     "temperature": temperature,
                     "do_sample": True,
-                    "max_new_tokens": 256 if is_sample else 512,
+                    "max_new_tokens": 256 if is_sample else MAX_NUM_TOKENS,
                     "stop_sequences": _STOP_SEQUENCES,
                 },
             ),
@@ -194,7 +195,7 @@ def get_magpie_generator(system_prompt, num_turns, temperature, is_sample):
                 generation_kwargs={
                     "temperature": temperature,
                     "do_sample": True,
-                    "max_new_tokens": 256 if is_sample else 1024,
+                    "max_new_tokens": 256 if is_sample else MAX_NUM_TOKENS,
                     "stop_sequences": _STOP_SEQUENCES,
                 },
             ),
@@ -217,7 +218,7 @@ def get_response_generator(system_prompt, num_turns, temperature, is_sample):
                 api_key=_get_next_api_key(),
                 generation_kwargs={
                     "temperature": temperature,
-                    "max_new_tokens": 256 if is_sample else 1024,
+                    "max_new_tokens": 256 if is_sample else MAX_NUM_TOKENS,
                 },
             ),
             system_prompt=system_prompt,
@@ -233,7 +234,7 @@ def get_response_generator(system_prompt, num_turns, temperature, is_sample):
                 api_key=_get_next_api_key(),
                 generation_kwargs={
                     "temperature": temperature,
-                    "max_new_tokens": 2048,
+                    "max_new_tokens": MAX_NUM_TOKENS,
                 },
             ),
             output_mappings={"generation": "completion"},
@@ -268,7 +269,7 @@ with Pipeline(name="sft") as pipeline:
             generation_kwargs={{
                 "temperature": {temperature},
                 "do_sample": True,
-                "max_new_tokens": 2048,
+                "max_new_tokens": {MAX_NUM_TOKENS},
                 "stop_sequences": {_STOP_SEQUENCES}
             }},
             api_key=os.environ["BASE_URL"],

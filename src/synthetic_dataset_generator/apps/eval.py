@@ -22,6 +22,7 @@ from synthetic_dataset_generator.apps.base import (
     hide_success_message,
     push_pipeline_code_to_hub,
     show_success_message,
+    test_max_num_rows,
     validate_argilla_user_workspace_dataset,
     validate_push_to_hub,
 )
@@ -303,6 +304,7 @@ def _evaluate_dataset(
     num_rows: int = 10,
     is_sample: bool = False,
 ):
+    num_rows = test_max_num_rows(num_rows)
     if eval_type == "chat-eval":
         dataframe = evaluate_instruction_response(
             dataframe=dataframe,

@@ -15,7 +15,9 @@ if HF_TOKEN is None:
     )
 
 # Inference
-DEFAULT_BATCH_SIZE = 5
+MAX_NUM_TOKENS = os.getenv("MAX_NUM_TOKENS", 2048)
+MAX_NUM_ROWS: str | int = os.getenv("MAX_NUM_ROWS", 1000)
+DEFAULT_BATCH_SIZE = os.getenv("DEFAULT_BATCH_SIZE", 5)
 MODEL = os.getenv("MODEL", "meta-llama/Meta-Llama-3.1-8B-Instruct")
 API_KEYS = (
     [os.getenv("HF_TOKEN")]

@@ -14,6 +14,7 @@ from synthetic_dataset_generator.apps.base import (
     hide_success_message,
     push_pipeline_code_to_hub,
     show_success_message,
+    test_max_num_rows,
     validate_argilla_user_workspace_dataset,
     validate_push_to_hub,
 )
@@ -100,6 +101,7 @@ def generate_dataset(
     is_sample: bool = False,
     progress=gr.Progress(),
 ) -> pd.DataFrame:
+    num_rows = test_max_num_rows(num_rows)
     progress(0.0, desc="(1/2) Generating instructions")
     magpie_generator = get_magpie_generator(
         system_prompt, num_turns, temperature, is_sample

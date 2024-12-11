@@ -79,6 +79,12 @@ demo.launch()
 
 Optionally, you can set the following environment variables to customize the generation process.
 
+- `MAX_NUM_TOKENS`: The maximum number of tokens to generate, defaults to `2048`.
+- `MAX_NUM_ROWS`: The maximum number of rows to generate, defaults to `1000`.
+- `DEFAULT_BATCH_SIZE`: The default batch size to use for generating the dataset, defaults to `5`.
+
+Optionally, you can use different models and APIs.
+
 - `BASE_URL`: The base URL for any OpenAI compatible API, e.g. `https://api-inference.huggingface.co/v1/`, `https://api.openai.com/v1/`.
 - `MODEL`: The model to use for generating the dataset, e.g. `meta-llama/Meta-Llama-3.1-8B-Instruct`, `gpt-4o`.
 - `API_KEY`: The API key to use for the corresponding API, e.g. `hf_...`, `sk-...`.

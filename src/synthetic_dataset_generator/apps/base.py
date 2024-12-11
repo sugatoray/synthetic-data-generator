@@ -8,6 +8,7 @@ from datasets import Dataset, concatenate_datasets, load_dataset
 from gradio import OAuthToken
 from huggingface_hub import HfApi, upload_file
 
+from synthetic_dataset_generator.constants import MAX_NUM_ROWS
 from synthetic_dataset_generator.utils import get_argilla_client
 
 
@@ -136,3 +137,12 @@ def show_success_message(org_name, repo_name) -> gr.Markdown:
 
 def hide_success_message() -> gr.Markdown:
     return gr.Markdown(value="")
+
+
+def test_max_num_rows(num_rows: int) -> int:
+    if num_rows > MAX_NUM_ROWS:
+        num_rows = MAX_NUM_ROWS
+        gr.Info(
+            f"Number of rows is larger than the configured maximum. Setting number of rows to {MAX_NUM_ROWS}. Set environment variable `MAX_NUM_ROWS` to change this behavior."
+        )
+    return num_rows

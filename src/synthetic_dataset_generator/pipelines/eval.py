@@ -5,7 +5,7 @@ from distilabel.steps.tasks import (
     UltraFeedback,
 )
 
-from synthetic_dataset_generator.constants import BASE_URL, MODEL
+from synthetic_dataset_generator.constants import BASE_URL, MAX_NUM_TOKENS, MODEL
 from synthetic_dataset_generator.pipelines.base import _get_next_api_key
 from synthetic_dataset_generator.utils import extract_column_names
 
@@ -18,7 +18,7 @@ def get_ultrafeedback_evaluator(aspect, is_sample):
             api_key=_get_next_api_key(),
             generation_kwargs={
                 "temperature": 0.01,
-                "max_new_tokens": 2048 if not is_sample else 512,
+                "max_new_tokens": MAX_NUM_TOKENS if not is_sample else 512,
             },
         ),
         aspect=aspect,
@@ -36,7 +36,7 @@ def get_custom_evaluator(prompt_template, structured_output, columns, is_sample)
             structured_output={"format": "json", "schema": structured_output},
             generation_kwargs={
                 "temperature": 0.01,
-                "max_new_tokens": 2048 if not is_sample else 512,
+                "max_new_tokens": MAX_NUM_TOKENS if not is_sample else 512,
             },
         ),
         template=prompt_template,
@@ -79,7 +79,7 @@ with Pipeline(name="ultrafeedback") as pipeline:
             api_key=os.environ["API_KEY"],
             generation_kwargs={{
                 "temperature": 0.01,
-                "max_new_tokens": 2048,
+                "max_new_tokens": {MAX_NUM_TOKENS},
             }},
         ),
         aspect=aspect,
@@ -123,7 +123,7 @@ with Pipeline(name="ultrafeedback") as pipeline:
                 api_key=os.environ["BASE_URL"],
                 generation_kwargs={{
                     "temperature": 0.01,
-                    "max_new_tokens": 2048,
+                    "max_new_tokens": {MAX_NUM_TOKENS},
                 }},
             output_mappings={{
                 "ratings": f"ratings_{{aspect}}",
@@ -177,7 +177,7 @@ with Pipeline(name="custom-evaluation") as pipeline:
             structured_output={{"format": "json", "schema": {structured_output}}},
             generation_kwargs={{
                 "temperature": 0.01,
-                "max_new_tokens": 2048,
+                "max_new_tokens": {MAX_NUM_TOKENS},
             }},
         ),
         template=CUSTOM_TEMPLATE,
