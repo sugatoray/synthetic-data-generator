@@ -13,6 +13,7 @@ button[role="tab"][aria-selected="true"] { border: 0; background: var(--button-p
 button[role="tab"][aria-selected="true"]:hover {border-color: var(--button-primary-background-fill); background: var(var(--button-primary-background-fill-hover))}
 .tabitem { border: 0; padding-inline: 0}
 .gallery-item {background: var(--background-fill-secondary); text-align: left}
+.table-wrap .tbody td { vertical-align: top }
 #system_prompt_examples { color: var(--body-text-color) !important; background-color: var(--block-background-fill) !important;}
 .container {padding-inline: 0 !important}
 #sign_in_button { flex-grow: 0; width: auto !important; display: flex; align-items: center; justify-content: center; margin: 0 auto; }
