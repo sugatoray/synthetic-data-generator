@@ -24,17 +24,17 @@ from synthetic_dataset_generator.constants import (
     MODEL,
     SFT_AVAILABLE,
 )
-from synthetic_dataset_generator.pipelines.embeddings import (
-    get_embeddings,
-    get_sentence_embedding_dimensions,
-)
-from synthetic_dataset_generator.pipelines.sft import (
+from synthetic_dataset_generator.pipelines.chat import (
     DEFAULT_DATASET_DESCRIPTIONS,
     generate_pipeline_code,
     get_magpie_generator,
     get_prompt_generator,
     get_prompt_rewriter,
     get_response_generator,
+)
+from synthetic_dataset_generator.pipelines.embeddings import (
+    get_embeddings,
+    get_sentence_embedding_dimensions,
 )
 from synthetic_dataset_generator.utils import (
     get_argilla_client,
