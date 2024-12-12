@@ -1,7 +1,7 @@
 from synthetic_dataset_generator._tabbedinterface import TabbedInterface
 
 # from synthetic_dataset_generator.apps.eval import app as eval_app
-from synthetic_dataset_generator.apps.readme import app as readme_app
+from synthetic_dataset_generator.apps.about import app as about_app
 from synthetic_dataset_generator.apps.sft import app as sft_app
 from synthetic_dataset_generator.apps.textcat import app as textcat_app
 
@@ -21,8 +21,8 @@ button[role="tab"][aria-selected="true"]:hover {border-color: var(--button-prima
 image = """<br><img src="https://raw.githubusercontent.com/argilla-io/synthetic-data-generator/main/assets/logo.svg" alt="Synthetic Data Generator Logo" style="display: block; margin-left: auto; margin-right: auto; width: clamp(50%, 400px, 100%)"/>"""
 
 demo = TabbedInterface(
-    [textcat_app, sft_app, readme_app],
-    ["Text Classification", "Supervised Fine-Tuning", "README"],
+    [textcat_app, sft_app, about_app],
+    ["Text Classification", "Supervised Fine-Tuning", "About"],
     css=css,
     title=image,
     theme=theme,
