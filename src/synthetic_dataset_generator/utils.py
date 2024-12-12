@@ -22,10 +22,15 @@ def get_duplicate_button():
 
 
 def list_orgs(oauth_token: Union[OAuthToken, None] = None):
+    if oauth_token is None:
+        return []
     try:
-        if oauth_token is None:
-            return []
         data = whoami(oauth_token.token)
+    except Exception:
+        swap_visibility(None)
+        return []
+
+    try:
         if data["auth"]["type"] == "oauth":
             organizations = [data["name"]] + [org["name"] for org in data["orgs"]]
         elif data["auth"]["type"] == "access_token":
