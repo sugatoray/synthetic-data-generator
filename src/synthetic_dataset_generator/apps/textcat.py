@@ -104,8 +104,11 @@ def generate_dataset(
         temperature=temperature,
         is_sample=is_sample,
     )
+    updated_system_prompt = f"{system_prompt}. Optional labels: {', '.join(labels)}."
+    if multi_label:
+        updated_system_prompt = f"{updated_system_prompt}. Only apply relevant labels. Applying less labels is better than applying too many labels."
     labeller_generator = get_labeller_generator(
-        system_prompt=f"{system_prompt}. Optional labels: {', '.join(labels)}. Only apply relevant labels. Applying less labels is better than applying too many labels.",
+        system_prompt=updated_system_prompt,
         labels=labels,
         multi_label=multi_label,
     )
@@ -181,16 +184,20 @@ def generate_dataset(
                     [
                         label.lower().strip()
                         for label in x
-                        if label.lower().strip() in labels
+                        if label is not None and label.lower().strip() in labels
                     ]
                 )
             )
         )
+        dataframe = dataframe[dataframe["labels"].notna()]
     else:
         dataframe = dataframe.rename(columns={"labels": "label"})
         dataframe["label"] = dataframe["label"].apply(
-            lambda x: x.lower().strip() if x and x.lower().strip() in labels else None
+            lambda x: x.lower().strip()
+            if x and x.lower().strip() in labels
+            else random.choice(labels)
         )
+    dataframe = dataframe[dataframe["text"].notna()]
 
     progress(1.0, desc="Dataset created")
     return dataframe
