@@ -23,7 +23,7 @@ image = """<br><img src="https://raw.githubusercontent.com/argilla-io/synthetic-
 
 demo = TabbedInterface(
     [textcat_app, chat_app, about_app],
-    ["Text Classification", "Chat", "About"],
+    ["Text Classification", "Chat Data", "About"],
     css=css,
     title=image,
     theme=theme,

@@ -15,15 +15,17 @@ if HF_TOKEN is None:
     )
 
 # Inference
-MAX_NUM_TOKENS = os.getenv("MAX_NUM_TOKENS", 2048)
-MAX_NUM_ROWS: str | int = os.getenv("MAX_NUM_ROWS", 1000)
-DEFAULT_BATCH_SIZE = os.getenv("DEFAULT_BATCH_SIZE", 5)
+MAX_NUM_TOKENS = int(os.getenv("MAX_NUM_TOKENS", 2048))
+MAX_NUM_ROWS: str | int = int(os.getenv("MAX_NUM_ROWS", 1000))
+DEFAULT_BATCH_SIZE = int(os.getenv("DEFAULT_BATCH_SIZE", 5))
 MODEL = os.getenv("MODEL", "meta-llama/Meta-Llama-3.1-8B-Instruct")
-API_KEYS = (
-    [os.getenv("HF_TOKEN")]
-    + [os.getenv(f"HF_TOKEN_{i}") for i in range(1, 10)]
-    + [os.getenv("API_KEY")]
-)
+_API_KEY = os.getenv("API_KEY")
+if _API_KEY:
+    API_KEYS = [_API_KEY]
+else:
+    API_KEYS = [os.getenv("HF_TOKEN")] + [
+        os.getenv(f"HF_TOKEN_{i}") for i in range(1, 10)
+    ]
 API_KEYS = [token for token in API_KEYS if token]
 BASE_URL = os.getenv("BASE_URL", "https://api-inference.huggingface.co/v1/")
 
