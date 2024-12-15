@@ -28,13 +28,12 @@ hf_oauth_scopes:
 
 ## Introduction
 
-Synthetic Data Generator is a tool that allows you to create high-quality datasets for training and fine-tuning language models. It leverages the power of distilabel and LLMs to generate synthetic data tailored to your specific needs.
+Synthetic Data Generator is a tool that allows you to create high-quality datasets for training and fine-tuning language models. It leverages the power of distilabel and LLMs to generate synthetic data tailored to your specific needs. [The announcement blog](https://huggingface.co/blog/synthetic-data-generator) goes over a practical example of how to use it.
 
 Supported Tasks:
 
 - Text Classification
-- Supervised Fine-Tuning
-- Judging and rationale evaluation
+- Chat Data for Supervised Fine-Tuning
 
 This tool simplifies the process of creating custom datasets, enabling you to:
 
@@ -87,7 +86,7 @@ Optionally, you can use different models and APIs.
 
 - `BASE_URL`: The base URL for any OpenAI compatible API, e.g. `https://api-inference.huggingface.co/v1/`, `https://api.openai.com/v1/`.
 - `MODEL`: The model to use for generating the dataset, e.g. `meta-llama/Meta-Llama-3.1-8B-Instruct`, `gpt-4o`.
-- `API_KEY`: The API key to use for the corresponding API, e.g. `hf_...`, `sk-...`.
+- `API_KEY`: The API key to use for the generation API, e.g. `hf_...`, `sk-...`. If not provided, it will default to the provided `HF_TOKEN` environment variable.
 
 Optionally, you can also push your datasets to Argilla for further curation by setting the following environment variables:
 
