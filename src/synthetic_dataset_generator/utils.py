@@ -48,7 +48,7 @@ def list_orgs(oauth_token: Union[OAuthToken, None] = None):
         gr.Info(
             "Your user token does not have the necessary permissions to push to organizations."
             "Please check your OAuth permissions in https://huggingface.co/settings/connected-applications."
-            "Update yout token permissions to include repo.write: https://huggingface.co/settings/tokens."
+            "Update your token permissions to include repo.write: https://huggingface.co/settings/tokens."
         )
         return []
 
