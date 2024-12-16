@@ -9,7 +9,7 @@ with gr.Blocks() as app:
 
         The synthetic data generator takes your custom prompt and returns a dataset for your use case, using a synthetic data pipeline. In the background this is powered by [distilabel](https://distilabel.argilla.io/latest/) and the [free Hugging Face text-generation API](https://huggingface.co/docs/api-inference/en/index) but we don’t need to worry about these complexities and we can focus on using the UI.
 
-        - Read more in [our announcement blog post](https://huggingface.co/blog/synthetic-dataset-generator)
+        - Read more in [our announcement blog post](https://huggingface.co/blog/synthetic-data-generator)
         - Find the library on [GitHub](https://github.com/argilla-io/synthetic-data-generator)
         """
     )
