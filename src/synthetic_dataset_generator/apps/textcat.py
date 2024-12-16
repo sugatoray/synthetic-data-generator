@@ -64,7 +64,7 @@ def generate_system_prompt(dataset_description, progress=gr.Progress()):
     progress(1.0, desc="Prompt generated")
     data = json.loads(result)
     system_prompt = data["classification_task"]
-    labels = data["labels"]
+    labels = get_preprocess_labels(data["labels"])
     return system_prompt, labels
 
 
@@ -177,14 +177,20 @@ def generate_dataset(
         distiset_results.append(record)
 
     dataframe = pd.DataFrame(distiset_results)
+    if (
+        not labels
+        or len(set(label.lower().strip() for label in labels if label.strip())) < 2
+    ):
+        raise gr.Error(
+            "Please provide at least 2 unique, non-empty labels to classify your text."
+        )
     if multi_label:
         dataframe["labels"] = dataframe["labels"].apply(
             lambda x: list(
                 set(
                     [
-                        label.lower().strip()
+                        label.lower().strip() if (label is not None and label.lower().strip() in labels) else random.choice(labels)
                         for label in x
-                        if label is not None and label.lower().strip() in labels
                     ]
                 )
             )
@@ -214,6 +220,7 @@ def push_dataset_to_hub(
     pipeline_code: str = "",
     progress=gr.Progress(),
 ):
+    gr.Info(message=f"Dataframe columns in push dataset to hub: {dataframe.columns}", duration=20)
     progress(0.0, desc="Validating")
     repo_id = validate_push_to_hub(org_name, repo_name)
     progress(0.3, desc="Preprocessing")
@@ -230,7 +237,10 @@ def push_dataset_to_hub(
         features = Features(
             {"text": Value("string"), "label": ClassLabel(names=labels)}
         )
-    dataset = Dataset.from_pandas(dataframe, features=features)
+    dataset = Dataset.from_pandas(
+        dataframe.reset_index(drop=True),
+        features=features,
+    )
     dataset = combine_datasets(repo_id, dataset)
     distiset = Distiset({"default": dataset})
     progress(0.9, desc="Pushing dataset")
@@ -269,6 +279,7 @@ def push_dataset(
         num_rows=num_rows,
         temperature=temperature,
     )
+    gr.Info(message=f"Dataframe columns: {dataframe.columns}", duration=20)
     push_dataset_to_hub(
         dataframe,
         org_name,
@@ -365,7 +376,7 @@ def push_dataset(
                             and all(label in labels for label in sample["labels"])
                         )
                     )
-                    else []
+                    else None
                 ),
             )
             for sample in hf_dataset
