@@ -46,10 +46,14 @@ if os.getenv("MAGPIE_PRE_QUERY_TEMPLATE"):
         raise ValueError(
             f"MAGPIE_PRE_QUERY_TEMPLATE must be either {llama_options} or {qwen_options}."
         )
-elif MODEL.lower() in llama_options:
+elif MODEL.lower() in llama_options or any(
+    option in MODEL.lower() for option in llama_options
+):
     SFT_AVAILABLE = True
     MAGPIE_PRE_QUERY_TEMPLATE = "llama3"
-elif MODEL.lower() in qwen_options:
+elif MODEL.lower() in qwen_options or any(
+    option in MODEL.lower() for option in qwen_options
+):
     SFT_AVAILABLE = True
     MAGPIE_PRE_QUERY_TEMPLATE = "qwen2"
 else:
