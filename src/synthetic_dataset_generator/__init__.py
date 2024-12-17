@@ -4,7 +4,6 @@ from gradio import TabbedInterface
 
 from synthetic_dataset_generator import (  # noqa
     _distiset,
-    _inference_client,
     _inference_endpoints,
 )
 
