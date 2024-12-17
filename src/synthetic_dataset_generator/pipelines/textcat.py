@@ -1,7 +1,7 @@
 import random
 from typing import List
 
-from distilabel.llms import InferenceEndpointsLLM
+from distilabel.llms import InferenceEndpointsLLM, OpenAILLM
 from distilabel.steps.tasks import (
     GenerateTextClassificationData,
     TextClassification,
@@ -61,39 +61,66 @@ class TextClassificationTask(BaseModel):
 
 
 def get_prompt_generator():
-    prompt_generator = TextGeneration(
-        llm=InferenceEndpointsLLM(
+    structured_output = {
+        "format": "json",
+        "schema": TextClassificationTask,
+    }
+    generation_kwargs = {
+        "temperature": 0.8,
+        "max_new_tokens": MAX_NUM_TOKENS,
+    }
+    if BASE_URL:
+        llm = OpenAILLM(
+            model=MODEL,
+            base_url=BASE_URL,
+            api_key=_get_next_api_key(),
+            structured_output=structured_output,
+            generation_kwargs=generation_kwargs,
+        )
+    else:
+        generation_kwargs["do_sample"] = True
+        llm = InferenceEndpointsLLM(
             api_key=_get_next_api_key(),
             model_id=MODEL,
             base_url=BASE_URL,
-            structured_output={"format": "json", "schema": TextClassificationTask},
-            generation_kwargs={
-                "temperature": 0.8,
-                "max_new_tokens": MAX_NUM_TOKENS,
-                "do_sample": True,
-            },
-        ),
+            structured_output=structured_output,
+            generation_kwargs=generation_kwargs,
+        )
+
+    prompt_generator = TextGeneration(
+        llm=llm,
         system_prompt=PROMPT_CREATION_PROMPT,
         use_system_prompt=True,
     )
+
     prompt_generator.load()
     return prompt_generator
 
 
 def get_textcat_generator(difficulty, clarity, temperature, is_sample):
-    textcat_generator = GenerateTextClassificationData(
-        llm=InferenceEndpointsLLM(
+    generation_kwargs = {
+        "temperature": temperature,
+        "max_new_tokens": 256 if is_sample else MAX_NUM_TOKENS,
+        "top_p": 0.95,
+    }
+    if BASE_URL:
+        llm = OpenAILLM(
+            model=MODEL,
+            base_url=BASE_URL,
+            api_key=_get_next_api_key(),
+            generation_kwargs=generation_kwargs,
+        )
+    else:
+        generation_kwargs["do_sample"] = True
+        llm = InferenceEndpointsLLM(
             model_id=MODEL,
             base_url=BASE_URL,
             api_key=_get_next_api_key(),
-            generation_kwargs={
-                "temperature": temperature,
-                "max_new_tokens": 256 if is_sample else MAX_NUM_TOKENS,
-                "do_sample": True,
-                "top_k": 50,
-                "top_p": 0.95,
-            },
-        ),
+            generation_kwargs=generation_kwargs,
+        )
+
+    textcat_generator = GenerateTextClassificationData(
+        llm=llm,
         difficulty=None if difficulty == "mixed" else difficulty,
         clarity=None if clarity == "mixed" else clarity,
         seed=random.randint(0, 2**32 - 1),
@@ -103,16 +130,28 @@ def get_textcat_generator(difficulty, clarity, temperature, is_sample):
 
 
 def get_labeller_generator(system_prompt, labels, multi_label):
-    labeller_generator = TextClassification(
-        llm=InferenceEndpointsLLM(
+    generation_kwargs = {
+        "temperature": 0.01,
+        "max_new_tokens": MAX_NUM_TOKENS,
+    }
+
+    if BASE_URL:
+        llm = OpenAILLM(
+            model=MODEL,
+            base_url=BASE_URL,
+            api_key=_get_next_api_key(),
+            generation_kwargs=generation_kwargs,
+        )
+    else:
+        llm = InferenceEndpointsLLM(
             model_id=MODEL,
             base_url=BASE_URL,
             api_key=_get_next_api_key(),
-            generation_kwargs={
-                "temperature": 0.7,
-                "max_new_tokens": MAX_NUM_TOKENS,
-            },
-        ),
+            generation_kwargs=generation_kwargs,
+        )
+
+    labeller_generator = TextClassification(
+        llm=llm,
         context=system_prompt,
         available_labels=labels,
         n=len(labels) if multi_label else 1,

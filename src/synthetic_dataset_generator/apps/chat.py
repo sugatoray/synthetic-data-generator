@@ -20,6 +20,7 @@ from synthetic_dataset_generator.apps.base import (
     validate_push_to_hub,
 )
 from synthetic_dataset_generator.constants import (
+    BASE_URL,
     DEFAULT_BATCH_SIZE,
     MODEL,
     SFT_AVAILABLE,
@@ -413,8 +414,8 @@ with gr.Blocks() as app:
                     [
                         "## Supervised Fine-Tuning not available",
                         "",
-                        f"This tool relies on the [Magpie](https://arxiv.org/abs/2406.08464) prequery template, which is not implemented for the {MODEL} model.",
-                        "Use Llama3 or Qwen2 models or [implement another magpie prequery template](https://github.com/argilla-io/distilabel/pull/778/files).",
+                        f"This tool relies on the [Magpie](https://arxiv.org/abs/2406.08464) prequery template, which is not implemented for the {MODEL} with {BASE_URL}.",
+                        "Use Llama3 or Qwen2 models with Hugging Face Inference Endpoints.",
                     ]
                 )
             )
