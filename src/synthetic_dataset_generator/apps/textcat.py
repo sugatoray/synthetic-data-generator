@@ -10,7 +10,7 @@ from datasets import ClassLabel, Dataset, Features, Sequence, Value
 from distilabel.distiset import Distiset
 from huggingface_hub import HfApi
 
-from src.synthetic_dataset_generator.apps.base import (
+from synthetic_dataset_generator.apps.base import (
     combine_datasets,
     hide_success_message,
     push_pipeline_code_to_hub,
@@ -19,24 +19,24 @@ from src.synthetic_dataset_generator.apps.base import (
     validate_argilla_user_workspace_dataset,
     validate_push_to_hub,
 )
-from src.synthetic_dataset_generator.pipelines.embeddings import (
+from synthetic_dataset_generator.constants import DEFAULT_BATCH_SIZE
+from synthetic_dataset_generator.pipelines.embeddings import (
     get_embeddings,
     get_sentence_embedding_dimensions,
 )
-from src.synthetic_dataset_generator.pipelines.textcat import (
+from synthetic_dataset_generator.pipelines.textcat import (
     DEFAULT_DATASET_DESCRIPTIONS,
     generate_pipeline_code,
     get_labeller_generator,
     get_prompt_generator,
     get_textcat_generator,
 )
-from src.synthetic_dataset_generator.utils import (
+from synthetic_dataset_generator.utils import (
     get_argilla_client,
     get_org_dropdown,
     get_preprocess_labels,
     swap_visibility,
 )
-from synthetic_dataset_generator.constants import DEFAULT_BATCH_SIZE
 
 
 def _get_dataframe():
@@ -189,7 +189,9 @@ def generate_dataset(
             lambda x: list(
                 set(
                     [
-                        label.lower().strip() if (label is not None and label.lower().strip() in labels) else random.choice(labels)
+                        label.lower().strip()
+                        if (label is not None and label.lower().strip() in labels)
+                        else random.choice(labels)
                         for label in x
                     ]
                 )
@@ -220,7 +222,10 @@ def push_dataset_to_hub(
     pipeline_code: str = "",
     progress=gr.Progress(),
 ):
-    gr.Info(message=f"Dataframe columns in push dataset to hub: {dataframe.columns}", duration=20)
+    gr.Info(
+        message=f"Dataframe columns in push dataset to hub: {dataframe.columns}",
+        duration=20,
+    )
     progress(0.0, desc="Validating")
     repo_id = validate_push_to_hub(org_name, repo_name)
     progress(0.3, desc="Preprocessing")
