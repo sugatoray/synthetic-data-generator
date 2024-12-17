@@ -33,10 +33,20 @@ if BASE_URL != "https://api-inference.huggingface.co/v1/" and len(API_KEYS) == 0
     raise ValueError(
         "API_KEY is not set. Ensure you have set the API_KEY environment variable that has access to the Hugging Face Inference Endpoints."
     )
-
 llama_options = ["llama3", "llama-3", "llama 3"]
 qwen_options = ["qwen2", "qwen-2", "qwen 2"]
-if MODEL.lower() in llama_options:
+if os.getenv("MAGPIE_PRE_QUERY_TEMPLATE"):
+    SFT_AVAILABLE = True
+    passed_pre_query_template = os.getenv("MAGPIE_PRE_QUERY_TEMPLATE")
+    if passed_pre_query_template.lower() in llama_options:
+        MAGPIE_PRE_QUERY_TEMPLATE = "llama3"
+    elif passed_pre_query_template.lower() in qwen_options:
+        MAGPIE_PRE_QUERY_TEMPLATE = "qwen2"
+    else:
+        raise ValueError(
+            f"MAGPIE_PRE_QUERY_TEMPLATE must be either {llama_options} or {qwen_options}."
+        )
+elif MODEL.lower() in llama_options:
     SFT_AVAILABLE = True
     MAGPIE_PRE_QUERY_TEMPLATE = "llama3"
 elif MODEL.lower() in qwen_options:
@@ -48,6 +58,7 @@ else:
         "`SFT_AVAILABLE` is set to `False` because the model is not a Qwen or Llama model."
     )
     MAGPIE_PRE_QUERY_TEMPLATE = None
+
 
 # Embeddings
 STATIC_EMBEDDING_MODEL = "minishlab/potion-base-8M"

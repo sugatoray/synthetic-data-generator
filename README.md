@@ -87,6 +87,7 @@ Optionally, you can use different models and APIs.
 - `BASE_URL`: The base URL for any OpenAI compatible API, e.g. `https://api-inference.huggingface.co/v1/`, `https://api.openai.com/v1/`.
 - `MODEL`: The model to use for generating the dataset, e.g. `meta-llama/Meta-Llama-3.1-8B-Instruct`, `gpt-4o`.
 - `API_KEY`: The API key to use for the generation API, e.g. `hf_...`, `sk-...`. If not provided, it will default to the provided `HF_TOKEN` environment variable.
+- `MAGPIE_PRE_QUERY_TEMPLATE`: Enforce setting the pre-query template for Magpie generation to either `llama3`, `qwen2`. Not that this is only used if the model is a Qwen or Llama model. If you want to use other model families for chat data generation, feel free to [implement your own pre-query template](https://github.com/argilla-io/distilabel/pull/778/files).
 
 Optionally, you can also push your datasets to Argilla for further curation by setting the following environment variables:
 
