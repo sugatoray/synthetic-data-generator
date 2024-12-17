@@ -43,9 +43,7 @@ if os.getenv("MAGPIE_PRE_QUERY_TEMPLATE"):
     elif passed_pre_query_template.lower() in qwen_options:
         MAGPIE_PRE_QUERY_TEMPLATE = "qwen2"
     else:
-        raise ValueError(
-            f"MAGPIE_PRE_QUERY_TEMPLATE must be either {llama_options} or {qwen_options}."
-        )
+        MAGPIE_PRE_QUERY_TEMPLATE = passed_pre_query_template
 elif MODEL.lower() in llama_options or any(
     option in MODEL.lower() for option in llama_options
 ):
