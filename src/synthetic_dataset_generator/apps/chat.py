@@ -409,7 +409,14 @@ with gr.Blocks() as app:
     with gr.Column() as main_ui:
         if not SFT_AVAILABLE:
             gr.Markdown(
-                value=f"## Supervised Fine-Tuning is not available for the {MODEL} model. Use Hugging Face Llama3 or Qwen2 models."
+                value="\n".join(
+                    [
+                        "## Supervised Fine-Tuning not available",
+                        "",
+                        f"This tool relies on the [Magpie](https://arxiv.org/abs/2406.08464) prequery template, which is not implemented for the {MODEL} model.",
+                        "Use Llama3 or Qwen2 models or [implement another magpie prequery template](https://github.com/argilla-io/distilabel/pull/778/files).",
+                    ]
+                )
             )
         else:
             gr.Markdown(value="## 1. Describe the dataset you want")
