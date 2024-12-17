@@ -3,7 +3,7 @@ import os
 
 from synthetic_dataset_generator import launch
 
-os.environ["MAGPIE_PRE_QUERY_TEMPLATE"] = "llama3"
-os.environ["MODEL"] = "my_custom_model_trained_on_llama3"
+os.environ["MAGPIE_PRE_QUERY_TEMPLATE"] = "my_custom_template"
+os.environ["MODEL"] = "google/gemma-2-9b-it"
 
 launch()
