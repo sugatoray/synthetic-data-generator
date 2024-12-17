@@ -177,13 +177,6 @@ def generate_dataset(
         distiset_results.append(record)
 
     dataframe = pd.DataFrame(distiset_results)
-    if (
-        not labels
-        or len(set(label.lower().strip() for label in labels if label.strip())) < 2
-    ):
-        raise gr.Error(
-            "Please provide at least 2 unique, non-empty labels to classify your text."
-        )
     if multi_label:
         dataframe["labels"] = dataframe["labels"].apply(
             lambda x: list(
@@ -222,10 +215,6 @@ def push_dataset_to_hub(
     pipeline_code: str = "",
     progress=gr.Progress(),
 ):
-    gr.Info(
-        message=f"Dataframe columns in push dataset to hub: {dataframe.columns}",
-        duration=20,
-    )
     progress(0.0, desc="Validating")
     repo_id = validate_push_to_hub(org_name, repo_name)
     progress(0.3, desc="Preprocessing")
@@ -284,7 +273,6 @@ def push_dataset(
         num_rows=num_rows,
         temperature=temperature,
     )
-    gr.Info(message=f"Dataframe columns: {dataframe.columns}", duration=20)
     push_dataset_to_hub(
         dataframe,
         org_name,
@@ -393,10 +381,13 @@ def push_dataset(
     return ""
 
 
-def validate_input_labels(labels):
-    if not labels or len(labels) < 2:
+def validate_input_labels(labels: List[str]) -> List[str]:
+    if (
+        not labels
+        or len(set(label.lower().strip() for label in labels if label.strip())) < 2
+    ):
         raise gr.Error(
-            f"Please select at least 2 labels to classify your text. You selected {len(labels) if labels else 0}."
+            f"Please provide at least 2 unique, non-empty labels to classify your text. You provided {len(labels) if labels else 0}."
         )
     return labels
 
@@ -569,6 +560,11 @@ with gr.Blocks() as app:
     )
 
     btn_apply_to_sample_dataset.click(
+        fn=validate_input_labels,
+        inputs=[labels],
+        outputs=[labels],
+        show_progress=True,
+    ).success(
         fn=generate_sample_dataset,
         inputs=[system_prompt, difficulty, clarity, labels, multi_label],
         outputs=[dataframe],
@@ -584,6 +580,11 @@ with gr.Blocks() as app:
         fn=validate_push_to_hub,
         inputs=[org_name, repo_name],
         outputs=[success_message],
+        show_progress=True,
+    ).success(
+        fn=validate_input_labels,
+        inputs=[labels],
+        outputs=[labels],
         show_progress=True,
     ).success(
         fn=hide_success_message,
