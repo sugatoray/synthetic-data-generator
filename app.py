@@ -1,4 +1,8 @@
-from synthetic_dataset_generator.app import demo
+import os
 
-if __name__ == "__main__":
-    demo.launch()
+from synthetic_dataset_generator import launch
+
+os.environ["BASE_URL"] = "http://localhost:11434"
+os.environ["MODEL"] = "llama3.1"
+
+launch()

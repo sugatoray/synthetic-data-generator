@@ -28,7 +28,3 @@ demo = TabbedInterface(
     title=image,
     theme=theme,
 )
-
-
-if __name__ == "__main__":
-    demo.launch()
