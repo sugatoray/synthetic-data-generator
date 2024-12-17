@@ -28,7 +28,7 @@ hf_oauth_scopes:
 
 ## Introduction
 
-Synthetic Data Generator is a tool that allows you to create high-quality datasets for training and fine-tuning language models. It leverages the power of distilabel and LLMs to generate synthetic data tailored to your specific needs. [The announcement blog](https://huggingface.co/blog/synthetic-data-generator) goes over a practical example of how to use it.
+Synthetic Data Generator is a tool that allows you to create high-quality datasets for training and fine-tuning language models. It leverages the power of distilabel and LLMs to generate synthetic data tailored to your specific needs. [The announcement blog](https://huggingface.co/blog/synthetic-data-generator) goes over a practical example of how to use it but you can also wathh the [video](https://www.youtube.com/watch?v=nXjVtnGeEss) to see it in action.
 
 Supported Tasks:
 
@@ -84,7 +84,7 @@ Optionally, you can set the following environment variables to customize the gen
 
 Optionally, you can use different models and APIs. For providers outside of Hugging Face, we provide an integration through [LiteLLM](https://docs.litellm.ai/docs/providers).
 
-- `BASE_URL`: The base URL for any OpenAI compatible API, e.g. `https://api-inference.huggingface.co/v1/`, `https://api.openai.com/v1/`, `http://127.0.0.1:11434/v1/`.
+- `BASE_URL`: The base URL for any OpenAI compatible API, e.g. `https://api.openai.com/v1/`, `http://127.0.0.1:11434/v1/`.
 - `MODEL`: The model to use for generating the dataset, e.g. `meta-llama/Meta-Llama-3.1-8B-Instruct`, `openai/gpt-4o`, `ollama/llama3.1`.
 - `API_KEY`: The API key to use for the generation API, e.g. `hf_...`, `sk-...`. If not provided, it will default to the provided `HF_TOKEN` environment variable.
 
