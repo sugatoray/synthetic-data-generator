@@ -3,8 +3,7 @@ import os
 
 from synthetic_dataset_generator.app import demo
 
-# Follow https://docs.argilla.io/latest/getting_started/quickstart/ to get your Argilla API key and URL
-os.environ["ARGILLA_API_URL"] = "https://[your-owner-name]-[your_space_name].hf.space"
-os.environ["ARGILLA_API_KEY"] = "my_api_key"
+os.environ["MAGPIE_PRE_QUERY_TEMPLATE"] = "llama3"
+os.environ["MODEL"] = "my_custom_model_trained_on_llama3"
 
 demo.launch()
