@@ -9,7 +9,7 @@ SFT_TASK = "supervised_fine_tuning"
 
 # Hugging Face
 HF_TOKEN = os.getenv("HF_TOKEN")
-if HF_TOKEN is None:
+if not HF_TOKEN:
     raise ValueError(
         "HF_TOKEN is not set. Ensure you have set the HF_TOKEN environment variable that has access to the Hugging Face Hub repositories and Inference Endpoints."
     )
@@ -70,8 +70,8 @@ if ARGILLA_API_URL is None or ARGILLA_API_KEY is None:
     ARGILLA_API_URL = os.getenv("ARGILLA_API_URL_SDG_REVIEWER")
     ARGILLA_API_KEY = os.getenv("ARGILLA_API_KEY_SDG_REVIEWER")
 
-if ARGILLA_API_URL is None or ARGILLA_API_KEY is None:
-    warnings.warn("ARGILLA_API_URL or ARGILLA_API_KEY is not set")
+if not ARGILLA_API_URL or not ARGILLA_API_KEY:
+    warnings.warn("ARGILLA_API_URL or ARGILLA_API_KEY is not set or is empty")
     argilla_client = None
 else:
     argilla_client = rg.Argilla(
