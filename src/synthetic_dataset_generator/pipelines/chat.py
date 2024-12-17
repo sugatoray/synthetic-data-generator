@@ -125,13 +125,20 @@ DEFAULT_DATASET_DESCRIPTIONS = [
     "rude customer assistant for a phone company",
     "assistant that solves math puzzles using python",
 ]
-
-_STOP_SEQUENCES = [
-    "<|eot_id|>",
-    "<|start_header_id|>",
-    "assistant",
-    " \n\n",
-]
+if MAGPIE_PRE_QUERY_TEMPLATE == "llama3":
+    _STOP_SEQUENCES = [
+        "<|eot_id|>",
+        "<|start_header_id|>",
+        "assistant",
+        " \n\n",
+    ]
+elif MAGPIE_PRE_QUERY_TEMPLATE == "qwen2":
+    _STOP_SEQUENCES = [
+        "<|im_end|>",
+        "<|im_start|>",
+        "assistant",
+        " \n",
+    ]
 
 
 def _get_output_mappings(num_turns):
