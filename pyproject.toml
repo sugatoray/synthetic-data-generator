@@ -5,7 +5,7 @@ description = "Build datasets using natural language"
 authors = [
     {name = "davidberenstein1957", email = "david.m.berenstein@gmail.com"},
 ]
-tags = [
+keywords = [
     "gradio",
     "synthetic-data",
     "huggingface",
